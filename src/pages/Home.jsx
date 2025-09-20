@@ -100,14 +100,14 @@ const Home = () => {
     const testimonials = [
         {
             id: 1,
-            text: "I found my dream home in just two weeks using EstatesHub. The search tools made it so easy to find exactly what I was looking for.",
+            text: "I found my dream home in just two weeks using Dwella. The search tools made it so easy to find exactly what I was looking for.",
             author: "Sarah Johnson",
             role: "Homeowner",
             avatar: "https://randomuser.me/api/portraits/women/44.jpg"
         },
         {
             id: 2,
-            text: "As a real estate agent, I've increased my client base by 40% since listing on EstatesHub. The platform is intuitive and powerful.",
+            text: "As a real estate agent, I've increased my client base by 40% since listing on Dwella. The platform is intuitive and powerful.",
             author: "Michael Chen",
             role: "Real Estate Agent",
             avatar: "https://randomuser.me/api/portraits/men/32.jpg"
@@ -140,15 +140,15 @@ const Home = () => {
                     <img
                         src="https://images.unsplash.com/photo-1582407947304-fd86f028f716?ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80"
                         alt="Luxury home"
-                        className="w-full h-full object-cover"
+                        className="object-cover w-full h-full"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40"></div>
                 </div>
 
-                <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
+                <div className="relative z-10 w-full px-4 pt-24 pb-20 mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="max-w-3xl">
                         <Motion.h1
-                            className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white mb-6"
+                            className="mb-6 font-serif text-4xl font-bold text-white md:text-5xl lg:text-6xl"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
@@ -156,7 +156,7 @@ const Home = () => {
                             Find Your Perfect Place to Call Home
                         </Motion.h1>
                         <Motion.p
-                            className="text-xl text-white/90 mb-10"
+                            className="mb-10 text-xl text-white/90"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, delay: 0.2 }}
@@ -165,7 +165,7 @@ const Home = () => {
                         </Motion.p>
 
                         <Motion.div
-                            className="bg-white rounded-xl shadow-xl overflow-hidden"
+                            className="overflow-hidden bg-white shadow-xl rounded-xl"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, delay: 0.4 }}
@@ -196,20 +196,20 @@ const Home = () => {
                             <form onSubmit={handleSearch} className="p-6">
                                 <div className="flex items-center">
                                     <div className="relative flex-grow">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <FiMapPin className="h-5 w-5 text-gray-400" />
+                                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                            <FiMapPin className="w-5 h-5 text-gray-400" />
                                         </div>
                                         <input
                                             type="text"
                                             placeholder="Enter an address, neighborhood, city, or ZIP code"
-                                            className="block w-full pl-10 pr-12 py-4 border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                                            className="block w-full py-4 pl-10 pr-12 border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                         />
                                     </div>
                                     <button
                                         type="submit"
-                                        className="ml-4 px-8 py-4 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition duration-300 flex-shrink-0 font-medium"
+                                        className="flex-shrink-0 px-8 py-4 ml-4 font-medium text-white transition duration-300 rounded-lg bg-emerald-600 hover:bg-emerald-700"
                                     >
                                         <FiSearch className="inline-block mr-2" />
                                         Search
@@ -223,50 +223,50 @@ const Home = () => {
 
             {/* Property Categories */}
             <section className="py-16 bg-gray-50">
-                <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-3xl font-serif font-bold text-gray-900 mb-10 text-center">Find Properties by Category</h2>
+                <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    <h2 className="mb-10 font-serif text-3xl font-bold text-center text-gray-900">Find Properties by Category</h2>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        <div className="bg-white p-6 rounded-xl shadow-subtle text-center hover:shadow-lg transition-shadow duration-300">
-                            <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full mb-4">
+                    <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+                        <div className="p-6 text-center transition-shadow duration-300 bg-white rounded-xl shadow-subtle hover:shadow-lg">
+                            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-emerald-100 text-emerald-600">
                                 <TbBuildingEstate size={28} />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-800 mb-2">Houses</h3>
-                            <p className="text-gray-600 mb-4">Find your perfect family home</p>
-                            <Link to="/properties?type=House" className="text-emerald-600 font-medium hover:text-emerald-700">
+                            <h3 className="mb-2 text-xl font-bold text-gray-800">Houses</h3>
+                            <p className="mb-4 text-gray-600">Find your perfect family home</p>
+                            <Link to="/properties?type=House" className="font-medium text-emerald-600 hover:text-emerald-700">
                                 Browse Houses <FiChevronRight className="inline ml-1" />
                             </Link>
                         </div>
 
-                        <div className="bg-white p-6 rounded-xl shadow-subtle text-center hover:shadow-lg transition-shadow duration-300">
-                            <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full mb-4">
+                        <div className="p-6 text-center transition-shadow duration-300 bg-white rounded-xl shadow-subtle hover:shadow-lg">
+                            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-emerald-100 text-emerald-600">
                                 <TbBuildingSkyscraper size={28} />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-800 mb-2">Apartments</h3>
-                            <p className="text-gray-600 mb-4">Modern city living spaces</p>
-                            <Link to="/properties?type=Apartment" className="text-emerald-600 font-medium hover:text-emerald-700">
+                            <h3 className="mb-2 text-xl font-bold text-gray-800">Apartments</h3>
+                            <p className="mb-4 text-gray-600">Modern city living spaces</p>
+                            <Link to="/properties?type=Apartment" className="font-medium text-emerald-600 hover:text-emerald-700">
                                 Browse Apartments <FiChevronRight className="inline ml-1" />
                             </Link>
                         </div>
 
-                        <div className="bg-white p-6 rounded-xl shadow-subtle text-center hover:shadow-lg transition-shadow duration-300">
-                            <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full mb-4">
+                        <div className="p-6 text-center transition-shadow duration-300 bg-white rounded-xl shadow-subtle hover:shadow-lg">
+                            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-emerald-100 text-emerald-600">
                                 <TbBuildingCottage size={28} />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-800 mb-2">Villas</h3>
-                            <p className="text-gray-600 mb-4">Luxury homes with privacy</p>
-                            <Link to="/properties?type=Villa" className="text-emerald-600 font-medium hover:text-emerald-700">
+                            <h3 className="mb-2 text-xl font-bold text-gray-800">Villas</h3>
+                            <p className="mb-4 text-gray-600">Luxury homes with privacy</p>
+                            <Link to="/properties?type=Villa" className="font-medium text-emerald-600 hover:text-emerald-700">
                                 Browse Villas <FiChevronRight className="inline ml-1" />
                             </Link>
                         </div>
 
-                        <div className="bg-white p-6 rounded-xl shadow-subtle text-center hover:shadow-lg transition-shadow duration-300">
-                            <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full mb-4">
+                        <div className="p-6 text-center transition-shadow duration-300 bg-white rounded-xl shadow-subtle hover:shadow-lg">
+                            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-emerald-100 text-emerald-600">
                                 <TbBuildingStore size={28} />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-800 mb-2">Commercial</h3>
-                            <p className="text-gray-600 mb-4">Office and retail spaces</p>
-                            <Link to="/properties?type=Commercial" className="text-emerald-600 font-medium hover:text-emerald-700">
+                            <h3 className="mb-2 text-xl font-bold text-gray-800">Commercial</h3>
+                            <p className="mb-4 text-gray-600">Office and retail spaces</p>
+                            <Link to="/properties?type=Commercial" className="font-medium text-emerald-600 hover:text-emerald-700">
                                 Browse Commercial <FiChevronRight className="inline ml-1" />
                             </Link>
                         </div>
@@ -276,27 +276,27 @@ const Home = () => {
 
             {/* Featured Properties */}
             <section className="py-16">
-                <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center mb-10">
-                        <h2 className="text-3xl font-serif font-bold text-gray-900">Featured Properties</h2>
-                        <Link to="/properties" className="text-emerald-600 font-medium hover:text-emerald-700">
+                <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between mb-10">
+                        <h2 className="font-serif text-3xl font-bold text-gray-900">Featured Properties</h2>
+                        <Link to="/properties" className="font-medium text-emerald-600 hover:text-emerald-700">
                             View All <FiChevronRight className="inline" />
                         </Link>
                     </div>
 
                     {isLoading ? (
                         // Loading skeleton
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
                             {[1, 2, 3].map((i) => (
-                                <div key={i} className="bg-white rounded-xl overflow-hidden shadow-subtle animate-pulse">
+                                <div key={i} className="overflow-hidden bg-white rounded-xl shadow-subtle animate-pulse">
                                     <div className="h-64 bg-gray-200"></div>
                                     <div className="p-6">
-                                        <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
-                                        <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                                        <div className="w-3/4 h-6 mb-3 bg-gray-200 rounded"></div>
+                                        <div className="w-1/2 h-4 mb-4 bg-gray-200 rounded"></div>
                                         <div className="flex justify-between mb-5">
-                                            <div className="h-4 bg-gray-200 rounded w-16"></div>
-                                            <div className="h-4 bg-gray-200 rounded w-16"></div>
-                                            <div className="h-4 bg-gray-200 rounded w-16"></div>
+                                            <div className="w-16 h-4 bg-gray-200 rounded"></div>
+                                            <div className="w-16 h-4 bg-gray-200 rounded"></div>
+                                            <div className="w-16 h-4 bg-gray-200 rounded"></div>
                                         </div>
                                         <div className="h-10 bg-gray-200 rounded"></div>
                                     </div>
@@ -304,32 +304,32 @@ const Home = () => {
                             ))}
                         </div>
                     ) : featuredProperties.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
                             {featuredProperties.map((property) => (
-                                <div key={property.id} className="bg-white rounded-xl overflow-hidden shadow-subtle hover:shadow-elevated transition-shadow duration-300">
+                                <div key={property.id} className="overflow-hidden transition-shadow duration-300 bg-white rounded-xl shadow-subtle hover:shadow-elevated">
                                     <div className="relative h-64 overflow-hidden">
                                         <img
                                             src={property.image}
                                             alt={property.title}
-                                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                                            className="object-cover w-full h-full transition-transform duration-700 hover:scale-110"
                                             onError={(e) => {
                                                 e.target.onerror = null;
                                                 e.target.src = 'https://placehold.co/800x500?text=No+Image';
                                             }}
                                         />
-                                        <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg font-bold text-emerald-700">
+                                        <div className="absolute px-4 py-2 font-bold rounded-lg bottom-4 right-4 bg-white/90 backdrop-blur-sm text-emerald-700">
                                             Ksh.{property.price.toLocaleString()}
                                         </div>
                                     </div>
 
                                     <div className="p-6">
-                                        <h3 className="text-xl font-bold text-gray-800 mb-2">{property.title}</h3>
-                                        <p className="text-gray-600 mb-4 flex items-center">
+                                        <h3 className="mb-2 text-xl font-bold text-gray-800">{property.title}</h3>
+                                        <p className="flex items-center mb-4 text-gray-600">
                                             <FiMapPin className="mr-2 text-gray-400" />
                                             {property.address}
                                         </p>
 
-                                        <div className="flex justify-between text-gray-700 mb-5">
+                                        <div className="flex justify-between mb-5 text-gray-700">
                                             <span>{property.beds} Beds</span>
                                             <span>{property.baths} Baths</span>
                                             <span>{property.sqft.toLocaleString()} sqft</span>
@@ -337,7 +337,7 @@ const Home = () => {
 
                                         <Link
                                             to={`/properties/${property.id}`}
-                                            className="block text-center w-full py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition duration-300 font-medium"
+                                            className="block w-full py-3 font-medium text-center text-white transition duration-300 rounded-lg bg-emerald-600 hover:bg-emerald-700"
                                         >
                                             View Details
                                         </Link>
@@ -347,7 +347,7 @@ const Home = () => {
                         </div>
                     ) : (
                         // Fallback when no properties found
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
                             {[
                                 {
                                     id: 1,
@@ -380,26 +380,26 @@ const Home = () => {
                                     image: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
                                 }
                             ].map((property) => (
-                                <div key={property.id} className="bg-white rounded-xl overflow-hidden shadow-subtle hover:shadow-elevated transition-shadow duration-300">
+                                <div key={property.id} className="overflow-hidden transition-shadow duration-300 bg-white rounded-xl shadow-subtle hover:shadow-elevated">
                                     <div className="relative h-64 overflow-hidden">
                                         <img
                                             src={property.image}
                                             alt={property.title}
-                                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                                            className="object-cover w-full h-full transition-transform duration-700 hover:scale-110"
                                         />
-                                        <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg font-bold text-emerald-700">
+                                        <div className="absolute px-4 py-2 font-bold rounded-lg bottom-4 right-4 bg-white/90 backdrop-blur-sm text-emerald-700">
                                             Ksh.{property.price.toLocaleString()}
                                         </div>
                                     </div>
 
                                     <div className="p-6">
-                                        <h3 className="text-xl font-bold text-gray-800 mb-2">{property.title}</h3>
-                                        <p className="text-gray-600 mb-4 flex items-center">
+                                        <h3 className="mb-2 text-xl font-bold text-gray-800">{property.title}</h3>
+                                        <p className="flex items-center mb-4 text-gray-600">
                                             <FiMapPin className="mr-2 text-gray-400" />
                                             {property.address}
                                         </p>
 
-                                        <div className="flex justify-between text-gray-700 mb-5">
+                                        <div className="flex justify-between mb-5 text-gray-700">
                                             <span>{property.beds} Beds</span>
                                             <span>{property.baths} Baths</span>
                                             <span>{property.sqft.toLocaleString()} sqft</span>
@@ -407,7 +407,7 @@ const Home = () => {
 
                                         <Link
                                             to={`/properties/${property.id}`}
-                                            className="block text-center w-full py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition duration-300 font-medium"
+                                            className="block w-full py-3 font-medium text-center text-white transition duration-300 rounded-lg bg-emerald-600 hover:bg-emerald-700"
                                         >
                                             View Details
                                         </Link>
@@ -421,38 +421,38 @@ const Home = () => {
 
             {/* How It Works */}
             <section className="py-16 bg-gray-50">
-                <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-3xl font-serif font-bold text-gray-900 mb-4 text-center">How EstatesHub Works</h2>
-                    <p className="text-xl text-gray-600 mb-12 text-center max-w-3xl mx-auto">
+                <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    <h2 className="mb-4 font-serif text-3xl font-bold text-center text-gray-900">How Dwella Works</h2>
+                    <p className="max-w-3xl mx-auto mb-12 text-xl text-center text-gray-600">
                         We've simplified the process of finding or selling your home
                     </p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
                         <div className="text-center">
-                            <div className="inline-flex items-center justify-center w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full mb-6">
+                            <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-full bg-emerald-100 text-emerald-600">
                                 <FiSearch size={32} />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-800 mb-3">Search Properties</h3>
+                            <h3 className="mb-3 text-xl font-bold text-gray-800">Search Properties</h3>
                             <p className="text-gray-600">
                                 Browse thousands of listings using our advanced search filters to find your perfect home
                             </p>
                         </div>
 
                         <div className="text-center">
-                            <div className="inline-flex items-center justify-center w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full mb-6">
+                            <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-full bg-emerald-100 text-emerald-600">
                                 <FiHome size={32} />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-800 mb-3">Tour Homes</h3>
+                            <h3 className="mb-3 text-xl font-bold text-gray-800">Tour Homes</h3>
                             <p className="text-gray-600">
                                 Schedule viewings or take virtual tours of properties from the comfort of your current home
                             </p>
                         </div>
 
                         <div className="text-center">
-                            <div className="inline-flex items-center justify-center w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full mb-6">
+                            <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-full bg-emerald-100 text-emerald-600">
                                 <FiDollarSign size={32} />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-800 mb-3">Close the Deal</h3>
+                            <h3 className="mb-3 text-xl font-bold text-gray-800">Close the Deal</h3>
                             <p className="text-gray-600">
                                 Get expert support throughout the buying or selling process for a smooth transaction
                             </p>
@@ -463,24 +463,24 @@ const Home = () => {
 
             {/* Featured Neighborhoods */}
             <section className="py-16">
-                <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-3xl font-serif font-bold text-gray-900 mb-10 text-center">Explore Popular Neighborhoods</h2>
+                <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    <h2 className="mb-10 font-serif text-3xl font-bold text-center text-gray-900">Explore Popular Neighborhoods</h2>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                         {neighborhoods.map((neighborhood) => (
-                            <div key={neighborhood.id} className="group relative rounded-xl overflow-hidden shadow-subtle hover:shadow-elevated transition-all duration-300">
+                            <div key={neighborhood.id} className="relative overflow-hidden transition-all duration-300 group rounded-xl shadow-subtle hover:shadow-elevated">
                                 <img
                                     src={neighborhood.image}
                                     alt={neighborhood.name}
-                                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700"
+                                    className="object-cover w-full h-64 transition-transform duration-700 group-hover:scale-110"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
                                 <div className="absolute bottom-0 left-0 right-0 p-6">
-                                    <h3 className="text-xl font-bold text-white mb-1">{neighborhood.name}</h3>
-                                    <p className="text-white/80 mb-3">{neighborhood.properties} Properties</p>
+                                    <h3 className="mb-1 text-xl font-bold text-white">{neighborhood.name}</h3>
+                                    <p className="mb-3 text-white/80">{neighborhood.properties} Properties</p>
                                     <Link
                                         to={`/properties?location=${encodeURIComponent(neighborhood.name)}`}
-                                        className="inline-block py-2 px-4 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition duration-300"
+                                        className="inline-block px-4 py-2 text-white transition duration-300 rounded-lg bg-white/20 backdrop-blur-sm hover:bg-white/30"
                                     >
                                         Explore
                                     </Link>
@@ -493,27 +493,27 @@ const Home = () => {
 
             {/* Testimonials */}
             <section className="py-16 bg-gray-50">
-                <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-3xl font-serif font-bold text-gray-900 mb-12 text-center">What Our Users Say</h2>
+                <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    <h2 className="mb-12 font-serif text-3xl font-bold text-center text-gray-900">What Our Users Say</h2>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
                         {testimonials.map((testimonial) => (
-                            <div key={testimonial.id} className="bg-white p-6 rounded-xl shadow-subtle">
+                            <div key={testimonial.id} className="p-6 bg-white rounded-xl shadow-subtle">
                                 <div className="flex items-center mb-1">
                                     {[...Array(5)].map((_, i) => (
-                                        <FiStar key={i} className="text-yellow-400 fill-yellow-400 mr-1" />
+                                        <FiStar key={i} className="mr-1 text-yellow-400 fill-yellow-400" />
                                     ))}
                                 </div>
-                                <p className="text-gray-700 mb-6">"{testimonial.text}"</p>
+                                <p className="mb-6 text-gray-700">"{testimonial.text}"</p>
                                 <div className="flex items-center">
                                     <img
                                         src={testimonial.avatar}
                                         alt={testimonial.author}
-                                        className="w-12 h-12 rounded-full mr-4"
+                                        className="w-12 h-12 mr-4 rounded-full"
                                     />
                                     <div>
                                         <h4 className="font-bold text-gray-800">{testimonial.author}</h4>
-                                        <p className="text-gray-600 text-sm">{testimonial.role}</p>
+                                        <p className="text-sm text-gray-600">{testimonial.role}</p>
                                     </div>
                                 </div>
                             </div>
@@ -524,22 +524,22 @@ const Home = () => {
 
             {/* CTA Section */}
             <section className="py-20 bg-emerald-600">
-                <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="max-w-3xl mx-auto text-center">
-                        <h2 className="text-3xl font-serif font-bold text-white mb-6">Ready to Find Your Dream Home?</h2>
-                        <p className="text-emerald-100 text-xl mb-8">
-                            Join thousands of satisfied customers who found their perfect property with EstatesHub
+                        <h2 className="mb-6 font-serif text-3xl font-bold text-white">Ready to Find Your Dream Home?</h2>
+                        <p className="mb-8 text-xl text-emerald-100">
+                            Join thousands of satisfied customers who found their perfect property with Dwella
                         </p>
-                        <div className="flex flex-col sm:flex-row justify-center gap-4">
+                        <div className="flex flex-col justify-center gap-4 sm:flex-row">
                             <Link
                                 to="/properties"
-                                className="px-8 py-4 bg-white text-emerald-600 rounded-lg hover:bg-gray-100 transition duration-300 font-medium"
+                                className="px-8 py-4 font-medium transition duration-300 bg-white rounded-lg text-emerald-600 hover:bg-gray-100"
                             >
                                 Browse Properties
                             </Link>
                             <Link
-                                to="/vendor/list-property"
-                                className="px-8 py-4 bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 transition duration-300 font-medium"
+                                to="/vendor-application"
+                                className="px-8 py-4 font-medium text-white transition duration-300 rounded-lg bg-emerald-700 hover:bg-emerald-800"
                             >
                                 List Your Property
                             </Link>
@@ -550,26 +550,26 @@ const Home = () => {
 
             {/* Trust Badges */}
             <section className="py-12 border-t border-gray-200">
-                <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex flex-col md:flex-row justify-between items-center text-center md:text-left">
+                <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    <div className="flex flex-col items-center justify-between text-center md:flex-row md:text-left">
                         <div className="mb-6 md:mb-0">
-                            <h3 className="text-lg font-bold text-gray-800 mb-2">EstatesHub</h3>
+                            <h3 className="mb-2 text-lg font-bold text-gray-800">Dwella</h3>
                             <p className="text-gray-600">
                                 Making real estate simple, secure, and successful
                             </p>
                         </div>
 
-                        <div className="flex flex-wrap justify-center md:justify-end gap-8">
+                        <div className="flex flex-wrap justify-center gap-8 md:justify-end">
                             <div className="flex items-center">
-                                <FiShield className="text-emerald-600 mr-2" size={20} />
+                                <FiShield className="mr-2 text-emerald-600" size={20} />
                                 <span className="text-gray-700">Secure Transactions</span>
                             </div>
                             <div className="flex items-center">
-                                <FiUser className="text-emerald-600 mr-2" size={20} />
+                                <FiUser className="mr-2 text-emerald-600" size={20} />
                                 <span className="text-gray-700">Verified Agents</span>
                             </div>
                             <div className="flex items-center">
-                                <FiStar className="text-emerald-600 mr-2" size={20} />
+                                <FiStar className="mr-2 text-emerald-600" size={20} />
                                 <span className="text-gray-700">Top Rated Service</span>
                             </div>
                         </div>

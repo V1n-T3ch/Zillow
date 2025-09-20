@@ -43,6 +43,7 @@ const DashboardLayout = ({ children, role = 'user' }) => {
             { to: '/vendor/list-property', icon: <FiPlusCircle size={20} />, label: 'List Property' },
             { to: '/vendor/properties', icon: <FiList size={20} />, label: 'My Properties' },
             { to: '/vendor/bookings', icon: <FiCalendar size={20} />, label: 'Booking Requests' },
+            { to: '/vendor/analytics', icon: <FiBarChart2 size={20} />, label: 'Analytics' },
         ];
     } else if (role === 'admin') {
         navLinks = [
@@ -56,17 +57,17 @@ const DashboardLayout = ({ children, role = 'user' }) => {
         <div className="min-h-screen bg-gray-50">
             <Navbar />
 
-            <div className="pt-20 pb-10">
-                <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="pb-10 pt-25">
+                <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="flex flex-col lg:flex-row">
                         {/* Mobile Sidebar Toggle */}
-                        <div className="lg:hidden flex items-center justify-between mb-6">
+                        <div className="flex items-center justify-between mb-6 lg:hidden">
                             <h1 className="text-2xl font-bold text-gray-800">
                                 {role === 'user' ? 'User Dashboard' : role === 'vendor' ? 'Vendor Dashboard' : 'Admin Dashboard'}
                             </h1>
                             <button
                                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                                className="p-2 rounded-md bg-white shadow-sm text-gray-500 hover:text-emerald-600"
+                                className="p-2 text-gray-500 bg-white rounded-md shadow-sm hover:text-emerald-600"
                             >
                                 {sidebarOpen ? <FiX size={24} /> : <FiMenu size={24} />}
                             </button>
@@ -83,10 +84,10 @@ const DashboardLayout = ({ children, role = 'user' }) => {
                                     <img
                                         src={currentUser.photoURL}
                                         alt={currentUser.displayName || 'User'}
-                                        className="w-12 h-12 rounded-full object-cover mr-4"
+                                        className="object-cover w-12 h-12 mr-4 rounded-full"
                                     />
                                 ) : (
-                                    <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-semibold mr-4">
+                                    <div className="flex items-center justify-center w-12 h-12 mr-4 font-semibold rounded-full bg-emerald-100 text-emerald-700">
                                         {currentUser?.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'U'}
                                     </div>
                                 )}
@@ -115,7 +116,7 @@ const DashboardLayout = ({ children, role = 'user' }) => {
 
                                 <button
                                     onClick={handleLogout}
-                                    className="flex items-center w-full px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                                    className="flex items-center w-full px-4 py-3 text-gray-600 transition-colors rounded-lg hover:bg-gray-50 hover:text-gray-900"
                                 >
                                     <FiLogOut size={20} className="mr-3" />
                                     Logout
@@ -124,16 +125,16 @@ const DashboardLayout = ({ children, role = 'user' }) => {
                         </div>
 
                         {/* Main Content */}
-                        <div className="lg:w-3/4 lg:ml-8 mt-6 lg:mt-0">
+                        <div className="mt-6 lg:w-3/4 lg:ml-8 lg:mt-0">
                             {/* Page Heading - visible on desktop */}
-                            <div className="hidden lg:block mb-6">
+                            <div className="hidden mb-6 lg:block">
                                 <h1 className="text-2xl font-bold text-gray-800">
                                     {role === 'user' ? 'User Dashboard' : role === 'vendor' ? 'Vendor Dashboard' : 'Admin Dashboard'}
                                 </h1>
                             </div>
 
                             {/* Page Content */}
-                            <div className="bg-white shadow-md rounded-xl p-6">
+                            <div className="p-6 bg-white shadow-md rounded-xl">
                                 {children}
                             </div>
                         </div>

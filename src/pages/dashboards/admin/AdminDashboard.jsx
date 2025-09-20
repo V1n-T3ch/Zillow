@@ -11,6 +11,12 @@ import {
     getCountFromServer, Timestamp, serverTimestamp, doc, updateDoc
 } from 'firebase/firestore';
 import { db } from '../../../firebase';
+import { 
+    sendVendorApprovedNotification, 
+    sendVendorRejectedNotification,
+    sendPropertyApprovedNotification,
+    sendPropertyRejectedNotification
+} from '../../../services/notificationService';
 
 const AdminDashboard = () => {
     const { currentUser, userDetails } = useAuth();
@@ -28,6 +34,7 @@ const AdminDashboard = () => {
     });
     const [recentUsers, setRecentUsers] = useState([]);
     const [pendingProperties, setPendingProperties] = useState([]);
+    const [pendingVendorApplications, setPendingVendorApplications] = useState([]);
 
     useEffect(() => {
         // Check if user is admin
@@ -170,7 +177,7 @@ const AdminDashboard = () => {
 
                 // Fetch pending properties (limited to 3)
                 const pendingPropertiesQuery = query(
-                    propertiesCollection,
+                    collection(db, 'properties'),
                     where('status', '==', 'pending'),
                     orderBy('createdAt', 'desc'),
                     limit(3)
@@ -182,6 +189,26 @@ const AdminDashboard = () => {
                     submittedDate: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString()
                 }));
                 setPendingProperties(pendingPropertiesList);
+
+                // Fetch pending vendor applications
+                const pendingVendorsQuery = query(
+                    usersCollection,
+                    where('vendorApplication.status', '==', 'pending'),
+                    orderBy('vendorApplication.submittedAt', 'desc'),
+                    limit(3)
+                );
+                const pendingVendorsSnapshot = await getDocs(pendingVendorsQuery);
+                const pendingVendorsList = pendingVendorsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    name: doc.data().name || doc.data().displayName || 'Anonymous User',
+                    email: doc.data().email || 'No email provided',
+                    photoURL: doc.data().photoURL || null,
+                    submittedDate: doc.data().vendorApplication?.submittedAt?.toDate().toISOString() || new Date().toISOString(),
+                    specialization: doc.data().vendorApplication?.specialization || 'Not specified',
+                    experience: doc.data().vendorApplication?.yearsExperience || 'Not specified'
+                }));
+                setPendingVendorApplications(pendingVendorsList);
 
                 setIsLoading(false);
             } catch (error) {
@@ -203,8 +230,20 @@ const AdminDashboard = () => {
                 updatedAt: serverTimestamp()
             });
 
+            // Find the property in the local state
+            const property = pendingProperties.find(prop => prop.id === propertyId);
+            
             // Update local state
             setPendingProperties(pendingProperties.filter(prop => prop.id !== propertyId));
+
+            // Send notification to the property owner if found
+            if (property && property.vendorId) {
+                await sendPropertyApprovedNotification(
+                    property.vendorId, 
+                    propertyId, 
+                    property.title || 'Your property'
+                );
+            }
 
             // You could show a success toast/notification here
         } catch (error) {
@@ -222,12 +261,75 @@ const AdminDashboard = () => {
                 updatedAt: serverTimestamp()
             });
 
+            // Find the property in the local state
+            const property = pendingProperties.find(prop => prop.id === propertyId);
+            
             // Update local state
             setPendingProperties(pendingProperties.filter(prop => prop.id !== propertyId));
+
+            // Send notification to the property owner if found
+            if (property && property.vendorId) {
+                await sendPropertyRejectedNotification(
+                    property.vendorId, 
+                    propertyId, 
+                    property.title || 'Your property'
+                );
+            }
 
             // You could show a success toast/notification here
         } catch (error) {
             console.error("Error rejecting property:", error);
+            // You could show an error toast/notification here
+        }
+    };
+
+    const handleApproveVendor = async (userId) => {
+        try {
+            // Update the user's role and vendor application status
+            const userRef = doc(db, 'users', userId);
+            await updateDoc(userRef, {
+                role: 'vendor',
+                'vendorApplication.status': 'approved',
+                'vendorApplication.reviewedAt': serverTimestamp()
+            });
+
+            // Update local state
+            setPendingVendorApplications(pendingVendorApplications.filter(app => app.id !== userId));
+
+            // Send notification to the user
+            const applicant = pendingVendorApplications.find(app => app.id === userId);
+            if (applicant) {
+                await sendVendorApprovedNotification(userId, applicant.name);
+            }
+
+            // You could show a success toast/notification here
+        } catch (error) {
+            console.error("Error approving vendor application:", error);
+            // You could show an error toast/notification here
+        }
+    };
+
+    const handleRejectVendor = async (userId) => {
+        try {
+            // Update vendor application status to rejected
+            const userRef = doc(db, 'users', userId);
+            await updateDoc(userRef, {
+                'vendorApplication.status': 'rejected',
+                'vendorApplication.reviewedAt': serverTimestamp()
+            });
+
+            // Update local state
+            setPendingVendorApplications(pendingVendorApplications.filter(app => app.id !== userId));
+
+            // Send notification to the user
+            const applicant = pendingVendorApplications.find(app => app.id === userId);
+            if (applicant) {
+                await sendVendorRejectedNotification(userId);
+            }
+
+            // You could show a success toast/notification here
+        } catch (error) {
+            console.error("Error rejecting vendor application:", error);
             // You could show an error toast/notification here
         }
     };
@@ -240,14 +342,14 @@ const AdminDashboard = () => {
     if (isLoading) {
         return (
             <DashboardLayout role="admin">
-                <div className="animate-pulse space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-6 animate-pulse">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                         {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="bg-gray-200 h-24 rounded-lg"></div>
+                            <div key={i} className="h-24 bg-gray-200 rounded-lg"></div>
                         ))}
                     </div>
-                    <div className="bg-gray-200 h-64 rounded-lg"></div>
-                    <div className="bg-gray-200 h-64 rounded-lg"></div>
+                    <div className="h-64 bg-gray-200 rounded-lg"></div>
+                    <div className="h-64 bg-gray-200 rounded-lg"></div>
                 </div>
             </DashboardLayout>
         );
@@ -256,8 +358,8 @@ const AdminDashboard = () => {
     if (error) {
         return (
             <DashboardLayout role="admin">
-                <div className="bg-red-50 p-4 rounded-lg border border-red-200 text-red-700">
-                    <h3 className="text-lg font-medium mb-2">Error</h3>
+                <div className="p-4 text-red-700 border border-red-200 rounded-lg bg-red-50">
+                    <h3 className="mb-2 text-lg font-medium">Error</h3>
                     <p>{error}</p>
                 </div>
             </DashboardLayout>
@@ -267,13 +369,13 @@ const AdminDashboard = () => {
     return (
         <DashboardLayout role="admin">
             <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Admin Dashboard</h2>
+                <h2 className="mb-6 text-2xl font-bold text-gray-800">Admin Stats</h2>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white p-6 rounded-lg shadow-subtle">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <div className="p-6 bg-white rounded-lg shadow-subtle">
                         <div className="flex items-center justify-between mb-4">
-                            <div className="bg-blue-100 text-blue-600 p-3 rounded-lg">
+                            <div className="p-3 text-blue-600 bg-blue-100 rounded-lg">
                                 <FiUsers size={24} />
                             </div>
                             <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${stats.userGrowth >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -284,9 +386,9 @@ const AdminDashboard = () => {
                         <p className="text-gray-500">Total Users</p>
                     </div>
 
-                    <div className="bg-white p-6 rounded-lg shadow-subtle">
+                    <div className="p-6 bg-white rounded-lg shadow-subtle">
                         <div className="flex items-center justify-between mb-4">
-                            <div className="bg-emerald-100 text-emerald-600 p-3 rounded-lg">
+                            <div className="p-3 rounded-lg bg-emerald-100 text-emerald-600">
                                 <FiHome size={24} />
                             </div>
                             <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${stats.propertyGrowth >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -297,9 +399,9 @@ const AdminDashboard = () => {
                         <p className="text-gray-500">Total Properties</p>
                     </div>
 
-                    <div className="bg-white p-6 rounded-lg shadow-subtle">
+                    <div className="p-6 bg-white rounded-lg shadow-subtle">
                         <div className="flex items-center justify-between mb-4">
-                            <div className="bg-purple-100 text-purple-600 p-3 rounded-lg">
+                            <div className="p-3 text-purple-600 bg-purple-100 rounded-lg">
                                 <FiCalendar size={24} />
                             </div>
                             <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${stats.bookingGrowth >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -310,9 +412,9 @@ const AdminDashboard = () => {
                         <p className="text-gray-500">Total Bookings</p>
                     </div>
 
-                    <div className="bg-white p-6 rounded-lg shadow-subtle">
+                    <div className="p-6 bg-white rounded-lg shadow-subtle">
                         <div className="flex items-center justify-between mb-4">
-                            <div className="bg-amber-100 text-amber-600 p-3 rounded-lg">
+                            <div className="p-3 rounded-lg bg-amber-100 text-amber-600">
                                 <FiDollarSign size={24} />
                             </div>
                             <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${stats.revenueGrowth >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -324,12 +426,12 @@ const AdminDashboard = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     {/* Recent Users */}
-                    <div className="bg-white p-6 rounded-lg shadow-subtle">
-                        <div className="flex justify-between items-center mb-4">
+                    <div className="p-6 bg-white rounded-lg shadow-subtle">
+                        <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-bold text-gray-800">Recent Users</h3>
-                            <Link to="/admin/users" className="text-emerald-600 hover:text-emerald-700 text-sm flex items-center">
+                            <Link to="/admin/users" className="flex items-center text-sm text-emerald-600 hover:text-emerald-700">
                                 View All <FiChevronRight className="ml-1" size={16} />
                             </Link>
                         </div>
@@ -342,7 +444,7 @@ const AdminDashboard = () => {
                                             <img
                                                 src={user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
                                                 alt={user.name}
-                                                className="w-10 h-10 rounded-full mr-3 object-cover"
+                                                className="object-cover w-10 h-10 mr-3 rounded-full"
                                             />
                                             <div>
                                                 <p className="font-medium text-gray-800">{user.name}</p>
@@ -372,7 +474,7 @@ const AdminDashboard = () => {
                                     </div>
                                 ))
                             ) : (
-                                <div className="text-center py-4 text-gray-500">
+                                <div className="py-4 text-center text-gray-500">
                                     No users found
                                 </div>
                             )}
@@ -380,10 +482,10 @@ const AdminDashboard = () => {
                     </div>
 
                     {/* Pending Property Approvals */}
-                    <div className="bg-white p-6 rounded-lg shadow-subtle">
-                        <div className="flex justify-between items-center mb-4">
+                    <div className="p-6 bg-white rounded-lg shadow-subtle">
+                        <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-bold text-gray-800">Pending Property Approvals</h3>
-                            <Link to="/admin/properties" className="text-emerald-600 hover:text-emerald-700 text-sm flex items-center">
+                            <Link to="/admin/properties" className="flex items-center text-sm text-emerald-600 hover:text-emerald-700">
                                 View All <FiChevronRight className="ml-1" size={16} />
                             </Link>
                         </div>
@@ -395,17 +497,17 @@ const AdminDashboard = () => {
                                         <img
                                             src={property.images?.[0] || 'https://placehold.co/800x500?text=No+Image'}
                                             alt={property.title}
-                                            className="w-16 h-12 rounded object-cover mr-3"
+                                            className="object-cover w-16 h-12 mr-3 rounded"
                                         />
                                         <div className="flex-1">
                                             <p className="font-medium text-gray-800">{property.title}</p>
-                                            <div className="flex items-center text-xs text-gray-500 mb-1">
+                                            <div className="flex items-center mb-1 text-xs text-gray-500">
                                                 <span>By {property.vendorName || 'Unknown Vendor'}</span>
                                                 <span className="mx-2">•</span>
                                                 <span>{formatDate(property.submittedDate)}</span>
                                             </div>
                                             <div className="flex items-center">
-                                                <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800 mr-2">
+                                                <span className="px-2 py-1 mr-2 text-xs text-gray-800 bg-gray-100 rounded-full">
                                                     {property.type || 'Property'}
                                                 </span>
                                                 <span className="px-2 py-1 text-xs rounded-full bg-emerald-100 text-emerald-800">
@@ -432,7 +534,7 @@ const AdminDashboard = () => {
                                     </div>
                                 ))
                             ) : (
-                                <div className="text-center py-4 text-gray-500">
+                                <div className="py-4 text-center text-gray-500">
                                     No pending properties
                                 </div>
                             )}
@@ -440,24 +542,95 @@ const AdminDashboard = () => {
                     </div>
                 </div>
 
+                {/* Pending Vendor Applications */}
+                <div className="p-6 bg-white rounded-lg shadow-subtle">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-gray-800">Pending Vendor Applications</h3>
+                        <Link to="/admin/users" className="flex items-center text-sm text-emerald-600 hover:text-emerald-700">
+                            View All <FiChevronRight className="ml-1" size={16} />
+                        </Link>
+                    </div>
+
+                    <div className="space-y-4">
+                        {pendingVendorApplications.length > 0 ? (
+                            pendingVendorApplications.map(application => (
+                                <div key={application.id} className="flex items-start p-4 rounded-lg bg-gray-50">
+                                    <img
+                                        src={application.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(application.name)}&background=random`}
+                                        alt={application.name}
+                                        className="object-cover w-12 h-12 mr-4 rounded-full"
+                                    />
+                                    <div className="flex-1">
+                                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
+                                            <div>
+                                                <p className="font-medium text-gray-800">{application.name}</p>
+                                                <p className="text-sm text-gray-600">{application.email}</p>
+                                                <div className="flex flex-wrap items-center mt-1 text-xs text-gray-500">
+                                                    <span className="mr-2">Applied: {formatDate(application.submittedDate)}</span>
+                                                    <span className="px-2 py-1 mr-2 text-blue-800 bg-blue-100 rounded-full">
+                                                        {application.specialization}
+                                                    </span>
+                                                    <span className="px-2 py-1 text-purple-800 bg-purple-100 rounded-full">
+                                                        {application.experience} Experience
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex mt-2 space-x-2 sm:mt-0">
+                                                <button
+                                                    className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 flex items-center"
+                                                    title="Approve Vendor"
+                                                    onClick={() => handleApproveVendor(application.id)}
+                                                >
+                                                    <FiCheckCircle size={16} className="mr-1" />
+                                                    <span className="hidden sm:inline">Approve</span>
+                                                </button>
+                                                <button
+                                                    className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 flex items-center"
+                                                    title="Reject Vendor"
+                                                    onClick={() => handleRejectVendor(application.id)}
+                                                >
+                                                    <FiAlertCircle size={16} className="mr-1" />
+                                                    <span className="hidden sm:inline">Reject</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="mt-2 text-sm">
+                                            <div className="p-3 bg-white border border-gray-200 rounded">
+                                                <p className="mb-1 font-medium text-gray-700">Why they want to become a vendor:</p>
+                                                <p className="text-gray-600">{application.vendorApplication?.reason || "No reason provided"}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="py-8 text-center text-gray-500">
+                                <FiUsers className="mx-auto mb-2 text-gray-300" size={32} />
+                                <p>No pending vendor applications</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 {/* Chart Section */}
-                <div className="bg-white p-6 rounded-lg shadow-subtle">
-                    <div className="flex justify-between items-center mb-4">
+                <div className="p-6 bg-white rounded-lg shadow-subtle">
+                    <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-bold text-gray-800">Platform Activity</h3>
                         <div className="flex space-x-2">
-                            <button className="px-3 py-1 text-sm bg-emerald-600 text-white rounded">Monthly</button>
-                            <button className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded">Weekly</button>
-                            <button className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded">Daily</button>
+                            <button className="px-3 py-1 text-sm text-white rounded bg-emerald-600">Monthly</button>
+                            <button className="px-3 py-1 text-sm text-gray-700 bg-gray-100 rounded">Weekly</button>
+                            <button className="px-3 py-1 text-sm text-gray-700 bg-gray-100 rounded">Daily</button>
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg border border-gray-100">
+                    <div className="flex items-center justify-center h-64 border border-gray-100 rounded-lg bg-gray-50">
                         <div className="text-center">
                             <FiBarChart2 size={48} className="mx-auto mb-4 text-gray-300" />
                             <p className="text-gray-500">Analytics charts would appear here</p>
                             <p className="text-sm text-gray-400">Showing user growth, property listings, and bookings</p>
                         </div>
-                    </div>
+                    </div> 
                 </div>
             </div>
         </DashboardLayout>

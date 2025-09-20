@@ -69,20 +69,20 @@ const Register = () => {
             <Navbar />
 
             <div className="pt-24 pb-16">
-                <div className="w-full max-w-md mx-auto px-4">
-                    <div className="bg-white shadow-subtle rounded-2xl p-8">
+                <div className="w-full max-w-md px-4 mx-auto">
+                    <div className="p-8 bg-white shadow-subtle rounded-2xl">
                         <Link
                             to="/"
-                            className="inline-flex items-center text-gray-600 hover:text-emerald-600 mb-6"
+                            className="inline-flex items-center mb-6 text-gray-600 hover:text-emerald-600"
                         >
                             <FiArrowLeft className="mr-2" /> Back to home
                         </Link>
 
-                        <h1 className="text-3xl font-serif font-bold text-gray-900 mb-2">Create account</h1>
-                        <p className="text-gray-600 mb-6">Join EstatesHub to find your dream property</p>
+                        <h1 className="mb-2 font-serif text-3xl font-bold text-gray-900">Create account</h1>
+                        <p className="mb-6 text-gray-600">Join Dwella to find your dream property</p>
 
                         {error && (
-                            <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-6 flex items-start">
+                            <div className="flex items-start p-3 mb-6 text-red-700 rounded-lg bg-red-50">
                                 <FiAlertCircle className="mr-2 mt-0.5 flex-shrink-0" />
                                 <span>{error}</span>
                             </div>
@@ -90,11 +90,11 @@ const Register = () => {
 
                         <form onSubmit={handleEmailSignup} className="space-y-5">
                             <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="name" className="block mb-1 text-sm font-medium text-gray-700">
                                     Full Name
                                 </label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                         <FiUser className="text-gray-400" />
                                     </div>
                                     <input
@@ -103,18 +103,18 @@ const Register = () => {
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         required
-                                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="block w-full py-3 pl-10 pr-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                         placeholder="John Doe"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="email" className="block mb-1 text-sm font-medium text-gray-700">
                                     Email Address
                                 </label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                         <FiMail className="text-gray-400" />
                                     </div>
                                     <input
@@ -123,18 +123,18 @@ const Register = () => {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
-                                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="block w-full py-3 pl-10 pr-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                         placeholder="you@example.com"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="password" className="block mb-1 text-sm font-medium text-gray-700">
                                     Password
                                 </label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                         <FiLock className="text-gray-400" />
                                     </div>
                                     <input
@@ -143,18 +143,18 @@ const Register = () => {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
-                                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="block w-full py-3 pl-10 pr-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                         placeholder="••••••••"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="confirmPassword" className="block mb-1 text-sm font-medium text-gray-700">
                                     Confirm Password
                                 </label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                         <FiLock className="text-gray-400" />
                                     </div>
                                     <input
@@ -163,7 +163,7 @@ const Register = () => {
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         required
-                                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="block w-full py-3 pl-10 pr-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                         placeholder="••••••••"
                                     />
                                 </div>
@@ -172,10 +172,10 @@ const Register = () => {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors flex items-center justify-center"
+                                className="flex items-center justify-center w-full py-3 text-white transition-colors rounded-lg bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                             >
                                 {loading ? (
-                                    <><FiLoader className="animate-spin mr-2" /> Creating account...</>
+                                    <><FiLoader className="mr-2 animate-spin" /> Creating account...</>
                                 ) : (
                                     'Create Account'
                                 )}
@@ -183,21 +183,21 @@ const Register = () => {
                         </form>
 
                         <div className="relative flex items-center justify-center my-6">
-                            <div className="border-t border-gray-200 absolute w-full"></div>
-                            <div className="bg-white px-4 relative z-10 text-sm text-gray-500">or continue with</div>
+                            <div className="absolute w-full border-t border-gray-200"></div>
+                            <div className="relative z-10 px-4 text-sm text-gray-500 bg-white">or continue with</div>
                         </div>
 
                         <button
                             onClick={handleGoogleSignup}
                             disabled={loading}
-                            className="w-full py-3 border border-gray-300 bg-white text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors flex items-center justify-center"
+                            className="flex items-center justify-center w-full py-3 text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
                         >
                             <FcGoogle size={20} className="mr-2" /> Sign up with Google
                         </button>
 
-                        <p className="text-center mt-8 text-gray-600">
+                        <p className="mt-8 text-center text-gray-600">
                             Already have an account?{' '}
-                            <Link to="/login" className="text-emerald-600 hover:text-emerald-700 font-medium">
+                            <Link to="/login" className="font-medium text-emerald-600 hover:text-emerald-700">
                                 Sign in
                             </Link>
                         </p>

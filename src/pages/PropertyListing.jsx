@@ -131,28 +131,29 @@ const PropertyListing = () => {
                     }
                 }
 
-                // Filter by location (case-insensitive partial match)
+                // Filter by location (case-insensitive partial match for both city and area)
                 if (location !== 'Any' && location !== '') {
-                    const searchTerm = location.toLowerCase();
-                    filtered = filtered.filter(property => 
-                        (property.city && property.city.toLowerCase().includes(searchTerm)) || 
-                        (property.state && property.state.toLowerCase().includes(searchTerm)) ||
-                        (property.address && property.address.toLowerCase().includes(searchTerm)) ||
-                        (property.zip && property.zip.toLowerCase().includes(searchTerm))
-                    );
+                    const searchTerm = location.toLowerCase().trim();
+                    
+                    filtered = filtered.filter(property => {
+                        // Check if city matches (case-insensitive)
+                        const cityMatch = property.city && 
+                            property.city.toLowerCase().includes(searchTerm);
+                        
+                        // Check if area matches (case-insensitive)
+                        const areaMatch = property.area && 
+                            property.area.toLowerCase().includes(searchTerm);
+                        
+                        // Return true if either city or area matches
+                        return cityMatch || areaMatch;
+                    });
                 }
 
                 // Filter by status (map UI status to data status)
                 if (propertyStatus !== 'Any') {
-                    if (propertyStatus === 'For Sale') {
-                        // Active properties are already filtered at the query level
-                    } else if (propertyStatus === 'For Rent') {
-                        // If you have rental properties in the future
-                        filtered = filtered.filter(property => 
-                            property.listingType === 'rental' || 
-                            property.listingType === 'For Rent'
-                        );
-                    }
+                    filtered = filtered.filter(property => 
+                        property.listingStatus === propertyStatus
+                    );
                 }
 
                 // Calculate total for pagination
@@ -441,16 +442,29 @@ const PropertyListing = () => {
                             </div>
                         </div>
 
-                        {/* Location - Changed from dropdown to input field */}
+                        {/* Location - Search for city or area */}
                         <div className="mb-6">
                             <h3 className="mb-3 font-semibold">Location</h3>
-                            <input
-                                type="text"
-                                className="w-full p-2 border rounded"
-                                placeholder="Enter city, area, or address"
-                                value={location === 'Any' ? '' : location}
-                                onChange={(e) => setLocation(e.target.value ? e.target.value : 'Any')}
-                            />
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    className="w-full p-2 pr-8 border rounded"
+                                    placeholder="Search by city or area"
+                                    value={location === 'Any' ? '' : location}
+                                    onChange={(e) => setLocation(e.target.value ? e.target.value.trim() : 'Any')}
+                                />
+                                {location !== 'Any' && (
+                                    <button 
+                                        className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-500"
+                                        onClick={() => setLocation('Any')}
+                                    >
+                                        <span className="text-xl">&times;</span>
+                                    </button>
+                                )}
+                            </div>
+                            <p className="mt-1 text-xs text-gray-500">
+                                Searches both city and area fields
+                            </p>
                         </div>
 
                         <button
@@ -545,15 +559,15 @@ const PropertyListing = () => {
                                                     property={{
                                                         ...property,
                                                         isFavorite: Boolean(favorites[property.id]),
-                                                        // These fields are directly on the property, not in a specs object
-                                                        bedrooms: property.beds || 0,
-                                                        bathrooms: property.baths || 0,
-                                                        sqft: property.sqft || 0,
-                                                        // Use a consistent status field
-                                                        status: property.listingType || 'For Sale',
-                                                        type: property.propertyType || 'Property',
+                                                        // Match the expected field names in PropertyCard
+                                                        beds: property.beds || 0,
+                                                        baths: property.baths || 0,
+                                                        // Use listingStatus directly
+                                                        listingStatus: property.listingStatus || 'For Sale',
+                                                        propertyType: property.propertyType || 'Property',
                                                         // Ensure price has a default value
                                                         price: property.price || 0,
+                                                        // Use the first image from images array
                                                         imageUrl: property.images?.[0] || 'https://placehold.co/800x500?text=No+Image'
                                                     }}
                                                     onFavoriteToggle={() => toggleFavorite(property.id)}

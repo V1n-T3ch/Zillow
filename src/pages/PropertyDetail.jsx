@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { 
   FiCamera, FiChevronLeft, FiChevronRight, FiPlus, 
   FiCheckCircle, FiHome, FiCalendar, FiMapPin, 
-  FiHeart, FiShare2, FiDollarSign, FiMaximize, 
+  FiHeart, FiShare2, FiDollarSign, 
   FiUsers, FiUser, FiPhone, FiMessageSquare
 } from 'react-icons/fi';
 import { db } from '../firebase';
@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'react-toastify';
+import { incrementPropertyViews } from '../services/analyticsService';
 
 // Stunning Image Gallery Component
 const PropertyGallery = ({ images = [] }) => {
@@ -81,16 +82,16 @@ const PropertyGallery = ({ images = [] }) => {
     
     return (
         <>
-            <div className="relative rounded-xl overflow-hidden shadow-2xl mb-8">
+            <div className="relative mb-8 overflow-hidden shadow-2xl rounded-xl">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 h-[70vh] max-h-[600px]">
                     <div 
-                        className="col-span-2 relative overflow-hidden cursor-pointer group"
+                        className="relative col-span-2 overflow-hidden cursor-pointer group"
                         onClick={() => setShowModal(true)}
                     >
-                        <motion.img 
+                        <Motion.img 
                             src={allImages[0]}
                             alt="Property main view"
-                            className="w-full h-full object-cover"
+                            className="object-cover w-full h-full"
                             initial={{ scale: 1 }}
                             whileHover={{ scale: 1.05 }}
                             transition={{ duration: 0.5 }}
@@ -99,7 +100,7 @@ const PropertyGallery = ({ images = [] }) => {
                                 e.target.src = 'https://placehold.co/1200x800?text=Image+Not+Available';
                             }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="absolute inset-0 transition-opacity duration-300 opacity-0 bg-gradient-to-t from-black/40 to-transparent group-hover:opacity-100">
                             <div className="absolute bottom-4 left-4">
                                 <div className="flex items-center gap-2 text-white">
                                     <FiCamera size={20} />
@@ -109,17 +110,17 @@ const PropertyGallery = ({ images = [] }) => {
                         </div>
                     </div>
                     
-                    <div className="hidden md:grid grid-rows-2 gap-2">
+                    <div className="hidden grid-rows-2 gap-2 md:grid">
                         {allImages.length > 1 ? (
                             <>
                                 <div 
                                     className="relative overflow-hidden cursor-pointer group"
                                     onClick={() => setShowModal(true)}
                                 >
-                                    <motion.img 
+                                    <Motion.img 
                                         src={allImages[1]}
                                         alt="Property view 2"
-                                        className="w-full h-full object-cover"
+                                        className="object-cover w-full h-full"
                                         initial={{ scale: 1 }}
                                         whileHover={{ scale: 1.05 }}
                                         transition={{ duration: 0.5 }}
@@ -128,7 +129,7 @@ const PropertyGallery = ({ images = [] }) => {
                                             e.target.src = 'https://placehold.co/1200x800?text=Image+Not+Available';
                                         }}
                                     />
-                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    <div className="absolute inset-0 transition-opacity opacity-0 bg-black/20 group-hover:opacity-100"></div>
                                 </div>
                                 <div 
                                     className="relative overflow-hidden cursor-pointer group"
@@ -136,10 +137,10 @@ const PropertyGallery = ({ images = [] }) => {
                                 >
                                     {allImages.length > 2 ? (
                                         <>
-                                            <motion.img 
+                                            <Motion.img 
                                                 src={allImages[2]}
                                                 alt="Property view 3"
-                                                className="w-full h-full object-cover"
+                                                className="object-cover w-full h-full"
                                                 initial={{ scale: 1 }}
                                                 whileHover={{ scale: 1.05 }}
                                                 transition={{ duration: 0.5 }}
@@ -149,8 +150,8 @@ const PropertyGallery = ({ images = [] }) => {
                                                 }}
                                             />
                                             {allImages.length > 3 && (
-                                                <div className="absolute inset-0 bg-black/50 group-hover:bg-black/70 transition-colors flex items-center justify-center">
-                                                    <div className="text-white text-center">
+                                                <div className="absolute inset-0 flex items-center justify-center transition-colors bg-black/50 group-hover:bg-black/70">
+                                                    <div className="text-center text-white">
                                                         <FiPlus size={28} className="mx-auto mb-1" />
                                                         <span className="font-medium">{allImages.length - 3} more</span>
                                                     </div>
@@ -158,14 +159,14 @@ const PropertyGallery = ({ images = [] }) => {
                                             )}
                                         </>
                                     ) : (
-                                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                                        <div className="flex items-center justify-center w-full h-full bg-gray-100">
                                             <FiCamera size={28} className="text-gray-400" />
                                         </div>
                                     )}
                                 </div>
                             </>
                         ) : (
-                            <div className="row-span-2 bg-gray-100 flex items-center justify-center">
+                            <div className="flex items-center justify-center row-span-2 bg-gray-100">
                                 <div className="text-center text-gray-400">
                                     <FiCamera size={36} className="mx-auto mb-2" />
                                     <p>No additional photos</p>
@@ -175,7 +176,7 @@ const PropertyGallery = ({ images = [] }) => {
                     </div>
                 </div>
                 
-                <div className="md:hidden absolute bottom-4 left-0 right-0">
+                <div className="absolute left-0 right-0 md:hidden bottom-4">
                     <div className="flex justify-center gap-1.5">
                         {allImages.map((_, index) => (
                             <button 
@@ -188,7 +189,7 @@ const PropertyGallery = ({ images = [] }) => {
                 </div>
                 
                 <button
-                    className="absolute right-4 bottom-4 bg-white/90 hover:bg-white text-gray-800 font-medium py-2 px-4 rounded-lg shadow-lg transition-all flex items-center"
+                    className="absolute flex items-center px-4 py-2 font-medium text-gray-800 transition-all rounded-lg shadow-lg right-4 bottom-4 bg-white/90 hover:bg-white"
                     onClick={() => setShowModal(true)}
                 >
                     <FiCamera className="mr-2" />
@@ -198,14 +199,14 @@ const PropertyGallery = ({ images = [] }) => {
             
             <AnimatePresence>
                 {showModal && (
-                    <motion.div 
-                        className="fixed inset-0 bg-black/95 z-50 flex flex-col justify-center items-center"
+                    <Motion.div 
+                        className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                     >
                         <button 
-                            className="absolute top-4 right-4 text-white bg-black/40 hover:bg-black/60 rounded-full p-2 transition-colors"
+                            className="absolute p-2 text-white transition-colors rounded-full top-4 right-4 bg-black/40 hover:bg-black/60"
                             onClick={() => setShowModal(false)}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -216,17 +217,17 @@ const PropertyGallery = ({ images = [] }) => {
                         
                         <div className="relative w-full max-w-5xl h-[70vh]">
                             <div 
-                                className="w-full h-full flex items-center justify-center"
+                                className="flex items-center justify-center w-full h-full"
                                 onTouchStart={handleTouchStart}
                                 onTouchMove={handleTouchMove}
                                 onTouchEnd={handleTouchEnd}
                             >
                                 <AnimatePresence mode="wait">
-                                    <motion.img
+                                    <Motion.img
                                         key={activeIndex}
                                         src={allImages[activeIndex]}
                                         alt={`Property view ${activeIndex + 1}`}
-                                        className="max-w-full max-h-full object-contain"
+                                        className="object-contain max-w-full max-h-full"
                                         initial={{ opacity: 0, x: 20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -20 }}
@@ -240,21 +241,21 @@ const PropertyGallery = ({ images = [] }) => {
                             </div>
                             
                             <button 
-                                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-3 transition-colors"
+                                className="absolute p-3 text-white transition-colors -translate-y-1/2 rounded-full left-4 top-1/2 bg-black/40 hover:bg-black/60"
                                 onClick={goToPrevious}
                             >
                                 <FiChevronLeft size={24} />
                             </button>
                             <button 
-                                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-3 transition-colors"
+                                className="absolute p-3 text-white transition-colors -translate-y-1/2 rounded-full right-4 top-1/2 bg-black/40 hover:bg-black/60"
                                 onClick={goToNext}
                             >
                                 <FiChevronRight size={24} />
                             </button>
                         </div>
                         
-                        <div className="mt-4 px-4 max-w-5xl w-full">
-                            <div className="flex overflow-x-auto gap-2 py-2 scrollbar-hide">
+                        <div className="w-full max-w-5xl px-4 mt-4">
+                            <div className="flex gap-2 py-2 overflow-x-auto scrollbar-hide">
                                 {allImages.map((img, index) => (
                                     <button
                                         key={index}
@@ -266,7 +267,7 @@ const PropertyGallery = ({ images = [] }) => {
                                         <img 
                                             src={img} 
                                             alt={`Thumbnail ${index + 1}`}
-                                            className="w-full h-full object-cover"
+                                            className="object-cover w-full h-full"
                                             onError={(e) => {
                                                 e.target.onerror = null;
                                                 e.target.src = 'https://placehold.co/1200x800?text=Image+Not+Available';
@@ -280,7 +281,7 @@ const PropertyGallery = ({ images = [] }) => {
                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white bg-black/60 rounded-full px-4 py-1.5">
                             {activeIndex + 1} / {allImages.length}
                         </div>
-                    </motion.div>
+                    </Motion.div>
                 )}
             </AnimatePresence>
         </>
@@ -327,14 +328,14 @@ const FeatureBadge = ({ icon: Icon, label, value, color = "emerald" }) => {
 
 // Animated Feature Amenity Component
 const FeatureAmenity = ({ children }) => (
-    <motion.div 
+    <Motion.div 
         className="px-4 py-2.5 bg-gradient-to-r from-emerald-50 to-emerald-100/50 text-emerald-800 rounded-lg flex items-center shadow-sm"
         whileHover={{ scale: 1.03, y: -2 }}
         transition={{ type: "spring", stiffness: 400, damping: 10 }}
     >
         <FiCheckCircle className="mr-2 text-emerald-500" size={16} />
         {children}
-    </motion.div>
+    </Motion.div>
 );
 
 // Main Property Detail Component
@@ -360,6 +361,7 @@ const PropertyDetail = () => {
     const [existingBookings, setExistingBookings] = useState([]);
     const [hasCheckedBookings, setHasCheckedBookings] = useState(false);
     const [activeTab, setActiveTab] = useState('description');
+    const [hasRecordedView, setHasRecordedView] = useState(false);
     
     useEffect(() => {
         const fetchPropertyData = async () => {
@@ -382,6 +384,17 @@ const PropertyDetail = () => {
                 };
                 
                 setProperty(propertyData);
+                
+                // Record the view after a short delay (to ensure it's an actual view, not just a page load)
+                if (!hasRecordedView) {
+                    const viewTimer = setTimeout(() => {
+                        incrementPropertyViews(id, propertyData.vendorId);
+                        setHasRecordedView(true);
+                    }, 5000); // 5 second delay
+                    
+                    // Clean up timer if component unmounts
+                    return () => clearTimeout(viewTimer);
+                }
                 
                 // Check if this property is in user's favorites
                 if (currentUser) {
@@ -418,6 +431,13 @@ const PropertyDetail = () => {
                 
                 setSimilarProperties(similarData);
                 
+                // Increment view counter after a short delay
+                // The delay prevents counting accidental/bounce views
+                const viewTimer = setTimeout(() => {
+                    incrementPropertyViews(id, propertyData.vendorId);
+                }, 5000); // 5 second delay
+                
+                return () => clearTimeout(viewTimer); // Clean up timer
             } catch (err) {
                 console.error('Error fetching property:', err);
                 setError('Failed to load property data');
@@ -625,13 +645,13 @@ const PropertyDetail = () => {
         return (
             <div className="min-h-screen bg-gray-50">
                 <div className="pt-20 pb-10">
-                    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="animate-pulse space-y-8">
-                            <div className="h-96 bg-gray-200 rounded-xl"></div>
-                            <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-                            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                        <div className="space-y-8 animate-pulse">
+                            <div className="bg-gray-200 h-96 rounded-xl"></div>
+                            <div className="w-3/4 h-8 bg-gray-200 rounded"></div>
+                            <div className="w-1/2 h-4 bg-gray-200 rounded"></div>
+                            <div className="w-2/3 h-4 bg-gray-200 rounded"></div>
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                                 <div className="h-32 bg-gray-200 rounded"></div>
                                 <div className="h-32 bg-gray-200 rounded"></div>
                                 <div className="h-32 bg-gray-200 rounded"></div>
@@ -648,17 +668,17 @@ const PropertyDetail = () => {
         return (
             <div className="min-h-screen bg-gray-50">
                 <div className="pt-20 pb-10">
-                    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="bg-white p-8 rounded-xl shadow-subtle text-center">
-                            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                    <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                        <div className="p-8 text-center bg-white rounded-xl shadow-subtle">
+                            <h2 className="mb-4 text-2xl font-bold text-gray-800">
                                 {error || 'Property Not Found'}
                             </h2>
-                            <p className="text-gray-600 mb-6">
+                            <p className="mb-6 text-gray-600">
                                 The property you're looking for doesn't exist or has been removed.
                             </p>
                             <button
                                 onClick={() => navigate('/properties')}
-                                className="inline-block px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+                                className="inline-block px-6 py-3 text-white rounded-lg bg-emerald-600 hover:bg-emerald-700"
                             >
                                 Browse Properties
                             </button>
@@ -671,59 +691,43 @@ const PropertyDetail = () => {
 
     // Status display
     const getStatusDisplay = () => {
-        switch (property.status) {
-            case 'active':
-            case 'forSale':
-                return 'For Sale';
-            case 'pending':
-                return 'Pending Sale';
-            case 'sold':
-                return 'Sold';
-            case 'forRent':
-                return 'For Rent';
-            default:
-                return property.status || 'For Sale';
+        if (property.listingStatus === 'For Rent') {
+            return 'For Rent';
+        } else {
+            return 'For Sale';
         }
     };
     
     // Status color classes
     const getStatusColors = () => {
-        switch (property.status) {
-            case 'active':
-            case 'forSale':
-                return 'bg-amber-100 text-amber-800';
-            case 'pending':
-                return 'bg-blue-100 text-blue-800';
-            case 'sold':
-                return 'bg-red-100 text-red-800';
-            case 'forRent':
-                return 'bg-violet-100 text-violet-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
+        if (property.listingStatus === 'For Rent') {
+            return 'bg-violet-100 text-violet-800';
+        } else {
+            return 'bg-amber-100 text-amber-800';
         }
     };
 
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="pt-20 pb-10">
-                <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                     {/* Image Gallery */}
                     <PropertyGallery images={property.images || []} />
 
-                    <div className="flex flex-col lg:flex-row gap-8">
+                    <div className="flex flex-col gap-8 lg:flex-row">
                         {/* Main Content */}
                         <div className="lg:w-2/3">
                             {/* Property Header */}
-                            <div className="bg-white p-6 rounded-xl shadow-subtle mb-6">
-                                <div className="flex justify-between items-start mb-4">
+                            <div className="p-6 mb-6 bg-white rounded-xl shadow-subtle">
+                                <div className="flex items-start justify-between mb-4">
                                     <div>
                                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColors()} mb-2`}>
                                             {getStatusDisplay()}
                                         </span>
-                                        <h1 className="text-3xl font-serif font-bold text-gray-800 mb-2">{property.title}</h1>
+                                        <h1 className="mb-2 font-serif text-3xl font-bold text-gray-800">{property.title}</h1>
                                         <div className="flex items-center text-gray-600">
                                             <FiMapPin className="mr-2 text-gray-400" />
-                                            {property.address}, {property.city}, {property.state}
+                                            {property.city}{property.area ? `, ${property.area}` : ''}
                                         </div>
                                     </div>
 
@@ -731,40 +735,35 @@ const PropertyDetail = () => {
                                         <h2 className="text-3xl font-bold text-emerald-600">
                                             ${property.price?.toLocaleString() || '0'}
                                         </h2>
-                                        <div className="text-sm text-gray-500 mt-1">
+                                        <div className="mt-1 text-sm text-gray-500">
                                             Listed on {new Date(property.createdAt?.toDate() || Date.now()).toLocaleDateString()}
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex flex-wrap gap-8 border-t border-gray-100 pt-4">
+                                <div className="flex flex-wrap gap-8 pt-4 border-t border-gray-100">
                                     <div className="text-center">
-                                        <div className="text-gray-500 text-sm">Beds</div>
-                                        <div className="font-bold text-gray-800 text-xl">{property.beds || 0}</div>
+                                        <div className="text-sm text-gray-500">Beds</div>
+                                        <div className="text-xl font-bold text-gray-800">{property.beds || 0}</div>
                                     </div>
 
                                     <div className="text-center">
-                                        <div className="text-gray-500 text-sm">Baths</div>
-                                        <div className="font-bold text-gray-800 text-xl">{property.baths || 0}</div>
+                                        <div className="text-sm text-gray-500">Baths</div>
+                                        <div className="text-xl font-bold text-gray-800">{property.baths || 0}</div>
                                     </div>
 
                                     <div className="text-center">
-                                        <div className="text-gray-500 text-sm">Sq Ft</div>
-                                        <div className="font-bold text-gray-800 text-xl">{property.sqft?.toLocaleString() || 0}</div>
+                                        <div className="text-sm text-gray-500">Stories</div>
+                                        <div className="text-xl font-bold text-gray-800">{property.stories || 'N/A'}</div>
                                     </div>
 
                                     <div className="text-center">
-                                        <div className="text-gray-500 text-sm">Lot Size</div>
-                                        <div className="font-bold text-gray-800 text-xl">{property.lotSize || 'N/A'}</div>
-                                    </div>
-
-                                    <div className="text-center">
-                                        <div className="text-gray-500 text-sm">Year Built</div>
-                                        <div className="font-bold text-gray-800 text-xl">{property.yearBuilt || 'N/A'}</div>
+                                        <div className="text-sm text-gray-500">Year Built</div>
+                                        <div className="text-xl font-bold text-gray-800">{property.yearBuilt || 'N/A'}</div>
                                     </div>
                                 </div>
 
-                                <div className="flex mt-6 gap-3">
+                                <div className="flex gap-3 mt-6">
                                     <button
                                         onClick={toggleFavorite}
                                         className={`flex items-center px-4 py-2 rounded-lg transition-colors ${isFavorite
@@ -777,7 +776,7 @@ const PropertyDetail = () => {
                                     </button>
 
                                     <button 
-                                        className="flex items-center px-4 py-2 bg-gray-50 text-gray-700 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
+                                        className="flex items-center px-4 py-2 text-gray-700 transition-colors border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100"
                                         onClick={handleShare}
                                     >
                                         <FiShare2 className="mr-2" />
@@ -787,7 +786,7 @@ const PropertyDetail = () => {
                             </div>
 
                             {/* Tab Navigation */}
-                            <div className="bg-white rounded-xl shadow-subtle mb-6 overflow-hidden">
+                            <div className="mb-6 overflow-hidden bg-white rounded-xl shadow-subtle">
                                 <div className="flex border-b border-gray-100">
                                     <button
                                         className={`px-6 py-3 text-sm font-medium ${activeTab === 'description' 
@@ -825,74 +824,69 @@ const PropertyDetail = () => {
 
                                     {/* Details Tab */}
                                     {activeTab === 'details' && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                             <div>
-                                                <h3 className="font-medium text-gray-700 mb-3">Basic Information</h3>
+                                                <h3 className="mb-3 font-medium text-gray-700">Basic Information</h3>
                                                 <ul className="space-y-3">
                                                     <li className="flex items-start">
-                                                        <FiHome className="text-emerald-500 mt-1 mr-2" />
+                                                        <FiHome className="mt-1 mr-2 text-emerald-500" />
                                                         <div>
-                                                            <span className="block text-gray-500 text-sm">Property Type</span>
+                                                            <span className="block text-sm text-gray-500">Property Type</span>
                                                             <span className="text-gray-800">{property.propertyType || 'N/A'}</span>
                                                         </div>
                                                     </li>
                                                     <li className="flex items-start">
-                                                        <FiMaximize className="text-emerald-500 mt-1 mr-2" />
+                                                        <FiUsers className="mt-1 mr-2 text-emerald-500" />
                                                         <div>
-                                                            <span className="block text-gray-500 text-sm">Lot Size</span>
-                                                            <span className="text-gray-800">{property.lotSize || 'N/A'}</span>
-                                                        </div>
-                                                    </li>
-                                                    <li className="flex items-start">
-                                                        <FiUsers className="text-emerald-500 mt-1 mr-2" />
-                                                        <div>
-                                                            <span className="block text-gray-500 text-sm">Year Built</span>
+                                                            <span className="block text-sm text-gray-500">Year Built</span>
                                                             <span className="text-gray-800">{property.yearBuilt || 'N/A'}</span>
                                                         </div>
                                                     </li>
                                                     <li className="flex items-start">
-                                                        <FiDollarSign className="text-emerald-500 mt-1 mr-2" />
+                                                        <FiDollarSign className="mt-1 mr-2 text-emerald-500" />
                                                         <div>
-                                                            <span className="block text-gray-500 text-sm">Price per Sq Ft</span>
-                                                            <span className="text-gray-800">
-                                                                {property.price && property.sqft 
-                                                                    ? `$${Math.round(property.price / property.sqft).toLocaleString()}`
-                                                                    : 'N/A'
-                                                                }
-                                                            </span>
+                                                            <span className="block text-sm text-gray-500">Listing Status</span>
+                                                            <span className="text-gray-800">{property.listingStatus || 'For Sale'}</span>
+                                                        </div>
+                                                    </li>
+                                                    <li className="flex items-start">
+                                                        <FiMapPin className="mt-1 mr-2 text-emerald-500" />
+                                                        <div>
+                                                            <span className="block text-sm text-gray-500">Location</span>
+                                                            <span className="text-gray-800">{property.city}{property.area ? `, ${property.area}` : ''}</span>
                                                         </div>
                                                     </li>
                                                 </ul>
                                             </div>
 
                                             <div>
-                                                <h3 className="font-medium text-gray-700 mb-3">Interior Features</h3>
+                                                <h3 className="mb-3 font-medium text-gray-700">Interior Features</h3>
                                                 <ul className="space-y-3">
                                                     <li className="flex items-start">
-                                                        <FiHome className="text-emerald-500 mt-1 mr-2" />
+                                                        <FiHome className="mt-1 mr-2 text-emerald-500" />
                                                         <div>
-                                                            <span className="block text-gray-500 text-sm">Bedrooms</span>
+                                                            <span className="block text-sm text-gray-500">Bedrooms</span>
                                                             <span className="text-gray-800">{property.beds || 'N/A'}</span>
                                                         </div>
                                                     </li>
                                                     <li className="flex items-start">
-                                                        <FiHome className="text-emerald-500 mt-1 mr-2" />
+                                                        <FiHome className="mt-1 mr-2 text-emerald-500" />
                                                         <div>
-                                                            <span className="block text-gray-500 text-sm">Bathrooms</span>
+                                                            <span className="block text-sm text-gray-500">Bathrooms</span>
                                                             <span className="text-gray-800">{property.baths || 'N/A'}</span>
                                                         </div>
                                                     </li>
                                                     <li className="flex items-start">
-                                                        <FiHome className="text-emerald-500 mt-1 mr-2" />
+                                                        <FiHome className="mt-1 mr-2 text-emerald-500" />
                                                         <div>
-                                                            <span className="block text-gray-500 text-sm">Stories</span>
+                                                            <span className="block text-sm text-gray-500">Stories</span>
                                                             <span className="text-gray-800">{property.stories || 'N/A'}</span>
                                                         </div>
                                                     </li>
                                                     <li className="flex items-start">
-                                                        <FiHome className="text-emerald-500 mt-1 mr-2" />
+                                                        <FiHome className="mt-1 mr-2 text-emerald-500" />
                                                         <div>
-                                                            <span className="block text-gray-500 text-sm">Garage</span>
+                                                            <span className="block text-sm text-gray-500">Garage</span>
                                                             <span className="text-gray-800">{property.garage || 'N/A'}</span>
                                                         </div>
                                                     </li>
@@ -907,12 +901,12 @@ const PropertyDetail = () => {
                                             {property.features && property.features.length > 0 ? (
                                                 property.features.map((feature, index) => (
                                                     <div key={index} className="flex items-center">
-                                                        <FiCheckCircle className="text-emerald-500 mr-2" />
+                                                        <FiCheckCircle className="mr-2 text-emerald-500" />
                                                         <span className="text-gray-700">{feature}</span>
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="col-span-3 text-gray-500 text-center py-8">
+                                                <div className="col-span-3 py-8 text-center text-gray-500">
                                                     No features specified for this property.
                                                 </div>
                                             )}
@@ -922,7 +916,7 @@ const PropertyDetail = () => {
                             </div>
 
                             {/* Property Stats and Highlights */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            <div className="grid grid-cols-2 gap-4 mb-6 md:grid-cols-4">
                                 <FeatureBadge
                                     icon={FiHome}
                                     label="Property Type"
@@ -942,9 +936,9 @@ const PropertyDetail = () => {
                                     color="amber"
                                 />
                                 <FeatureBadge
-                                    icon={FiMaximize}
-                                    label="Area"
-                                    value={property.sqft ? `${property.sqft.toLocaleString()} sqft` : 'N/A'}
+                                    icon={FiHome}
+                                    label="Garage"
+                                    value={property.garage || 'None'}
                                     color="purple"
                                 />
                             </div>
@@ -953,22 +947,22 @@ const PropertyDetail = () => {
                         {/* Sidebar */}
                         <div className="lg:w-1/3">
                             {/* Agent Contact */}
-                            <div className="bg-white p-6 rounded-xl shadow-subtle mb-6">
+                            <div className="p-6 mb-6 bg-white rounded-xl shadow-subtle">
                                 <div className="flex items-center mb-4">
-                                    <div className="w-16 h-16 rounded-full bg-gray-200 mr-4 flex items-center justify-center">
+                                    <div className="flex items-center justify-center w-16 h-16 mr-4 bg-gray-200 rounded-full">
                                         <FiUser className="text-gray-400" size={24} />
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-gray-800">{property.vendorName || 'Property Agent'}</h3>
-                                        <p className="text-gray-600 text-sm">Zillow Real Estate</p>
+                                        <p className="text-sm text-gray-600">Zillow Real Estate</p>
                                     </div>
                                 </div>
 
                                 {existingBookings.length > 0 ? (
                                     <div className="mb-6">
-                                        <h4 className="font-medium text-gray-800 mb-3">Your Bookings</h4>
+                                        <h4 className="mb-3 font-medium text-gray-800">Your Bookings</h4>
                                         {existingBookings.map((booking) => (
-                                            <div key={booking.id} className="bg-blue-50 p-4 rounded-lg mb-2">
+                                            <div key={booking.id} className="p-4 mb-2 rounded-lg bg-blue-50">
                                                 <div className="flex justify-between">
                                                     <div>
                                                         <p className="font-medium text-gray-800">
@@ -990,7 +984,7 @@ const PropertyDetail = () => {
                                                     {booking.status !== 'cancelled' && (
                                                         <button
                                                             onClick={() => handleCancelBooking(booking.id)}
-                                                            className="text-red-600 hover:text-red-800 text-sm"
+                                                            className="text-sm text-red-600 hover:text-red-800"
                                                         >
                                                             Cancel
                                                         </button>
@@ -1001,7 +995,7 @@ const PropertyDetail = () => {
                                     </div>
                                 ) : null}
 
-                                <div className="space-y-4 mb-6">
+                                <div className="mb-6 space-y-4">
                                     <a href="tel:123-456-7890" className="flex items-center text-gray-700 hover:text-emerald-600">
                                         <FiPhone className="mr-3 text-emerald-500" />
                                         Contact via phone
@@ -1014,7 +1008,7 @@ const PropertyDetail = () => {
 
                                 <button 
                                     onClick={() => setShowBookingForm(!showBookingForm)}
-                                    className="w-full py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center justify-center"
+                                    className="flex items-center justify-center w-full py-3 font-medium text-white transition-colors rounded-lg bg-emerald-600 hover:bg-emerald-700"
                                 >
                                     <FiCalendar className="mr-2" />
                                     Schedule a Viewing
@@ -1023,19 +1017,19 @@ const PropertyDetail = () => {
 
                             {/* Booking Form */}
                             {showBookingForm && (
-                                <div className="bg-white p-6 rounded-xl shadow-subtle mb-6">
-                                    <h3 className="font-bold text-gray-800 mb-4">Schedule a Viewing</h3>
+                                <div className="p-6 mb-6 bg-white rounded-xl shadow-subtle">
+                                    <h3 className="mb-4 font-bold text-gray-800">Schedule a Viewing</h3>
                                     
                                     {bookingSubmitted ? (
-                                        <div className="bg-emerald-50 text-emerald-700 p-4 rounded-lg text-center">
+                                        <div className="p-4 text-center rounded-lg bg-emerald-50 text-emerald-700">
                                             <FiCheckCircle className="mx-auto mb-2 text-2xl" />
                                             <p className="font-medium">Booking request sent!</p>
-                                            <p className="text-sm mt-1">We'll contact you to confirm your appointment.</p>
+                                            <p className="mt-1 text-sm">We'll contact you to confirm your appointment.</p>
                                         </div>
                                     ) : (
                                         <form onSubmit={handleBookingSubmit}>
                                             <div className="mb-4">
-                                                <label className="block text-gray-700 text-sm font-medium mb-2">
+                                                <label className="block mb-2 text-sm font-medium text-gray-700">
                                                     Select Date*
                                                 </label>
                                                 <input
@@ -1048,12 +1042,12 @@ const PropertyDetail = () => {
                                                     } focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
                                                 />
                                                 {bookingErrors.date && (
-                                                    <p className="text-red-500 text-xs mt-1">{bookingErrors.date}</p>
+                                                    <p className="mt-1 text-xs text-red-500">{bookingErrors.date}</p>
                                                 )}
                                             </div>
                                             
                                             <div className="mb-4">
-                                                <label className="block text-gray-700 text-sm font-medium mb-2">
+                                                <label className="block mb-2 text-sm font-medium text-gray-700">
                                                     Select Time*
                                                 </label>
                                                 <select
@@ -1071,12 +1065,12 @@ const PropertyDetail = () => {
                                                     ))}
                                                 </select>
                                                 {bookingErrors.time && (
-                                                    <p className="text-red-500 text-xs mt-1">{bookingErrors.time}</p>
+                                                    <p className="mt-1 text-xs text-red-500">{bookingErrors.time}</p>
                                                 )}
                                             </div>
                                             
                                             <div className="mb-4">
-                                                <label className="block text-gray-700 text-sm font-medium mb-2">
+                                                <label className="block mb-2 text-sm font-medium text-gray-700">
                                                     Your Phone Number*
                                                 </label>
                                                 <input
@@ -1089,12 +1083,12 @@ const PropertyDetail = () => {
                                                     placeholder="Your phone number"
                                                 />
                                                 {bookingErrors.phone && (
-                                                    <p className="text-red-500 text-xs mt-1">{bookingErrors.phone}</p>
+                                                    <p className="mt-1 text-xs text-red-500">{bookingErrors.phone}</p>
                                                 )}
                                             </div>
                                             
                                             <div className="mb-4">
-                                                <label className="block text-gray-700 text-sm font-medium mb-2">
+                                                <label className="block mb-2 text-sm font-medium text-gray-700">
                                                     Your Email*
                                                 </label>
                                                 <input
@@ -1107,12 +1101,12 @@ const PropertyDetail = () => {
                                                     placeholder="Your email address"
                                                 />
                                                 {bookingErrors.email && (
-                                                    <p className="text-red-500 text-xs mt-1">{bookingErrors.email}</p>
+                                                    <p className="mt-1 text-xs text-red-500">{bookingErrors.email}</p>
                                                 )}
                                             </div>
                                             
                                             <div className="mb-4">
-                                                <label className="block text-gray-700 text-sm font-medium mb-2">
+                                                <label className="block mb-2 text-sm font-medium text-gray-700">
                                                     Notes (optional)
                                                 </label>
                                                 <textarea
@@ -1126,12 +1120,12 @@ const PropertyDetail = () => {
                                             
                                             <button
                                                 type="submit"
-                                                className="w-full py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center justify-center"
+                                                className="flex items-center justify-center w-full py-3 font-medium text-white transition-colors rounded-lg bg-emerald-600 hover:bg-emerald-700"
                                                 disabled={bookingLoading}
                                             >
                                                 {bookingLoading ? (
                                                     <>
-                                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <svg className="w-4 h-4 mr-2 -ml-1 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                         </svg>
@@ -1150,33 +1144,33 @@ const PropertyDetail = () => {
 
                             {/* Similar Properties */}
                             {similarProperties.length > 0 && (
-                                <div className="bg-white p-6 rounded-xl shadow-subtle">
-                                    <h3 className="font-bold text-gray-800 mb-4">Similar Properties</h3>
+                                <div className="p-6 bg-white rounded-xl shadow-subtle">
+                                    <h3 className="mb-4 font-bold text-gray-800">Similar Properties</h3>
                                     <div className="space-y-4">
                                         {similarProperties.map((similar) => (
-                                            <div key={similar.id} className="flex border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                                                <div className="w-24 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                                            <div key={similar.id} className="flex pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                                                <div className="flex-shrink-0 w-24 h-20 overflow-hidden rounded-lg">
                                                     <img
                                                         src={similar.images?.[0] || 'https://placehold.co/800x600?text=No+Image'}
                                                         alt={similar.title}
-                                                        className="w-full h-full object-cover"
+                                                        className="object-cover w-full h-full"
                                                         onError={(e) => {
                                                             e.target.onerror = null;
                                                             e.target.src = 'https://placehold.co/800x600?text=No+Image';
                                                         }}
                                                     />
                                                 </div>
-                                                <div className="ml-3 flex-1">
-                                                    <h4 className="font-medium text-sm text-gray-800 line-clamp-1">{similar.title}</h4>
-                                                    <p className="text-emerald-600 font-semibold text-sm">${similar.price?.toLocaleString() || '0'}</p>
-                                                    <div className="flex text-xs text-gray-500 mt-1">
+                                                <div className="flex-1 ml-3">
+                                                    <h4 className="text-sm font-medium text-gray-800 line-clamp-1">{similar.title}</h4>
+                                                    <p className="text-sm font-semibold text-emerald-600">${similar.price?.toLocaleString() || '0'}</p>
+                                                    <div className="flex mt-1 text-xs text-gray-500">
                                                         <span className="mr-2">{similar.beds || 0} bd</span>
                                                         <span className="mr-2">{similar.baths || 0} ba</span>
-                                                        <span>{similar.sqft?.toLocaleString() || 0} sqft</span>
+                                                        <span>{similar.city}, {similar.area}</span>
                                                     </div>
                                                     <a
                                                         href={`/properties/${similar.id}`}
-                                                        className="text-xs text-emerald-600 hover:text-emerald-700 font-medium mt-1 inline-block"
+                                                        className="inline-block mt-1 text-xs font-medium text-emerald-600 hover:text-emerald-700"
                                                     >
                                                         View Details
                                                     </a>

@@ -11,6 +11,10 @@ import {
 import { db } from '../../../firebase';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { 
+    sendPropertyApprovedNotification, 
+    sendPropertyRejectedNotification 
+} from '../../../services/notificationService';
 
 const PropertyManagement = () => {
     const { userDetails } = useAuth();
@@ -49,7 +53,7 @@ const PropertyManagement = () => {
 
         // If type filter is applied, add it to query
         if (selectedType !== 'all') {
-            propertiesQuery = query(propertiesQuery, where('type', '==', selectedType));
+            propertiesQuery = query(propertiesQuery, where('propertyType', '==', selectedType));
         }
 
         // Set up real-time listener for properties
@@ -78,6 +82,12 @@ const PropertyManagement = () => {
 
     const handleStatusChange = async (propertyId, newStatus) => {
         try {
+            // Get the property details before updating
+            const property = properties.find(p => p.id === propertyId);
+            if (!property) {
+                throw new Error("Property not found");
+            }
+
             // Update the property status in Firestore
             const propertyRef = doc(db, 'properties', propertyId);
             await updateDoc(propertyRef, {
@@ -93,6 +103,28 @@ const PropertyManagement = () => {
             };
 
             toast.success(statusMessages[newStatus] || `Property status updated to ${newStatus}`);
+
+            // Send notification to the property owner
+            if (property.vendorId) {
+                if (newStatus === 'active') {
+                    // Send property approved notification
+                    await sendPropertyApprovedNotification(
+                        property.vendorId,
+                        propertyId,
+                        property.title || 'Your property'
+                    );
+                } else if (newStatus === 'rejected') {
+                    // Send property rejected notification
+                    await sendPropertyRejectedNotification(
+                        property.vendorId,
+                        propertyId,
+                        property.title || 'Your property',
+                        'The property did not meet our listing requirements.'
+                    );
+                }
+            } else {
+                console.warn('No vendor ID found for property, notification not sent');
+            }
         } catch (error) {
             console.error("Error updating property status:", error);
             // Show error notification with toast
@@ -107,11 +139,30 @@ const PropertyManagement = () => {
         }
 
         try {
+            // Get the property details before deleting
+            const property = properties.find(p => p.id === propertyId);
+            if (!property) {
+                throw new Error("Property not found");
+            }
+
             // Delete the property from Firestore
             await deleteDoc(doc(db, 'properties', propertyId));
 
             // Show success notification with toast
             toast.success("Property has been permanently deleted");
+
+            // Send notification to the property owner about the deletion
+            if (property.vendorId) {
+                // Create a custom notification for property deletion
+                // We're using the rejection notification but with a specific message
+                await sendPropertyRejectedNotification(
+                    property.vendorId,
+                    propertyId,
+                    property.title || 'Your property',
+                    'This property has been removed from our platform by an administrator.'
+                );
+                console.log('Property deletion notification sent to vendor');
+            }
         } catch (error) {
             console.error("Error deleting property:", error);
             // Show error notification with toast
@@ -124,7 +175,8 @@ const PropertyManagement = () => {
     // Note: We're already filtering by status and type on the server side
     const filteredProperties = properties.filter(property => {
         const matchesSearch = property.title?.toLowerCase().includes(search.toLowerCase()) ||
-            property.address?.toLowerCase().includes(search.toLowerCase()) ||
+            property.city?.toLowerCase().includes(search.toLowerCase()) ||
+            property.area?.toLowerCase().includes(search.toLowerCase()) ||
             property.description?.toLowerCase().includes(search.toLowerCase());
 
         return matchesSearch;
@@ -150,13 +202,13 @@ const PropertyManagement = () => {
     const getStatusBadge = (status) => {
         switch (status) {
             case 'active':
-                return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Active</span>;
+                return <span className="px-2 py-1 text-xs text-green-800 bg-green-100 rounded-full">Active</span>;
             case 'pending':
-                return <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Pending</span>;
+                return <span className="px-2 py-1 text-xs text-yellow-800 bg-yellow-100 rounded-full">Pending</span>;
             case 'rejected':
-                return <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Rejected</span>;
+                return <span className="px-2 py-1 text-xs text-red-800 bg-red-100 rounded-full">Rejected</span>;
             default:
-                return <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">{status}</span>;
+                return <span className="px-2 py-1 text-xs text-gray-800 bg-gray-100 rounded-full">{status}</span>;
         }
     };
 
@@ -164,8 +216,8 @@ const PropertyManagement = () => {
         return (
             <DashboardLayout role="admin">
                 <ToastContainer position="top-right" autoClose={5000} />
-                <div className="bg-red-50 p-4 rounded-lg border border-red-200 text-red-700">
-                    <h3 className="text-lg font-medium mb-2">Error</h3>
+                <div className="p-4 text-red-700 border border-red-200 rounded-lg bg-red-50">
+                    <h3 className="mb-2 text-lg font-medium">Error</h3>
                     <p>{error}</p>
                 </div>
             </DashboardLayout>
@@ -187,19 +239,19 @@ const PropertyManagement = () => {
                 pauseOnHover
             />
             <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Property Management</h2>
+                <h2 className="mb-6 text-2xl font-bold text-gray-800">Property Management</h2>
 
                 {/* Filters */}
-                <div className="bg-white p-4 rounded-lg shadow-subtle mb-6">
+                <div className="p-4 mb-6 bg-white rounded-lg shadow-subtle">
                     <div className="flex flex-wrap gap-4">
                         <div className="flex-1 min-w-[280px]">
                             <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                     <FiSearch className="text-gray-400" />
                                 </div>
                                 <input
                                     type="text"
-                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    className="block w-full py-2 pl-10 pr-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                     placeholder="Search properties..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
@@ -214,7 +266,7 @@ const PropertyManagement = () => {
                                     setSelectedType(e.target.value);
                                     setCurrentPage(1); // Reset to first page when changing filters
                                 }}
-                                className="block w-full py-2 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                             >
                                 <option value="all">All Types</option>
                                 {propertyTypes.map(type => (
@@ -230,7 +282,7 @@ const PropertyManagement = () => {
                                     setSelectedStatus(e.target.value);
                                     setCurrentPage(1); // Reset to first page when changing filters
                                 }}
-                                className="block w-full py-2 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                             >
                                 <option value="all">All Statuses</option>
                                 <option value="active">Active</option>
@@ -243,17 +295,17 @@ const PropertyManagement = () => {
 
                 {/* Properties Grid */}
                 {isLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {Array.from({ length: 6 }).map((_, index) => (
-                            <div key={index} className="bg-white rounded-lg shadow-subtle overflow-hidden animate-pulse">
+                            <div key={index} className="overflow-hidden bg-white rounded-lg shadow-subtle animate-pulse">
                                 <div className="h-48 bg-gray-200"></div>
                                 <div className="p-4">
-                                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-                                    <div className="h-6 bg-gray-200 rounded w-1/3 mb-2"></div>
-                                    <div className="flex justify-between items-center mt-4">
-                                        <div className="h-8 bg-gray-200 rounded w-20"></div>
-                                        <div className="h-8 bg-gray-200 rounded w-20"></div>
+                                    <div className="w-3/4 h-4 mb-2 bg-gray-200 rounded"></div>
+                                    <div className="w-1/2 h-4 mb-4 bg-gray-200 rounded"></div>
+                                    <div className="w-1/3 h-6 mb-2 bg-gray-200 rounded"></div>
+                                    <div className="flex items-center justify-between mt-4">
+                                        <div className="w-20 h-8 bg-gray-200 rounded"></div>
+                                        <div className="w-20 h-8 bg-gray-200 rounded"></div>
                                     </div>
                                 </div>
                             </div>
@@ -261,14 +313,14 @@ const PropertyManagement = () => {
                     </div>
                 ) : currentProperties.length > 0 ? (
                     <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                             {currentProperties.map((property) => (
-                                <div key={property.id} className="bg-white rounded-lg shadow-subtle overflow-hidden">
+                                <div key={property.id} className="overflow-hidden bg-white rounded-lg shadow-subtle">
                                     <div className="relative">
                                         <img
                                             src={property.images?.[0] || 'https://placehold.co/800x500?text=No+Image'}
                                             alt={property.title}
-                                            className="w-full h-48 object-cover"
+                                            className="object-cover w-full h-48"
                                             onError={(e) => {
                                                 e.target.onerror = null;
                                                 e.target.src = 'https://placehold.co/800x500?text=No+Image';
@@ -279,24 +331,26 @@ const PropertyManagement = () => {
                                         </div>
                                     </div>
                                     <div className="p-4">
-                                        <h3 className="font-bold text-gray-800 text-lg mb-1">{property.title}</h3>
-                                        <p className="text-gray-600 text-sm mb-2">{property.address}</p>
-                                        <p className="text-emerald-600 font-bold text-xl mb-2">
+                                        <h3 className="mb-1 text-lg font-bold text-gray-800">{property.title}</h3>
+                                        <p className="mb-2 text-sm text-gray-600">
+                                            {property.city}{property.area ? `, ${property.area}` : ''}
+                                        </p>
+                                        <p className="mb-2 text-xl font-bold text-emerald-600">
                                             ${property.price?.toLocaleString() || '0'}
                                         </p>
 
-                                        <div className="flex items-center text-sm text-gray-500 mb-4">
-                                            <span className="mr-3">{property.specs?.beds || 0} beds</span>
-                                            <span className="mr-3">{property.specs?.baths || 0} baths</span>
-                                            <span>{property.specs?.sqft || 0} sqft</span>
+                                        <div className="flex items-center mb-4 text-sm text-gray-500">
+                                            <span className="mr-3">{property.beds || 0} beds</span>
+                                            <span className="mr-3">{property.baths || 0} baths</span>
+                                            <span>{property.stories || 1} {property.stories === 1 ? 'story' : 'stories'}</span>
                                         </div>
 
-                                        <div className="flex items-center justify-between text-sm mb-4">
+                                        <div className="flex items-center justify-between mb-4 text-sm">
                                             <span>Listed by: {property.vendorName || 'Unknown'}</span>
                                             <span>Added: {formatDate(property.createdAt)}</span>
                                         </div>
 
-                                        <div className="flex justify-between items-center">
+                                        <div className="flex items-center justify-between">
                                             <div className="space-x-2">
                                                 {property.status === 'pending' && (
                                                     <>
@@ -334,14 +388,14 @@ const PropertyManagement = () => {
                                             <div className="space-x-2">
                                                 <Link
                                                     to={`/properties/${property.id}`}
-                                                    className="p-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 inline-flex items-center"
+                                                    className="inline-flex items-center p-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
                                                     title="View Property"
                                                 >
                                                     <FiEye size={16} />
                                                 </Link>
                                                 <button
                                                     onClick={() => handleDeleteProperty(property.id)}
-                                                    className="p-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 inline-flex items-center"
+                                                    className="inline-flex items-center p-2 text-red-700 rounded-lg bg-red-50 hover:bg-red-100"
                                                     title="Delete Property"
                                                 >
                                                     <FiTrash2 size={16} />
@@ -354,7 +408,7 @@ const PropertyManagement = () => {
                         </div>
 
                         {/* Pagination */}
-                        <div className="mt-6 py-3 flex items-center justify-between">
+                        <div className="flex items-center justify-between py-3 mt-6">
                             <div className="text-sm text-gray-500">
                                 Showing <span className="font-medium">{indexOfFirstProperty + 1}</span> to <span className="font-medium">
                                     {Math.min(indexOfLastProperty, filteredProperties.length)}
@@ -416,12 +470,12 @@ const PropertyManagement = () => {
                         </div>
                     </>
                 ) : (
-                    <div className="bg-white p-8 rounded-lg shadow-subtle text-center">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 text-gray-400 rounded-full mb-4">
+                    <div className="p-8 text-center bg-white rounded-lg shadow-subtle">
+                        <div className="inline-flex items-center justify-center w-16 h-16 mb-4 text-gray-400 bg-gray-100 rounded-full">
                             <FiHome size={24} />
                         </div>
-                        <h3 className="text-xl font-semibold text-gray-800 mb-2">No Properties Found</h3>
-                        <p className="text-gray-600 mb-6">
+                        <h3 className="mb-2 text-xl font-semibold text-gray-800">No Properties Found</h3>
+                        <p className="mb-6 text-gray-600">
                             {search ?
                                 "No properties match your search criteria." :
                                 selectedType !== 'all' || selectedStatus !== 'all' ?
@@ -436,7 +490,7 @@ const PropertyManagement = () => {
                                     setSelectedStatus('all');
                                     toast.info("Filters cleared");
                                 }}
-                                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+                                className="px-4 py-2 text-white rounded-lg bg-emerald-600 hover:bg-emerald-700"
                             >
                                 Clear Filters
                             </button>

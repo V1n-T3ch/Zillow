@@ -10,6 +10,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import ProtectedRoute from './components/ProtectedRoute';
 import Neighborhoods from './pages/Neighborhoods';
 import Agents from './pages/Agents';
+import VendorApplication from './pages/VendorApplication';
+import Notifications from './pages/Notifications';
 
 // User dashboard
 import UserDashboard from './pages/dashboards/user/UserDashboard';
@@ -23,6 +25,7 @@ import ListProperty from './pages/dashboards/vendor/ListProperty';
 import ManageProperties from './pages/dashboards/vendor/ManageProperties';
 import EditProperty from './pages/dashboards/vendor/EditProperty';
 import VendorBookings from './pages/dashboards/vendor/VendorBookings';
+import PropertyAnalytics from './pages/dashboards/vendor/PropertyAnalytics';
 
 // Admin dashboard
 import AdminDashboard from './pages/dashboards/admin/AdminDashboard';
@@ -43,6 +46,13 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          
+          {/* Vendor application route */}
+          <Route path="/vendor-application" element={
+            <ProtectedRoute>
+              <VendorApplication />
+            </ProtectedRoute>
+          } />
 
           {/* User dashboard routes */}
           <Route path="/dashboard" element={
@@ -92,6 +102,11 @@ function App() {
               <VendorBookings />
             </ProtectedRoute>
           } />
+          <Route path="/vendor/analytics" element={
+            <ProtectedRoute requiredRole="vendor">
+              <PropertyAnalytics />
+            </ProtectedRoute>
+          } />
 
           {/* Admin dashboard routes */}
           <Route path="/admin" element={
@@ -107,6 +122,13 @@ function App() {
           <Route path="/admin/properties" element={
             <ProtectedRoute requiredRole="admin">
               <PropertyManagement />
+            </ProtectedRoute>
+          } />
+
+          {/* Notifications route */}
+          <Route path="/notifications" element={
+            <ProtectedRoute>
+              <Notifications />
             </ProtectedRoute>
           } />
         </Routes>

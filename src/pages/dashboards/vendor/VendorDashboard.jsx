@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { FiHome, FiCalendar, FiDollarSign, FiUsers, FiChevronRight, FiPlusCircle, FiAlertCircle } from 'react-icons/fi';
 import DashboardLayout from '../../../components/dashboard/DashboardLayout';
 import { db } from '../../../firebase';
-import { collection, query, where, getDocs, limit, orderBy, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, orderBy, getDoc, doc } from 'firebase/firestore';
 import { useAuth } from '../../../hooks/useAuth';
 
 const VendorDashboard = () => {
@@ -52,49 +52,77 @@ const VendorDashboard = () => {
 
                 setProperties(propertiesList);
 
-                // Fetch bookings
-                const bookingsQuery = query(
-                    collection(db, 'bookings'),
-                    where('vendorId', '==', currentUser.uid),
-                    orderBy('date', 'desc'),
-                    limit(3)
-                );
+                // Fetch bookings - with improved error handling and logging
+                try {
+                    console.log("Attempting to fetch bookings for vendor:", currentUser.uid);
+                    
+                    const bookingsQuery = query(
+                        collection(db, 'bookings'),
+                        where('vendorId', '==', currentUser.uid),
+                        orderBy('createdAt', 'desc'), // Use createdAt instead of date for sorting
+                        limit(5) // Fetch more to ensure we get some results
+                    );
 
-                const bookingsSnapshot = await getDocs(bookingsQuery);
+                    const bookingsSnapshot = await getDocs(bookingsQuery);
+                    console.log(`Found ${bookingsSnapshot.docs.length} bookings`);
 
-                // Process and format the bookings
-                const bookingsList = await Promise.all(bookingsSnapshot.docs.map(async (doc) => {
-                    const bookingData = doc.data();
+                    // Process and format the bookings
+                    const bookingsList = await Promise.all(bookingsSnapshot.docs.map(async (bookingDoc) => {
+                        const bookingData = bookingDoc.data();
+                        console.log("Booking data:", bookingData);
 
-                    // Get property details if needed
-                    let propertyImage = bookingData.propertyImage;
+                        // Get property details if needed
+                        let propertyImage = bookingData.propertyImage || null;
+                        let propertyTitle = bookingData.propertyTitle || 'Property Viewing';
 
-                    if (bookingData.propertyId) {
-                        try {
-                            const propertyDoc = await getDoc(doc(db, 'properties', bookingData.propertyId));
-                            if (propertyDoc.exists()) {
-                                const propertyData = propertyDoc.data();
-                                propertyImage = propertyData.images?.[0] || propertyImage;
+                        if (bookingData.propertyId) {
+                            try {
+                                const propertyDocRef = doc(db, 'properties', bookingData.propertyId);
+                                const propertyDoc = await getDoc(propertyDocRef);
+                                if (propertyDoc.exists()) {
+                                    const propertyData = propertyDoc.data();
+                                    propertyImage = propertyData.images?.[0] || propertyImage;
+                                    propertyTitle = propertyData.title || propertyTitle;
+                                }
+                            } catch (err) {
+                                console.error(`Error fetching property ${bookingData.propertyId}:`, err);
+                                // Continue with default values
                             }
-                        } catch (err) {
-                            console.error(`Error fetching property ${bookingData.propertyId}:`, err);
                         }
-                    }
 
-                    return {
-                        id: doc.id,
-                        propertyId: bookingData.propertyId,
-                        propertyTitle: bookingData.propertyTitle || 'Property Viewing',
-                        clientName: bookingData.userName || 'Client',
-                        clientEmail: bookingData.userEmail || 'client@example.com',
-                        date: bookingData.date?.toDate().toISOString() || new Date().toISOString(),
-                        time: bookingData.time || 'Not specified',
-                        status: bookingData.status || 'Pending',
-                        imageUrl: propertyImage
-                    };
-                }));
+                        // Format the date safely
+                        let formattedDate;
+                        try {
+                            formattedDate = bookingData.date?.toDate?.() 
+                                ? bookingData.date.toDate().toISOString() 
+                                : typeof bookingData.date === 'string' 
+                                    ? new Date(bookingData.date).toISOString() 
+                                    : new Date().toISOString();
+                        } catch (err) {
+                            console.error("Error formatting date:", err);
+                            formattedDate = new Date().toISOString();
+                        }
 
-                setBookings(bookingsList);
+                        return {
+                            id: bookingDoc.id,
+                            propertyId: bookingData.propertyId || '',
+                            propertyTitle: propertyTitle,
+                            clientName: bookingData.userName || bookingData.clientName || 'Client',
+                            clientEmail: bookingData.userEmail || bookingData.clientEmail || '',
+                            date: formattedDate,
+                            time: bookingData.time || 'Not specified',
+                            status: bookingData.status || 'Pending',
+                            imageUrl: propertyImage || 'https://placehold.co/800x500?text=Property'
+                        };
+                    }));
+
+                    console.log("Processed bookings:", bookingsList);
+                    setBookings(bookingsList);
+                } catch (bookingError) {
+                    console.error('Error fetching bookings:', bookingError);
+                    // Don't fail the whole function, just set bookings to empty
+                    setBookings([]);
+                }
 
                 // Calculate stats from real data
                 const activeProperties = propertiesList.filter(p => p.status === 'active' || p.status === 'Active').length;

@@ -16,22 +16,22 @@ import { useAuth } from '../hooks/useAuth';
 
 const AgentCard = ({ agent, onContactClick }) => {
   return (
-    <div className="bg-white rounded-xl shadow-subtle overflow-hidden">
+    <div className="overflow-hidden bg-white rounded-xl shadow-subtle">
       <div className="p-6">
-        <div className="flex flex-col sm:flex-row items-center">
-          <div className="w-24 h-24 mb-4 sm:mb-0 sm:mr-6 rounded-full overflow-hidden flex-shrink-0 border-2 border-gray-100">
+        <div className="flex flex-col items-center sm:flex-row">
+          <div className="flex-shrink-0 w-24 h-24 mb-4 overflow-hidden border-2 border-gray-100 rounded-full sm:mb-0 sm:mr-6">
             <img 
               src={agent.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.name)}&background=0D9488&color=fff`} 
               alt={agent.name}
-              className="w-full h-full object-cover"
+              className="object-cover w-full h-full"
             />
           </div>
           
-          <div className="text-center sm:text-left flex-grow">
+          <div className="flex-grow text-center sm:text-left">
             <h3 className="text-xl font-bold text-gray-800">{agent.name}</h3>
             <p className="text-gray-600">{agent.title || 'Real Estate Agent'}</p>
             
-            <div className="flex items-center justify-center sm:justify-start mt-2">
+            <div className="flex items-center justify-center mt-2 sm:justify-start">
               {Array.from({ length: 5 }).map((_, i) => (
                 <FiStar 
                   key={i} 
@@ -46,11 +46,11 @@ const AgentCard = ({ agent, onContactClick }) => {
             </div>
             
             {agent.specialties && (
-              <div className="mt-2 flex flex-wrap justify-center sm:justify-start gap-1">
+              <div className="flex flex-wrap justify-center gap-1 mt-2 sm:justify-start">
                 {agent.specialties.map((specialty, index) => (
                   <span 
                     key={index} 
-                    className="px-2 py-1 bg-emerald-50 text-emerald-700 text-xs rounded-full"
+                    className="px-2 py-1 text-xs rounded-full bg-emerald-50 text-emerald-700"
                   >
                     {specialty}
                   </span>
@@ -59,23 +59,23 @@ const AgentCard = ({ agent, onContactClick }) => {
             )}
           </div>
           
-          <div className="mt-4 sm:mt-0 text-center sm:text-right sm:border-l sm:pl-6 sm:ml-6">
+          <div className="mt-4 text-center sm:mt-0 sm:text-right sm:border-l sm:pl-6 sm:ml-6">
             <div className="flex flex-col sm:items-end">
-              <div className="flex items-center justify-center sm:justify-end mb-2">
-                <FiHome className="text-emerald-500 mr-2" />
+              <div className="flex items-center justify-center mb-2 sm:justify-end">
+                <FiHome className="mr-2 text-emerald-500" />
                 <span className="text-gray-700">{agent.listingCount || 0} Properties</span>
               </div>
               
               {agent.location && (
-                <div className="flex items-center justify-center sm:justify-end mb-2">
-                  <FiMapPin className="text-emerald-500 mr-2" />
+                <div className="flex items-center justify-center mb-2 sm:justify-end">
+                  <FiMapPin className="mr-2 text-emerald-500" />
                   <span className="text-gray-700">{agent.location}</span>
                 </div>
               )}
               
               {agent.experience && (
                 <div className="flex items-center justify-center sm:justify-end">
-                  <FiCheck className="text-emerald-500 mr-2" />
+                  <FiCheck className="mr-2 text-emerald-500" />
                   <span className="text-gray-700">{agent.experience} Experience</span>
                 </div>
               )}
@@ -83,10 +83,10 @@ const AgentCard = ({ agent, onContactClick }) => {
           </div>
         </div>
         
-        <div className="mt-6 flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col gap-3 mt-6 sm:flex-row">
           <a 
             href={`mailto:${agent.email}`} 
-            className="flex-1 flex items-center justify-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+            className="flex items-center justify-center flex-1 px-4 py-2 text-white transition-colors rounded-lg bg-emerald-600 hover:bg-emerald-700"
           >
             <FiMail className="mr-2" />
             Email
@@ -94,7 +94,7 @@ const AgentCard = ({ agent, onContactClick }) => {
           
           <a 
             href={`tel:${agent.phone}`} 
-            className="flex-1 flex items-center justify-center px-4 py-2 bg-white border border-emerald-600 text-emerald-700 rounded-lg hover:bg-emerald-50 transition-colors"
+            className="flex items-center justify-center flex-1 px-4 py-2 transition-colors bg-white border rounded-lg border-emerald-600 text-emerald-700 hover:bg-emerald-50"
           >
             <FiPhone className="mr-2" />
             Call
@@ -102,7 +102,7 @@ const AgentCard = ({ agent, onContactClick }) => {
           
           <button 
             onClick={() => onContactClick(agent)}
-            className="flex-1 flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center justify-center flex-1 px-4 py-2 text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             <FiMessageSquare className="mr-2" />
             Message
@@ -111,28 +111,28 @@ const AgentCard = ({ agent, onContactClick }) => {
       </div>
       
       {agent.recentReview && (
-        <div className="bg-gray-50 p-4 border-t border-gray-100">
+        <div className="p-4 border-t border-gray-100 bg-gray-50">
           <div className="flex items-start">
             <div className="flex-shrink-0 mr-3">
-              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-600">
                 <FiStar className="fill-current" size={14} />
               </div>
             </div>
             <div>
               <div className="flex items-center mb-1">
-                <h4 className="font-medium text-gray-800 mr-2">{agent.recentReview.name || 'Anonymous'}</h4>
-                <span className="text-gray-500 text-sm">{agent.recentReview.date}</span>
+                <h4 className="mr-2 font-medium text-gray-800">{agent.recentReview.name || 'Anonymous'}</h4>
+                <span className="text-sm text-gray-500">{agent.recentReview.date}</span>
               </div>
-              <p className="text-gray-600 text-sm line-clamp-2">{agent.recentReview.text}</p>
+              <p className="text-sm text-gray-600 line-clamp-2">{agent.recentReview.text}</p>
             </div>
           </div>
         </div>
       )}
       
-      <div className="p-4 border-t border-gray-100 bg-white">
+      <div className="p-4 bg-white border-t border-gray-100">
         <Link 
           to={`/properties?agent=${agent.id}`}
-          className="text-emerald-600 hover:text-emerald-700 text-sm font-medium"
+          className="text-sm font-medium text-emerald-600 hover:text-emerald-700"
         >
           View {agent.name}'s properties →
         </Link>
@@ -389,20 +389,20 @@ const Agents = () => {
       <Navbar />
       
       <div className="pt-20 pb-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+          <div className="mb-10 text-center">
+            <h1 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">
               Find Your Perfect Real Estate Agent
             </h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="max-w-2xl mx-auto text-gray-600">
               Connect with top-rated real estate professionals who can help you
               find your dream home or sell your property.
             </p>
           </div>
           
           {/* Filters */}
-          <div className="bg-white rounded-xl shadow-subtle p-6 mb-8">
-            <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-6">
+          <div className="p-6 mb-8 bg-white rounded-xl shadow-subtle">
+            <div className="flex flex-col space-y-4 md:flex-row md:items-center md:space-y-0 md:space-x-6">
               <div className="flex-grow">
                 <div className="relative">
                   <input
@@ -410,9 +410,9 @@ const Agents = () => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search by name, location, specialty..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   />
-                  <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <FiSearch className="absolute text-gray-400 -translate-y-1/2 left-3 top-1/2" />
                 </div>
               </div>
               
@@ -421,7 +421,7 @@ const Agents = () => {
                   <select
                     value={locationFilter}
                     onChange={(e) => setLocationFilter(e.target.value)}
-                    className="pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white"
+                    className="py-2 pl-3 pr-8 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   >
                     {locations.map(location => (
                       <option key={location} value={location}>
@@ -435,7 +435,7 @@ const Agents = () => {
                   <select
                     value={specialtyFilter}
                     onChange={(e) => setSpecialtyFilter(e.target.value)}
-                    className="pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white"
+                    className="py-2 pl-3 pr-8 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   >
                     {specialties.map(specialty => (
                       <option key={specialty} value={specialty}>
@@ -449,7 +449,7 @@ const Agents = () => {
                   <select
                     value={ratingFilter}
                     onChange={(e) => setRatingFilter(e.target.value)}
-                    className="pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white"
+                    className="py-2 pl-3 pr-8 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   >
                     <option value="All">All Ratings</option>
                     <option value="4+">4+ Stars</option>
@@ -462,7 +462,7 @@ const Agents = () => {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white"
+                    className="py-2 pl-3 pr-8 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   >
                     <option value="rating">Sort by Rating</option>
                     <option value="listings">Sort by Listings</option>
@@ -476,40 +476,40 @@ const Agents = () => {
           
           {/* Agents Grid */}
           <div className="mb-10">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">
+            <h2 className="mb-6 text-2xl font-bold text-gray-800">
               {filteredAgents.length} Agent{filteredAgents.length !== 1 ? 's' : ''} Available
             </h2>
             
             {isLoading ? (
               <div className="grid grid-cols-1 gap-6">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="bg-white rounded-xl shadow-subtle overflow-hidden animate-pulse">
+                  <div key={i} className="overflow-hidden bg-white rounded-xl shadow-subtle animate-pulse">
                     <div className="p-6">
                       <div className="flex items-center">
-                        <div className="w-24 h-24 rounded-full bg-gray-300 mr-6"></div>
+                        <div className="w-24 h-24 mr-6 bg-gray-300 rounded-full"></div>
                         <div className="flex-grow">
-                          <div className="h-6 bg-gray-300 rounded w-1/3 mb-3"></div>
-                          <div className="h-4 bg-gray-300 rounded w-1/4 mb-3"></div>
-                          <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                          <div className="w-1/3 h-6 mb-3 bg-gray-300 rounded"></div>
+                          <div className="w-1/4 h-4 mb-3 bg-gray-300 rounded"></div>
+                          <div className="w-1/2 h-4 bg-gray-300 rounded"></div>
                         </div>
                       </div>
-                      <div className="mt-6 flex gap-3">
-                        <div className="h-10 bg-gray-300 rounded flex-1"></div>
-                        <div className="h-10 bg-gray-300 rounded flex-1"></div>
-                        <div className="h-10 bg-gray-300 rounded flex-1"></div>
+                      <div className="flex gap-3 mt-6">
+                        <div className="flex-1 h-10 bg-gray-300 rounded"></div>
+                        <div className="flex-1 h-10 bg-gray-300 rounded"></div>
+                        <div className="flex-1 h-10 bg-gray-300 rounded"></div>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : error ? (
-              <div className="bg-red-50 text-red-700 p-4 rounded-lg">
+              <div className="p-4 text-red-700 rounded-lg bg-red-50">
                 {error}
               </div>
             ) : filteredAgents.length === 0 ? (
-              <div className="bg-white p-8 rounded-xl shadow-subtle text-center">
-                <h3 className="text-xl font-semibold mb-2">No agents found</h3>
-                <p className="text-gray-600 mb-4">Try adjusting your filters or search criteria</p>
+              <div className="p-8 text-center bg-white rounded-xl shadow-subtle">
+                <h3 className="mb-2 text-xl font-semibold">No agents found</h3>
+                <p className="mb-4 text-gray-600">Try adjusting your filters or search criteria</p>
                 <button
                   onClick={() => {
                     setLocationFilter('All');
@@ -518,7 +518,7 @@ const Agents = () => {
                     setSortBy('rating');
                     setSearchTerm('');
                   }}
-                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+                  className="px-4 py-2 text-white rounded-lg bg-emerald-600 hover:bg-emerald-700"
                 >
                   Reset Filters
                 </button>
@@ -537,14 +537,14 @@ const Agents = () => {
           </div>
           
           {/* Call To Action */}
-          <div className="bg-gradient-to-r from-emerald-600 to-emerald-800 rounded-xl p-8 text-white text-center">
-            <h2 className="text-2xl font-bold mb-4">Are you a real estate professional?</h2>
-            <p className="mb-6 max-w-2xl mx-auto">
+          <div className="p-8 text-center text-white bg-gradient-to-r from-emerald-600 to-emerald-800 rounded-xl">
+            <h2 className="mb-4 text-2xl font-bold">Are you a real estate professional?</h2>
+            <p className="max-w-2xl mx-auto mb-6">
               Join our platform to showcase your properties and connect with potential clients.
             </p>
             <Link
-              to="/register?role=vendor"
-              className="inline-block px-6 py-3 bg-white text-emerald-700 rounded-lg hover:bg-gray-100 transition-colors font-medium"
+              to="/vendor-application"
+              className="inline-block px-6 py-3 font-medium transition-colors bg-white rounded-lg text-emerald-700 hover:bg-gray-100"
             >
               Register as an Agent
             </Link>
@@ -554,16 +554,16 @@ const Agents = () => {
       
       {/* Contact Form Modal */}
       {showContactForm && selectedAgent && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="w-full max-w-md bg-white rounded-xl">
             <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">
+              <h3 className="mb-4 text-xl font-bold text-gray-800">
                 Contact {selectedAgent.name}
               </h3>
               
               <form onSubmit={handleSendMessage}>
                 <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-medium mb-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
                     Your Message
                   </label>
                   <textarea
@@ -576,13 +576,13 @@ const Agents = () => {
                   ></textarea>
                 </div>
                 
-                <div className="mb-4 flex gap-3">
+                <div className="flex gap-3 mb-4">
                   <button
                     type="button"
                     onClick={() => {
                       setContactMessage(`Hello ${selectedAgent.name}, I'm interested in viewing some of your properties. Please contact me to discuss further.`);
                     }}
-                    className="text-sm text-gray-600 px-3 py-1 border border-gray-200 rounded-md hover:bg-gray-50"
+                    className="px-3 py-1 text-sm text-gray-600 border border-gray-200 rounded-md hover:bg-gray-50"
                   >
                     Viewing Request
                   </button>
@@ -591,7 +591,7 @@ const Agents = () => {
                     onClick={() => {
                       setContactMessage(`Hello ${selectedAgent.name}, I'm looking to sell my property and would like to learn more about your services.`);
                     }}
-                    className="text-sm text-gray-600 px-3 py-1 border border-gray-200 rounded-md hover:bg-gray-50"
+                    className="px-3 py-1 text-sm text-gray-600 border border-gray-200 rounded-md hover:bg-gray-50"
                   >
                     Selling Inquiry
                   </button>
@@ -604,13 +604,13 @@ const Agents = () => {
                       setShowContactForm(false);
                       setContactMessage('');
                     }}
-                    className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                    className="flex-1 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+                    className="flex-1 py-2 text-white rounded-lg bg-emerald-600 hover:bg-emerald-700"
                   >
                     Send Message
                   </button>
@@ -618,14 +618,14 @@ const Agents = () => {
               </form>
             </div>
             
-            <div className="border-t border-gray-100 p-4 bg-gray-50 rounded-b-xl">
+            <div className="p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className="w-10 h-10 mr-3 rounded-full overflow-hidden">
+                  <div className="w-10 h-10 mr-3 overflow-hidden rounded-full">
                     <img 
                       src={selectedAgent.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedAgent.name)}&background=0D9488&color=fff`} 
                       alt={selectedAgent.name}
-                      className="w-full h-full object-cover"
+                      className="object-cover w-full h-full"
                     />
                   </div>
                   <div>

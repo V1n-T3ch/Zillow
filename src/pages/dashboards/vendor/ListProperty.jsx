@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiImage, FiDollarSign, FiHome, FiMap, FiMapPin, FiCheckSquare, FiMaximize, FiLayers, FiPlus, FiXCircle } from 'react-icons/fi';
+import { FiImage, FiDollarSign, FiHome, FiLayers, FiPlus, FiXCircle } from 'react-icons/fi';
 import DashboardLayout from '../../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../../hooks/useAuth';
 import { db } from '../../../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import axios from 'axios'; // Add this import
+import axios from 'axios';
 
 const ListProperty = () => {
     const { currentUser } = useAuth();
@@ -19,16 +19,12 @@ const ListProperty = () => {
         title: '',
         description: '',
         price: '',
-        address: '',
         city: '',
-        state: '',
-        zip: '',
+        area: '',
         propertyType: '',
-        status: 'For Sale',
+        listingStatus: '',
         beds: '',
         baths: '',
-        sqft: '',
-        lotSize: '',
         yearBuilt: '',
         stories: '1',
         garage: '0',
@@ -42,6 +38,10 @@ const ListProperty = () => {
     const propertyTypes = [
         'House', 'Apartment', 'Condo', 'Townhouse', 'Villa', 'Land', 'Commercial'
     ];
+    
+    const listingStatus = [
+        'For Sale', 'For Rent'
+    ];
 
     const possibleFeatures = [
         'Air Conditioning', 'Balcony', 'Dishwasher', 'Fireplace', 'Garden',
@@ -54,7 +54,7 @@ const ListProperty = () => {
         const { name, value } = e.target;
 
         // Handle number inputs
-        if (['price', 'beds', 'baths', 'sqft', 'yearBuilt'].includes(name)) {
+        if (['price', 'beds', 'baths', 'yearBuilt'].includes(name)) {
             const numberValue = value === '' ? '' : Number(value);
             setFormData({ ...formData, [name]: numberValue });
         } else {
@@ -169,22 +169,22 @@ const ListProperty = () => {
     return (
         <DashboardLayout role="vendor">
             <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">List a New Property</h2>
+                <h2 className="mb-6 text-2xl font-bold text-gray-800">List a New Property</h2>
 
                 {submitError && (
-                    <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg">
+                    <div className="p-4 mb-6 text-red-700 rounded-lg bg-red-50">
                         {submitError}
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-8">
                     {/* Basic Information */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm">
-                        <h3 className="text-lg font-bold text-gray-800 mb-4">Basic Information</h3>
+                    <div className="p-6 bg-white shadow-sm rounded-xl">
+                        <h3 className="mb-4 text-lg font-bold text-gray-800">Basic Information</h3>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div className="md:col-span-2">
-                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="title">
+                                <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="title">
                                     Property Title *
                                 </label>
                                 <input
@@ -200,7 +200,7 @@ const ListProperty = () => {
                             </div>
 
                             <div className="md:col-span-2">
-                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="description">
+                                <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="description">
                                     Description *
                                 </label>
                                 <textarea
@@ -216,11 +216,11 @@ const ListProperty = () => {
                             </div>
 
                             <div>
-                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="price">
+                                <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="price">
                                     Price ($) *
                                 </label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                         <FiDollarSign className="text-gray-500" />
                                     </div>
                                     <input
@@ -232,18 +232,18 @@ const ListProperty = () => {
                                         value={formData.price}
                                         onChange={handleChange}
                                         required
-                                        className="block w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="block w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                         placeholder="450000"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="propertyType">
+                                <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="propertyType">
                                     Property Type *
                                 </label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                         <FiHome className="text-gray-500" />
                                     </div>
                                     <select
@@ -252,7 +252,7 @@ const ListProperty = () => {
                                         value={formData.propertyType}
                                         onChange={handleChange}
                                         required
-                                        className="block w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="block w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                     >
                                         <option value="">Select Type</option>
                                         {propertyTypes.map(type => (
@@ -263,52 +263,33 @@ const ListProperty = () => {
                             </div>
 
                             <div>
-                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="status">
+                                <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="listingStatus">
                                     Listing Status *
                                 </label>
                                 <select
-                                    id="status"
-                                    name="status"
-                                    value={formData.status}
+                                    id="listingStatus"
+                                    name="listingStatus"
+                                    value={formData.listingStatus}
                                     onChange={handleChange}
                                     required
                                     className="block w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                 >
-                                    <option value="For Sale">For Sale</option>
-                                    <option value="For Rent">For Rent</option>
+                                    <option value="">Select Type</option>
+                                    {listingStatus.map(type => (
+                                        <option key={type} value={type}>{type}</option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
                     </div>
 
                     {/* Location */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm">
-                        <h3 className="text-lg font-bold text-gray-800 mb-4">Location</h3>
+                    <div className="p-6 bg-white shadow-sm rounded-xl">
+                        <h3 className="mb-4 text-lg font-bold text-gray-800">Location</h3>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="md:col-span-2">
-                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="address">
-                                    Street Address *
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <FiMapPin className="text-gray-500" />
-                                    </div>
-                                    <input
-                                        id="address"
-                                        name="address"
-                                        type="text"
-                                        value={formData.address}
-                                        onChange={handleChange}
-                                        required
-                                        className="block w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                        placeholder="123 Main St"
-                                    />
-                                </div>
-                            </div>
-
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div>
-                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="city">
+                                <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="city">
                                     City *
                                 </label>
                                 <input
@@ -324,46 +305,30 @@ const ListProperty = () => {
                             </div>
 
                             <div>
-                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="state">
-                                    State/Province *
+                                <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="area">
+                                    Area *
                                 </label>
                                 <input
-                                    id="state"
-                                    name="state"
+                                    id="area"
+                                    name="area"
                                     type="text"
-                                    value={formData.state}
+                                    value={formData.area}
                                     onChange={handleChange}
                                     required
                                     className="block w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                    placeholder="e.g. Nairobi"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="zip">
-                                    ZIP/Postal Code *
-                                </label>
-                                <input
-                                    id="zip"
-                                    name="zip"
-                                    type="text"
-                                    value={formData.zip}
-                                    onChange={handleChange}
-                                    required
-                                    className="block w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                    placeholder="e.g. 00100"
+                                    placeholder="e.g. Westlands"
                                 />
                             </div>
                         </div>
                     </div>
 
                     {/* Property Details */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm">
-                        <h3 className="text-lg font-bold text-gray-800 mb-4">Property Details</h3>
+                    <div className="p-6 bg-white shadow-sm rounded-xl">
+                        <h3 className="mb-4 text-lg font-bold text-gray-800">Property Details</h3>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                             <div>
-                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="beds">
+                                <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="beds">
                                     Bedrooms *
                                 </label>
                                 <input
@@ -379,7 +344,7 @@ const ListProperty = () => {
                             </div>
 
                             <div>
-                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="baths">
+                                <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="baths">
                                     Bathrooms *
                                 </label>
                                 <input
@@ -396,43 +361,7 @@ const ListProperty = () => {
                             </div>
 
                             <div>
-                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="sqft">
-                                    Square Feet *
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <FiMaximize className="text-gray-500" />
-                                    </div>
-                                    <input
-                                        id="sqft"
-                                        name="sqft"
-                                        type="number"
-                                        min="0"
-                                        value={formData.sqft}
-                                        onChange={handleChange}
-                                        required
-                                        className="block w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="lotSize">
-                                    Lot Size
-                                </label>
-                                <input
-                                    id="lotSize"
-                                    name="lotSize"
-                                    type="text"
-                                    value={formData.lotSize}
-                                    onChange={handleChange}
-                                    className="block w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                    placeholder="e.g. 0.25 acres"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="yearBuilt">
+                                <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="yearBuilt">
                                     Year Built
                                 </label>
                                 <input
@@ -448,11 +377,11 @@ const ListProperty = () => {
                             </div>
 
                             <div>
-                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="stories">
+                                <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="stories">
                                     Stories
                                 </label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                         <FiLayers className="text-gray-500" />
                                     </div>
                                     <select
@@ -460,7 +389,7 @@ const ListProperty = () => {
                                         name="stories"
                                         value={formData.stories}
                                         onChange={handleChange}
-                                        className="block w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="block w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                     >
                                         <option value="1">1</option>
                                         <option value="2">2</option>
@@ -471,7 +400,7 @@ const ListProperty = () => {
                             </div>
 
                             <div>
-                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="garage">
+                                <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="garage">
                                     Garage Spaces
                                 </label>
                                 <select
@@ -492,11 +421,11 @@ const ListProperty = () => {
                     </div>
 
                     {/* Features */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm">
-                        <h3 className="text-lg font-bold text-gray-800 mb-4">Features</h3>
-                        <p className="text-gray-600 mb-4">Select all the features that apply to this property.</p>
+                    <div className="p-6 bg-white shadow-sm rounded-xl">
+                        <h3 className="mb-4 text-lg font-bold text-gray-800">Features</h3>
+                        <p className="mb-4 text-gray-600">Select all the features that apply to this property.</p>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                             {possibleFeatures.map(feature => (
                                 <div key={feature} className="flex items-center">
                                     <input
@@ -504,7 +433,7 @@ const ListProperty = () => {
                                         id={`feature-${feature}`}
                                         checked={formData.features.includes(feature)}
                                         onChange={() => handleFeatureToggle(feature)}
-                                        className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
+                                        className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500"
                                     />
                                     <label htmlFor={`feature-${feature}`} className="ml-2 text-gray-700">
                                         {feature}
@@ -515,9 +444,9 @@ const ListProperty = () => {
                     </div>
 
                     {/* Images */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm">
-                        <h3 className="text-lg font-bold text-gray-800 mb-4">Property Images</h3>
-                        <p className="text-gray-600 mb-4">Upload high-quality images of your property. You can upload multiple images.</p>
+                    <div className="p-6 bg-white shadow-sm rounded-xl">
+                        <h3 className="mb-4 text-lg font-bold text-gray-800">Property Images</h3>
+                        <p className="mb-4 text-gray-600">Upload high-quality images of your property. You can upload multiple images.</p>
 
                         <div className="mb-6">
                             <label
@@ -542,18 +471,18 @@ const ListProperty = () => {
                         </div>
 
                         {imagePreviews.length > 0 && (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                                 {imagePreviews.map((preview, index) => (
                                     <div key={index} className="relative group">
                                         <img
                                             src={preview}
                                             alt={`Preview ${index + 1}`}
-                                            className="h-32 w-full object-cover rounded-lg"
+                                            className="object-cover w-full h-32 rounded-lg"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => removeImage(index)}
-                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            className="absolute p-1 text-white transition-opacity bg-red-500 rounded-full opacity-0 top-2 right-2 group-hover:opacity-100"
                                         >
                                             <FiXCircle size={16} />
                                         </button>
@@ -567,9 +496,9 @@ const ListProperty = () => {
                     <div className="flex justify-end">
                         {isSubmitting ? (
                             <div className="w-full">
-                                <div className="bg-gray-200 h-2 rounded-full mb-2">
+                                <div className="h-2 mb-2 bg-gray-200 rounded-full">
                                     <div
-                                        className="bg-emerald-500 h-2 rounded-full"
+                                        className="h-2 rounded-full bg-emerald-500"
                                         style={{ width: `${uploadProgress}%` }}
                                     ></div>
                                 </div>
@@ -580,7 +509,7 @@ const ListProperty = () => {
                         ) : (
                             <button
                                 type="submit"
-                                className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                                className="px-8 py-3 text-white rounded-lg bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                             >
                                 Submit Property
                             </button>
