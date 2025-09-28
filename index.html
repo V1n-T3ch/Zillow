@@ -11,30 +11,35 @@
     <meta name="keywords" content="real estate, homes for sale, property listings, apartments for rent, real estate agents, home buying, property search, housing market">
     <meta name="author" content="Dwella Real Estate">
 
+    <!-- PWA Support -->
+    <meta name="theme-color" content="#3c8224">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Dwella">
+
     <!-- Favicon and App Icons -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
-    <meta name="theme-color" content="#10B981">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://yourdomain.com/">
+    <meta property="og:url" content="https://dwella.co.ke/">
     <meta property="og:title" content="Dwella | Find Your Dream Home | Real Estate Listings">
     <meta property="og:description" content="Discover thousands of homes for sale and rent. Connect with top real estate agents, explore neighborhoods, and find your perfect property with Dwella.">
-    <meta property="og:image" content="https://yourdomain.com/og-image.jpg">
+    <meta property="og:image" content="https://dwella.co.ke/og-image.jpg">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://yourdomain.com/">
+    <meta property="twitter:url" content="https://dwella.co.ke/">
     <meta property="twitter:title" content="Dwella | Find Your Dream Home | Real Estate Listings">
     <meta property="twitter:description" content="Discover thousands of homes for sale and rent. Connect with top real estate agents, explore neighborhoods, and find your perfect property with Dwella.">
-    <meta property="twitter:image" content="https://yourdomain.com/twitter-image.jpg">
+    <meta property="twitter:image" content="https://dwella.co.ke/twitter-image.jpg">
     
     <!-- Canonical URL -->
-    <link rel="canonical" href="https://yourdomain.com/">
+    <link rel="canonical" href="https://dwella.co.ke/">
     
     <!-- Preconnect to important domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,8 +55,8 @@
         "@context": "https://schema.org",
         "@type": "RealEstateAgent",
         "name": "Dwella Real Estate",
-        "url": "https://yourdomain.com",
-        "logo": "https://yourdomain.com/logo.png",
+        "url": "https://dwella.co.ke",
+        "logo": "https://dwella.co.ke/Dwella.jpg",
         "sameAs": [
           "https://www.facebook.com/yourrealestatecompany",
           "https://www.instagram.com/yourrealestatecompany",
@@ -72,18 +77,23 @@
     </script>
   </head>
   <body>
+    <noscript>You need to enable JavaScript to use the Dwella real estate marketplace.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     
-    <!-- Google tag (gtag.js) - Add your Google Analytics code here -->
-    <!--
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <!-- Register Service Worker for PWA -->
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-XXXXXXXXXX');
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/serviceWorker.js')
+            .then(registration => {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch(error => {
+              console.log('ServiceWorker registration failed: ', error);
+            });
+        });
+      }
     </script>
-    -->
   </body>
 </html>
