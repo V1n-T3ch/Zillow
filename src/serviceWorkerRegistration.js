@@ -1,8 +1,8 @@
 export function register() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      const swUrl = `${process.env.PUBLIC_URL}/serviceWorker.js`;
-      
+      const swUrl = `${import.meta.env.VITE_PUBLIC_URL}/serviceWorker.js`;
+      console.log('Service Worker URL: ', swUrl);
       navigator.serviceWorker
         .register(swUrl)
         .then(registration => {

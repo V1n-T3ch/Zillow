@@ -69,7 +69,7 @@ const HeroSection = ({ onSearch, activeListingType, setActiveListingType, showFi
                                 </div>
                                 <input
                                     type="text"
-                                    placeholder="Enter location, ZIP code, or address"
+                                    placeholder="Enter County, location or area"
                                     className="w-full pl-12 pr-4 py-4 rounded-lg bg-gray-50 border-gray-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-700 text-lg placeholder-gray-400"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}

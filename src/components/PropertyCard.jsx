@@ -107,7 +107,7 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
                                 <h3 className="mt-2 mb-1 text-xl font-bold text-gray-800 line-clamp-1">{title}</h3>
                             </div>
                             <p className="text-2xl font-bold text-emerald-600">
-                                ${(price || 0).toLocaleString()}
+                                Ksh.{(price || 0).toLocaleString()}
                                 {listingStatus === 'For Rent' && <span className="text-sm font-normal text-gray-500">/mo</span>}
                             </p>
                         </div>
@@ -200,7 +200,7 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
                 {/* Price tag */}
                 <div className="absolute bottom-4 right-4">
                     <span className="bg-white/90 backdrop-blur-sm text-emerald-700 px-3 py-1.5 rounded-lg font-bold shadow-sm">
-                        ${(price || 0).toLocaleString()}{listingStatus === 'For Rent' && <span className="text-xs font-normal text-gray-500">/mo</span>}
+                        Ksh.{(price || 0).toLocaleString()}{listingStatus === 'For Rent' && <span className="text-xs font-normal text-gray-500">/mo</span>}
                     </span>
                 </div>
 

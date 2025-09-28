@@ -54,7 +54,7 @@ const SavedProperties = () => {
                             id: favoriteDoc.id,  // favorite document ID (for deletion)
                             propertyId: propertyId,
                             title: propertyData.title || 'Unnamed Property',
-                            address: propertyData.address || 'No address provided',
+                            address: propertyData.area || 'No address provided',
                             price: propertyData.price || 0,
                             beds: propertyData.specs?.beds || 0,
                             baths: propertyData.specs?.baths || 0,

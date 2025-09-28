@@ -38,7 +38,7 @@ const EditProperty = () => {
     // Get form values for dynamic preview
     const watchTitle = watch('title', '');
     const watchPrice = watch('price', '');
-    const watchAddress = watch('address', '');
+    const watchArea = watch('area', '');  // Changed from watchAddress
     const watchCity = watch('city', '');
     const watchFeatures = watch('features', []);
     
@@ -74,7 +74,7 @@ const EditProperty = () => {
                 reset({
                     title: propertyData.title || '',
                     price: propertyData.price || '',
-                    address: propertyData.address || '',
+                    area: propertyData.area || '',  // Changed from address to area
                     city: propertyData.city || '',
                     state: propertyData.state || '',
                     zip: propertyData.zip || '',
@@ -208,7 +208,7 @@ const EditProperty = () => {
             await updateDoc(propertyRef, {
                 title: data.title,
                 price: Number(data.price),
-                address: data.address,
+                area: data.area,
                 city: data.city,
                 state: data.state,
                 zip: data.zip,
@@ -312,7 +312,7 @@ const EditProperty = () => {
                             </div>
                             <div className="md:w-2/3">
                                 <h3 className="font-bold text-xl text-gray-800">{watchTitle || 'Property Title'}</h3>
-                                <p className="text-gray-600 mb-2">{watchAddress}, {watchCity}</p>
+                                <p className="text-gray-600 mb-2">{watchArea || 'Area'}, {watchCity || 'City'}</p>
                                 <p className="text-xl font-semibold text-emerald-600">Ksh.{watchPrice ? Number(watchPrice).toLocaleString() : '0'}</p>
                                 
                                 <div className="mt-3 flex flex-wrap gap-2">
@@ -402,20 +402,20 @@ const EditProperty = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="md:col-span-2">
                                 <label className="block text-gray-700 text-sm font-medium mb-2">
-                                    Address*
+                                    Area*
                                 </label>
                                 <input
                                     type="text"
-                                    className={`w-full p-3 border rounded-lg ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
-                                    placeholder="e.g. 123 Main Street"
-                                    {...register('address', { required: 'Address is required' })}
+                                    className={`w-full p-3 border rounded-lg ${errors.area ? 'border-red-500' : 'border-gray-300'}`}
+                                    placeholder="e.g. Westlands"
+                                    {...register('area', { required: 'Area is required' })}
                                 />
-                                {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address.message}</p>}
+                                {errors.area && <p className="text-red-500 text-xs mt-1">{errors.area.message}</p>}
                             </div>
                             
                             <div>
                                 <label className="block text-gray-700 text-sm font-medium mb-2">
-                                    City*
+                                    Location*
                                 </label>
                                 <input
                                     type="text"
@@ -428,7 +428,7 @@ const EditProperty = () => {
                             
                             <div>
                                 <label className="block text-gray-700 text-sm font-medium mb-2">
-                                    State/County*
+                                    County*
                                 </label>
                                 <input
                                     type="text"
@@ -439,17 +439,6 @@ const EditProperty = () => {
                                 {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state.message}</p>}
                             </div>
                             
-                            <div>
-                                <label className="block text-gray-700 text-sm font-medium mb-2">
-                                    ZIP/Postal Code
-                                </label>
-                                <input
-                                    type="text"
-                                    className="w-full p-3 border border-gray-300 rounded-lg"
-                                    placeholder="e.g. 00100"
-                                    {...register('zip')}
-                                />
-                            </div>
                         </div>
                     </div>
                     
@@ -489,34 +478,6 @@ const EditProperty = () => {
                                     })}
                                 />
                                 {errors.baths && <p className="text-red-500 text-xs mt-1">{errors.baths.message}</p>}
-                            </div>
-                            
-                            <div>
-                                <label className="block text-gray-700 text-sm font-medium mb-2">
-                                    Square Feet*
-                                </label>
-                                <input
-                                    type="number"
-                                    className={`w-full p-3 border rounded-lg ${errors.sqft ? 'border-red-500' : 'border-gray-300'}`}
-                                    placeholder="e.g. 2000"
-                                    {...register('sqft', { 
-                                        required: 'Square footage is required',
-                                        min: { value: 1, message: 'Must be greater than 0' }
-                                    })}
-                                />
-                                {errors.sqft && <p className="text-red-500 text-xs mt-1">{errors.sqft.message}</p>}
-                            </div>
-                            
-                            <div>
-                                <label className="block text-gray-700 text-sm font-medium mb-2">
-                                    Lot Size (acres)
-                                </label>
-                                <input
-                                    type="text"
-                                    className="w-full p-3 border border-gray-300 rounded-lg"
-                                    placeholder="e.g. 0.25"
-                                    {...register('lotSize')}
-                                />
                             </div>
                             
                             <div>

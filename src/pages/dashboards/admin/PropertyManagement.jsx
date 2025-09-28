@@ -336,7 +336,7 @@ const PropertyManagement = () => {
                                             {property.city}{property.area ? `, ${property.area}` : ''}
                                         </p>
                                         <p className="mb-2 text-xl font-bold text-emerald-600">
-                                            ${property.price?.toLocaleString() || '0'}
+                                            Ksh.{property.price?.toLocaleString() || '0'}
                                         </p>
 
                                         <div className="flex items-center mb-4 text-sm text-gray-500">

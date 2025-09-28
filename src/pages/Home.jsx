@@ -44,11 +44,10 @@ const Home = () => {
                     return {
                         id: doc.id,
                         title: data.title || 'Beautiful Property',
-                        address: data.address || 'Address not available',
+                        address: data.area || 'Address not available',
                         price: data.price || 0,
-                        beds: data.specs?.beds || 0,
-                        baths: data.specs?.baths || 0,
-                        sqft: data.specs?.sqft || 0,
+                        beds: data.beds || 0,
+                        baths: data.baths || 0,
                         image: data.images?.[0] || 'https://placehold.co/800x500?text=No+Image'
                     };
                 });
@@ -332,7 +331,6 @@ const Home = () => {
                                         <div className="flex justify-between mb-5 text-gray-700">
                                             <span>{property.beds} Beds</span>
                                             <span>{property.baths} Baths</span>
-                                            <span>{property.sqft.toLocaleString()} sqft</span>
                                         </div>
 
                                         <Link

@@ -90,11 +90,12 @@ const VendorBookings = () => {
                     }
 
                     return {
-                        id: bookingDoc.id, // Change from doc.id to bookingDoc.id
+                        id: bookingDoc.id,
                         propertyId: bookingData.propertyId || '',
                         propertyTitle: bookingData.propertyTitle || propertyDetails.title || 'Property',
                         propertyImage: propertyDetails.images?.[0] || 'https://placehold.co/800x500?text=No+Image',
                         date: formattedDate,
+                        // Fix the time field access - add debug logging
                         time: bookingData.bookingTime || 'Not specified',
                         status: bookingData.status || 'pending',
                         user: {

@@ -511,7 +511,7 @@ const AdminDashboard = () => {
                                                     {property.type || 'Property'}
                                                 </span>
                                                 <span className="px-2 py-1 text-xs rounded-full bg-emerald-100 text-emerald-800">
-                                                    ${property.price?.toLocaleString() || '0'}
+                                                    Ksh.{property.price?.toLocaleString() || '0'}
                                                 </span>
                                             </div>
                                         </div>

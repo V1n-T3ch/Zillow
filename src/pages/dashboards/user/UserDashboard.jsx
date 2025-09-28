@@ -87,7 +87,7 @@ const UserDashboard = () => {
                         propertyId: propertyId,
                         title: propertyData.title || 'Unnamed Property',
                         price: propertyData.price || 0,
-                        address: propertyData.address || 'No address provided',
+                        address: propertyData.area || 'No address provided',
                         imageUrl: propertyData.images?.[0] || 'https://placehold.co/800x500?text=No+Image'
                     };
                 } catch (error) {
@@ -292,7 +292,7 @@ const UserDashboard = () => {
                                     <div className="p-4">
                                         <h3 className="font-bold text-gray-800 mb-1">{property.title}</h3>
                                         <p className="text-gray-600 text-sm mb-2">{property.address}</p>
-                                        <p className="text-emerald-600 font-bold">${property.price.toLocaleString()}</p>
+                                        <p className="text-emerald-600 font-bold">Ksh.{property.price.toLocaleString()}</p>
                                     </div>
                                 </Link>
                             ))}

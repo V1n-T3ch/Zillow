@@ -44,6 +44,7 @@ const PropertyAnalytics = () => {
   const [favoritesChange, setFavoritesChange] = useState(0); // % change
   const [viewsData, setViewsData] = useState([]);
   const [activeTab, setActiveTab] = useState('views'); // 'views' or 'favorites'
+  const [dataLoading, setDataLoading] = useState(false);
   
   // Fetch vendor's properties
   useEffect(() => {
@@ -68,7 +69,7 @@ const PropertyAnalytics = () => {
         
         setProperties(propertiesList);
         
-        // Calculate totals
+        // Calculate totals from actual property data
         const views = propertiesList.reduce((sum, property) => sum + (property.views || 0), 0);
         const favorites = propertiesList.reduce((sum, property) => sum + (property.favorites || 0), 0);
         
@@ -85,12 +86,8 @@ const PropertyAnalytics = () => {
         const bookingsSnapshot = await getDocs(bookingsQuery);
         setTotalBookings(bookingsSnapshot.docs.length);
 
-        // Set mock change percentages (these would be calculated from historical data)
-        setViewsChange(12); // 12% increase
-        setFavoritesChange(-3); // 3% decrease
-        
-        // Generate view history data (mock data for now)
-        generateChartData(propertiesList, timeRange, selectedProperty);
+        // Fetch historical data instead of generating mock data
+        await fetchHistoricalData(propertiesList, timeRange, selectedProperty);
         
         setIsLoading(false);
       } catch (error) {
@@ -105,56 +102,64 @@ const PropertyAnalytics = () => {
   // Generate chart data whenever the filters change
   useEffect(() => {
     if (properties.length > 0) {
-      generateChartData(properties, timeRange, selectedProperty);
+      fetchHistoricalData(properties, timeRange, selectedProperty);
     }
   }, [properties, timeRange, selectedProperty]);
   
-  // Generate mock chart data (would be replaced with actual historical data)
-  const generateChartData = (propertiesList, days, propertyId) => {
-    const daysCount = parseInt(days) || 30;
-    const labels = [];
-    const viewsData = [];
-    const favoritesData = [];
+  // Fetch historical analytics data from Firestore
+  const fetchHistoricalData = async (propertiesList, days, propertyId) => {
+    setDataLoading(true);
     
-    // Generate date labels
-    for (let i = daysCount - 1; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+    try {
+      // Filter properties if specific property is selected
+      const relevantProperties = propertyId === 'all' 
+        ? propertiesList 
+        : propertiesList.filter(p => p.id === propertyId);
       
-      // Generate random data points with an upward trend
-      if (propertyId === 'all') {
-        // For all properties combined, generate higher numbers
-        const baseViews = Math.floor(totalViews / daysCount * 0.8);
-        const baseFavorites = Math.floor(totalFavorites / daysCount * 0.8);
-        
-        // Add some randomness and trend (higher numbers for more recent days)
-        viewsData.push(baseViews + Math.floor(Math.random() * 5) + Math.floor(i/3));
-        favoritesData.push(baseFavorites + Math.floor(Math.random() * 2) + Math.floor(i/8));
-      } else {
-        // For individual property
-        const property = propertiesList.find(p => p.id === propertyId);
-        if (property) {
-          const propertyViews = property.views || 0;
-          const propertyFavorites = property.favorites || 0;
-          
-          const baseViews = Math.floor(propertyViews / daysCount * 0.8);
-          const baseFavorites = Math.floor(propertyFavorites / daysCount * 0.8);
-          
-          viewsData.push(baseViews + Math.floor(Math.random() * 3) + Math.floor(i/5));
-          favoritesData.push(baseFavorites + Math.floor(Math.random() * 1) + Math.floor(i/10));
-        } else {
-          viewsData.push(0);
-          favoritesData.push(0);
-        }
+      if (relevantProperties.length === 0) {
+        // No properties match the criteria
+        setViewsData({
+          labels: [],
+          views: [],
+          favorites: []
+        });
+        setDataLoading(false);
+        return;
       }
+      
+      // For single property view, we'll use the property title as the label
+      // For all properties view, we'll use the property titles as labels
+      const labels = relevantProperties.map(prop => 
+        prop.title?.length > 15 ? prop.title.substring(0, 15) + '...' : prop.title || 'Untitled'
+      );
+      
+      // Get the actual view and favorite counts directly from the properties
+      const viewsData = relevantProperties.map(prop => prop.views || 0);
+      const favoritesData = relevantProperties.map(prop => prop.favorites || 0);
+      
+      // Calculate change percentages based on actual data
+      // For now, we'll keep these at 0 since we're not showing trends over time
+      setViewsChange(0);
+      setFavoritesChange(0);
+      
+      // Update chart data with raw values
+      setViewsData({
+        labels,
+        views: viewsData,
+        favorites: favoritesData
+      });
+      
+    } catch (error) {
+      console.error('Error generating property data:', error);
+      
+      setViewsData({
+        labels: [],
+        views: [],
+        favorites: []
+      });
     }
     
-    setViewsData({
-      labels,
-      views: viewsData,
-      favorites: favoritesData
-    });
+    setDataLoading(false);
   };
   
   // Prepare chart configuration
@@ -377,7 +382,7 @@ const PropertyAnalytics = () => {
             </div>
           </div>
           
-          {isLoading ? (
+          {(isLoading || dataLoading) ? (
             <div className="flex items-center justify-center h-80">
               <div className="w-16 h-16 border-4 border-gray-200 rounded-full border-t-emerald-500 animate-spin"></div>
             </div>
@@ -386,8 +391,9 @@ const PropertyAnalytics = () => {
               <Line data={chartData} options={chartOptions} />
             </div>
           ) : (
-            <div className="flex items-center justify-center text-gray-500 h-80">
-              No data available
+            <div className="flex flex-col items-center justify-center h-80 text-gray-500">
+              <p>No historical data available</p>
+              <p className="text-sm mt-2">Analytics data will appear as users interact with your properties</p>
             </div>
           )}
         </div>

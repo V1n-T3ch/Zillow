@@ -9,12 +9,13 @@ import {
 } from 'react-icons/fi';
 import { db } from '../firebase';
 import { 
-  doc, getDoc, collection, addDoc, 
+  doc, getDoc, collection, addDoc, updateDoc, increment,
   deleteDoc, getDocs, query, where, serverTimestamp 
 } from 'firebase/firestore';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'react-toastify';
 import { incrementPropertyViews } from '../services/analyticsService';
+import Navbar from '../components/Navbar';
 
 // Stunning Image Gallery Component
 const PropertyGallery = ({ images = [] }) => {
@@ -458,22 +459,52 @@ const PropertyDetail = () => {
         }
         
         try {
+            // Reference to the property document
+            const propertyRef = doc(db, 'properties', id);
+            
             if (isFavorite) {
-                // Remove from favorites
+                // Remove from favorites collection
                 await deleteDoc(doc(db, 'favorites', favoriteId));
+                
+                // Decrement the favorites count in the property document
+                await updateDoc(propertyRef, {
+                    favorites: increment(-1), // Decrement by 1
+                    updatedAt: serverTimestamp()
+                });
+                
                 setIsFavorite(false);
                 setFavoriteId(null);
+                
+                // Update local state
+                setProperty(prev => ({
+                    ...prev,
+                    favorites: Math.max((prev.favorites || 0) - 1, 0) // Ensure it doesn't go below 0
+                }));
+                
                 toast.success('Removed from favorites');
             } else {
-                // Add to favorites
+                // Add to favorites collection
                 const favoriteRef = await addDoc(collection(db, 'favorites'), {
                     userId: currentUser.uid,
                     propertyId: id,
                     createdAt: serverTimestamp()
                 });
                 
+                // Increment the favorites count in the property document
+                await updateDoc(propertyRef, {
+                    favorites: increment(1), // Increment by 1
+                    updatedAt: serverTimestamp()
+                });
+                
                 setIsFavorite(true);
                 setFavoriteId(favoriteRef.id);
+                
+                // Update local state
+                setProperty(prev => ({
+                    ...prev,
+                    favorites: (prev.favorites || 0) + 1
+                }));
+                
                 toast.success('Added to favorites');
             }
         } catch (err) {
@@ -709,6 +740,7 @@ const PropertyDetail = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            <Navbar />
             <div className="pt-20 pb-10">
                 <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                     {/* Image Gallery */}
@@ -733,7 +765,7 @@ const PropertyDetail = () => {
 
                                     <div>
                                         <h2 className="text-3xl font-bold text-emerald-600">
-                                            ${property.price?.toLocaleString() || '0'}
+                                            Ksh.{property.price?.toLocaleString() || '0'}
                                         </h2>
                                         <div className="mt-1 text-sm text-gray-500">
                                             Listed on {new Date(property.createdAt?.toDate() || Date.now()).toLocaleDateString()}

@@ -72,7 +72,7 @@ const UserBookings = () => {
                                 id: bookingDoc.id,
                                 propertyId,
                                 propertyTitle: 'Property No Longer Available',
-                                address: 'N/A',
+                                area: 'N/A',
                                 date: bookingData.date.toDate().toISOString(),
                                 time: bookingData.time || 'N/A',
                                 status: bookingData.status || 'Pending',
@@ -91,7 +91,7 @@ const UserBookings = () => {
                             id: bookingDoc.id,
                             propertyId,
                             propertyTitle: propertyData.title || 'Unnamed Property',
-                            address: propertyData.address || 'No address provided',
+                            area: propertyData.area || 'No area provided',
                             date: bookingData.date.toDate().toISOString(),
                             time: bookingData.time || 'N/A',
                             status: bookingData.status || 'Pending',
@@ -373,7 +373,7 @@ const UserBookings = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                         <div className="flex items-start">
                                             <FiMapPin className="text-gray-400 mt-1 mr-2 flex-shrink-0" />
-                                            <span className="text-gray-600">{booking.address}</span>
+                                            <span className="text-gray-600">{booking.area}</span>
                                         </div>
 
                                         <div className="flex items-start">

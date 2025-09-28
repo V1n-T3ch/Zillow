@@ -40,7 +40,7 @@ const VendorDashboard = () => {
                     id: doc.id,
                     ...doc.data(),
                     title: doc.data().title || 'Untitled Property',
-                    address: doc.data().address || 'Address not available',
+                    address: doc.data().area || 'Address not available',
                     price: doc.data().price || 0,
                     status: doc.data().status || 'pending',
                     type: doc.data().propertyType || doc.data().type || 'Property',
@@ -110,7 +110,7 @@ const VendorDashboard = () => {
                             clientName: bookingData.userName || bookingData.clientName || 'Client',
                             clientEmail: bookingData.userEmail || bookingData.clientEmail || '',
                             date: formattedDate,
-                            time: bookingData.time || 'Not specified',
+                            time: bookingData.bookingTime || 'Not specified',
                             status: bookingData.status || 'Pending',
                             imageUrl: propertyImage || 'https://placehold.co/800x500?text=Property'
                         };
@@ -349,7 +349,7 @@ const VendorDashboard = () => {
                                                     <p className="mb-4 text-gray-600">{property.address}</p>
                                                 </div>
                                                 <div className="mt-2 text-right md:mt-0">
-                                                    <p className="text-2xl font-bold text-emerald-600">${property.price.toLocaleString()}</p>
+                                                    <p className="text-2xl font-bold text-emerald-600">Ksh.{property.price.toLocaleString()}</p>
                                                 </div>
                                             </div>
 

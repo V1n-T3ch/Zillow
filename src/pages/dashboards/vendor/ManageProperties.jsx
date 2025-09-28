@@ -131,8 +131,8 @@ const ManageProperties = () => {
                                     </div>
                                     <div className="sm:w-2/4 mb-4 sm:mb-0">
                                         <h3 className="font-bold text-lg text-gray-800">{property.title}</h3>
-                                        <p className="text-gray-600">{property.address}</p>
-                                        <p className="text-lg font-semibold text-emerald-600">${property.price?.toLocaleString() || '0'}</p>
+                                        <p className="text-gray-600">{property.area || 'Not Available'}</p>
+                                        <p className="text-lg font-semibold text-emerald-600">Ksh.{property.price?.toLocaleString() || '0'}</p>
                                         <div className="mt-2 flex flex-wrap gap-2">
                                             <span className={`px-2 py-1 text-xs rounded-full ${property.status === 'active'
                                                     ? 'bg-green-100 text-green-800'
