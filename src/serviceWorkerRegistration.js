@@ -1,10 +1,12 @@
 export function register() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      const swUrl = `${import.meta.env.VITE_PUBLIC_URL}/serviceWorker.js`;
+      // Use window.location.origin instead of environment variable
+      const swUrl = `${window.location.origin}/serviceWorker.js`;
       console.log('Service Worker URL: ', swUrl);
+      
       navigator.serviceWorker
-        .register(swUrl)
+        .register(swUrl, { scope: '/' })  // Add explicit scope
         .then(registration => {
           console.log('Service Worker registered: ', registration);
         })

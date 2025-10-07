@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { FiSearch, FiMapPin, FiHome, FiChevronRight, FiUser, FiDollarSign, FiShield, FiStar } from 'react-icons/fi';
-import { TbBuildingSkyscraper, TbBuildingEstate, TbBuildingCottage, TbBuildingStore } from 'react-icons/tb';
+import { 
+    FiSearch, FiMapPin, FiHome, FiChevronRight, FiUser, 
+    FiDollarSign, FiShield, FiStar, FiMail, FiPhone, 
+    FiMapPin as FiLocation, FiInstagram, FiTwitter, FiFacebook 
+} from 'react-icons/fi';
+import { TbBrandTiktok, TbBuildingSkyscraper, TbBuildingEstate, TbBuildingCottage, TbBuildingStore } from 'react-icons/tb';
 import { motion as Motion } from 'framer-motion';
 import { db } from '../firebase';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
@@ -92,31 +96,6 @@ const Home = () => {
             name: 'Hillside',
             properties: 12,
             image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-        }
-    ];
-
-    // Testimonials data
-    const testimonials = [
-        {
-            id: 1,
-            text: "I found my dream home in just two weeks using Dwella. The search tools made it so easy to find exactly what I was looking for.",
-            author: "Sarah Johnson",
-            role: "Homeowner",
-            avatar: "https://randomuser.me/api/portraits/women/44.jpg"
-        },
-        {
-            id: 2,
-            text: "As a real estate agent, I've increased my client base by 40% since listing on Dwella. The platform is intuitive and powerful.",
-            author: "Michael Chen",
-            role: "Real Estate Agent",
-            avatar: "https://randomuser.me/api/portraits/men/32.jpg"
-        },
-        {
-            id: 3,
-            text: "The virtual tours feature saved me so much time. I was able to narrow down my options without leaving my current home.",
-            author: "Emily Rodriguez",
-            role: "First-time Buyer",
-            avatar: "https://randomuser.me/api/portraits/women/68.jpg"
         }
     ];
 
@@ -489,37 +468,6 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* Testimonials */}
-            <section className="py-16 bg-gray-50">
-                <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <h2 className="mb-12 font-serif text-3xl font-bold text-center text-gray-900">What Our Users Say</h2>
-
-                    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-                        {testimonials.map((testimonial) => (
-                            <div key={testimonial.id} className="p-6 bg-white rounded-xl shadow-subtle">
-                                <div className="flex items-center mb-1">
-                                    {[...Array(5)].map((_, i) => (
-                                        <FiStar key={i} className="mr-1 text-yellow-400 fill-yellow-400" />
-                                    ))}
-                                </div>
-                                <p className="mb-6 text-gray-700">"{testimonial.text}"</p>
-                                <div className="flex items-center">
-                                    <img
-                                        src={testimonial.avatar}
-                                        alt={testimonial.author}
-                                        className="w-12 h-12 mr-4 rounded-full"
-                                    />
-                                    <div>
-                                        <h4 className="font-bold text-gray-800">{testimonial.author}</h4>
-                                        <p className="text-sm text-gray-600">{testimonial.role}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
             {/* CTA Section */}
             <section className="py-20 bg-emerald-600">
                 <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -546,34 +494,162 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* Trust Badges */}
-            <section className="py-12 border-t border-gray-200">
-                <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="flex flex-col items-center justify-between text-center md:flex-row md:text-left">
-                        <div className="mb-6 md:mb-0">
-                            <h3 className="mb-2 text-lg font-bold text-gray-800">Dwella</h3>
-                            <p className="text-gray-600">
-                                Making real estate simple, secure, and successful
-                            </p>
-                        </div>
+            {/* Footer */}
+            <footer className="text-white bg-gray-900">
+                {/* Main Footer */}
+                <div className="py-12 border-b border-gray-800">
+                    <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+                            {/* Company Info */}
+                            <div>
+                                <h3 className="mb-6 text-xl font-bold text-white">
+                                    <span className="text-emerald-400">D</span>wella
+                                </h3>
+                                <p className="mb-6 text-gray-400">
+                                    Your trusted partner in finding the perfect property. Making real estate simple, secure, and successful since 2023.
+                                </p>
+                                <div className="flex space-x-4">
+                                    <a href="https://instagram.com/dwella_ke" target="_blank" rel="noopener noreferrer"
+                                       className="p-2 transition-colors bg-gray-800 rounded-full hover:bg-emerald-600">
+                                        <FiInstagram size={18} />
+                                    </a>
+                                    <a href="https://facebook.com/dwella_ke" target="_blank" rel="noopener noreferrer"
+                                       className="p-2 transition-colors bg-gray-800 rounded-full hover:bg-emerald-600">
+                                        <FiFacebook size={18} />
+                                    </a>
+                                    <a href="https://twitter.com/dwella_ke" target="_blank" rel="noopener noreferrer"
+                                       className="p-2 transition-colors bg-gray-800 rounded-full hover:bg-emerald-600">
+                                        <FiTwitter size={18} />
+                                    </a>
+                                    <a href="https://tiktok.com/@dwella_ke" target="_blank" rel="noopener noreferrer"
+                                       className="p-2 transition-colors bg-gray-800 rounded-full hover:bg-emerald-600">
+                                        <TbBrandTiktok size={18} />
+                                    </a>
+                                </div>
+                            </div>
 
-                        <div className="flex flex-wrap justify-center gap-8 md:justify-end">
-                            <div className="flex items-center">
-                                <FiShield className="mr-2 text-emerald-600" size={20} />
-                                <span className="text-gray-700">Secure Transactions</span>
+                            {/* Quick Links */}
+                            <div>
+                                <h3 className="mb-6 text-lg font-semibold">Quick Links</h3>
+                                <ul className="space-y-3">
+                                    <li>
+                                        <Link to="/properties" className="text-gray-400 transition-colors hover:text-emerald-400">
+                                            Browse Properties
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/neighborhoods" className="text-gray-400 transition-colors hover:text-emerald-400">
+                                            Neighborhoods
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/agents" className="text-gray-400 transition-colors hover:text-emerald-400">
+                                            Find an Agent
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/vendor-application" className="text-gray-400 transition-colors hover:text-emerald-400">
+                                            List Your Property
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/blog" className="text-gray-400 transition-colors hover:text-emerald-400">
+                                            Real Estate Blog
+                                        </Link>
+                                    </li>
+                                </ul>
                             </div>
-                            <div className="flex items-center">
-                                <FiUser className="mr-2 text-emerald-600" size={20} />
-                                <span className="text-gray-700">Verified Agents</span>
+
+                            {/* Contact Information */}
+                            <div>
+                                <h3 className="mb-6 text-lg font-semibold">Contact Us</h3>
+                                <ul className="space-y-4">
+                                    <li className="flex items-start">
+                                        <FiLocation className="mt-1 mr-3 text-emerald-400" />
+                                        <span className="text-gray-400">
+                                            Westlands Business Park<br />
+                                            Nairobi, Kenya
+                                        </span>
+                                    </li>
+                                    <li className="flex items-center">
+                                        <FiPhone className="mr-3 text-emerald-400" />
+                                        <a href="tel:+254794886290" className="text-gray-400 transition-colors hover:text-emerald-400">
+                                            +254 794 886 290
+                                        </a>
+                                    </li>
+                                    <li className="flex items-center">
+                                        <FiMail className="mr-3 text-emerald-400" />
+                                        <a href="mailto:dwellakenya@gmail.com" className="text-gray-400 transition-colors hover:text-emerald-400">
+                                            dwellakenya@gmail.com
+                                        </a>
+                                    </li>
+                                </ul>
                             </div>
-                            <div className="flex items-center">
-                                <FiStar className="mr-2 text-emerald-600" size={20} />
-                                <span className="text-gray-700">Top Rated Service</span>
+
+                            {/* Newsletter */}
+                            <div>
+                                <h3 className="mb-6 text-lg font-semibold">Newsletter</h3>
+                                <p className="mb-4 text-gray-400">
+                                    Subscribe to get the latest property listings and real estate news
+                                </p>
+                                <form className="space-y-3">
+                                    <div className="flex flex-wrap items-center">
+                                        <input 
+                                            type="email" 
+                                            placeholder="Your email address" 
+                                            className="w-full px-4 py-2 text-gray-800 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                            required
+                                        />
+                                    </div>
+                                    <button 
+                                        type="submit" 
+                                        className="w-full px-4 py-2 text-white transition-colors rounded-lg bg-emerald-600 hover:bg-emerald-700"
+                                    >
+                                        Subscribe
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
                 </div>
-            </section>
+
+                {/* Bottom Footer */}
+                <div className="py-6">
+                    <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                        <div className="flex flex-col items-center justify-between md:flex-row">
+                            <p className="text-sm text-gray-500">
+                                © {new Date().getFullYear()} Dwella Real Estate. All rights reserved.
+                            </p>
+                            <div className="flex mt-4 space-x-6 md:mt-0">
+                                <Link to="/privacy-policy" className="text-sm text-gray-500 transition-colors hover:text-emerald-400">
+                                    Privacy Policy
+                                </Link>
+                                <Link to="/terms-of-service" className="text-sm text-gray-500 transition-colors hover:text-emerald-400">
+                                    Terms of Service
+                                </Link>
+                                <Link to="/sitemap" className="text-sm text-gray-500 transition-colors hover:text-emerald-400">
+                                    Sitemap
+                                </Link>
+                            </div>
+                        </div>
+                        
+                        <div className="flex flex-wrap justify-center gap-6 mt-6 md:justify-start">
+                            <div className="flex items-center">
+                                <FiShield className="mr-2 text-emerald-400" size={16} />
+                                <span className="text-sm text-gray-500">Secure Transactions</span>
+                            </div>
+                            <div className="flex items-center">
+                                <FiUser className="mr-2 text-emerald-400" size={16} />
+                                <span className="text-sm text-gray-500">Verified Agents</span>
+                            </div>
+                            <div className="flex items-center">
+                                <FiStar className="mr-2 text-emerald-400" size={16} />
+                                <span className="text-sm text-gray-500">Top Rated Service</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 };

@@ -1,15 +1,14 @@
-const CACHE_NAME = 'dwella-v1';
+const CACHE_NAME = 'dwella-v2'; // Increment cache version
 const urlsToCache = [
   '/',
   '/index.html',
-  '/static/js/main.chunk.js',
-  '/static/js/0.chunk.js',
-  '/static/js/bundle.js',
-  '/static/css/main.chunk.css',
-  '/manifest.json',
+  '/site.webmanifest',
   '/favicon.ico',
-  '/logo192.png',
-  '/logo512.png'
+  '/android-chrome-192x192.png',
+  '/android-chrome-512x512.png',
+  // Vite uses this pattern for assets, not CRA's pattern
+  '/assets/index-*.js',
+  '/assets/index-*.css'
 ];
 
 // Installation
