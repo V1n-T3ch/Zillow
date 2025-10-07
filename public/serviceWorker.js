@@ -1,14 +1,11 @@
-const CACHE_NAME = 'dwella-v2'; // Increment cache version
+const CACHE_NAME = 'dwella-v3';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/site.webmanifest',
+  '/manifest.json', // Updated filename
   '/favicon.ico',
   '/android-chrome-192x192.png',
-  '/android-chrome-512x512.png',
-  // Vite uses this pattern for assets, not CRA's pattern
-  '/assets/index-*.js',
-  '/assets/index-*.css'
+  '/android-chrome-512x512.png'
 ];
 
 // Installation
@@ -19,51 +16,73 @@ self.addEventListener('install', event => {
         console.log('Cache opened');
         return cache.addAll(urlsToCache);
       })
+      .catch(error => {
+        console.error('Service worker installation failed:', error);
+      })
   );
+  // Force activation
+  self.skipWaiting();
 });
 
-// Cache and return requests
+// Cache and return requests with better error handling
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Cache hit - return response
         if (response) {
-          return response;
+          return response; // Cache hit
         }
-        return fetch(event.request)
+
+        // Clone the request
+        const fetchRequest = event.request.clone();
+        
+        return fetch(fetchRequest)
           .then(response => {
-            // Check if we received a valid response
+            // Check if response is valid
             if(!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
 
             // Clone the response
             const responseToCache = response.clone();
-
+            
             caches.open(CACHE_NAME)
               .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
+                // Don't cache if method isn't GET
+                if(event.request.method === 'GET') {
+                  cache.put(event.request, responseToCache);
+                }
+              })
+              .catch(err => console.error('Error caching new resource:', err));
 
             return response;
+          })
+          .catch(error => {
+            console.error('Fetch failed:', error);
+            // Return a fallback response if we have one
+            return caches.match('/offline.html');
           });
       })
   );
 });
 
-// Update service worker
+// Activate and clean up old caches
 self.addEventListener('activate', event => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if(cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys()
+      .then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            if(cacheWhitelist.indexOf(cacheName) === -1) {
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+      .then(() => {
+        // Take control of all clients immediately
+        return self.clients.claim();
+      })
   );
 });
