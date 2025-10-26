@@ -389,7 +389,7 @@ const PropertyDetail = () => {
                 // Record the view after a short delay (to ensure it's an actual view, not just a page load)
                 if (!hasRecordedView) {
                     const viewTimer = setTimeout(() => {
-                        incrementPropertyViews(id, propertyData.vendorId);
+                        incrementPropertyViews(id, propertyData.agentID);
                         setHasRecordedView(true);
                     }, 5000); // 5 second delay
                     
@@ -435,7 +435,7 @@ const PropertyDetail = () => {
                 // Increment view counter after a short delay
                 // The delay prevents counting accidental/bounce views
                 const viewTimer = setTimeout(() => {
-                    incrementPropertyViews(id, propertyData.vendorId);
+                    incrementPropertyViews(id, propertyData.agentID);
                 }, 5000); // 5 second delay
                 
                 return () => clearTimeout(viewTimer); // Clean up timer
@@ -590,9 +590,9 @@ const PropertyDetail = () => {
                 notes: bookingNotes,
                 status: 'pending',
                 createdAt: serverTimestamp(),
-                vendorId: property.vendorId,       // Make sure to include vendorId
+                agentID: property.agentID,       // Make sure to include agentID
                 propertyTitle: property.title,     // Include property title
-                agentName: property.vendorName     // Use vendorName directly
+                agentName: property.agentName     // Use agentName directly
             });
             
             setBookingSubmitted(true);
@@ -985,7 +985,7 @@ const PropertyDetail = () => {
                                         <FiUser className="text-gray-400" size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-gray-800">{property.vendorName || 'Property Agent'}</h3>
+                                        <h3 className="font-bold text-gray-800">{property.agentName || 'Property Agent'}</h3>
                                         <p className="text-sm text-gray-600">Zillow Real Estate</p>
                                     </div>
                                 </div>
@@ -1032,7 +1032,7 @@ const PropertyDetail = () => {
                                         <FiPhone className="mr-3 text-emerald-500" />
                                         Contact via phone
                                     </a>
-                                    <a href={`mailto:${property.vendorEmail || 'contact@example.com'}`} className="flex items-center text-gray-700 hover:text-emerald-600">
+                                    <a href={`mailto:${property.agentEmail || 'contact@example.com'}`} className="flex items-center text-gray-700 hover:text-emerald-600">
                                         <FiMessageSquare className="mr-3 text-emerald-500" />
                                         Send email inquiry
                                     </a>

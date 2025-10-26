@@ -148,9 +148,9 @@ const Notifications = () => {
 
   const getNotificationIcon = (type) => {
     switch (type) {
-      case 'vendor_approved':
+      case 'agent_approved':
         return <FiCheckCircle className="text-green-500" />;
-      case 'vendor_rejected':
+      case 'agent_rejected':
         return <FiXCircle className="text-red-500" />;
       case 'property_approved':
         return <FiHome className="text-emerald-500" />;

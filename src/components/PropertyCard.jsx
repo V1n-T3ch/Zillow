@@ -14,7 +14,6 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
         images,
         city,
         area,
-        status, 
         isNewListing, 
         isFavorite, 
         description, 

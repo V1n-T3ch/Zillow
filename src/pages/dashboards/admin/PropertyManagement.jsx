@@ -105,25 +105,25 @@ const PropertyManagement = () => {
             toast.success(statusMessages[newStatus] || `Property status updated to ${newStatus}`);
 
             // Send notification to the property owner
-            if (property.vendorId) {
+            if (property.agentID) {
                 if (newStatus === 'active') {
                     // Send property approved notification
                     await sendPropertyApprovedNotification(
-                        property.vendorId,
+                        property.agentID,
                         propertyId,
                         property.title || 'Your property'
                     );
                 } else if (newStatus === 'rejected') {
                     // Send property rejected notification
                     await sendPropertyRejectedNotification(
-                        property.vendorId,
+                        property.agentID,
                         propertyId,
                         property.title || 'Your property',
                         'The property did not meet our listing requirements.'
                     );
                 }
             } else {
-                console.warn('No vendor ID found for property, notification not sent');
+                console.warn('No Agent ID found for property, notification not sent');
             }
         } catch (error) {
             console.error("Error updating property status:", error);
@@ -152,16 +152,16 @@ const PropertyManagement = () => {
             toast.success("Property has been permanently deleted");
 
             // Send notification to the property owner about the deletion
-            if (property.vendorId) {
+            if (property.agentID) {
                 // Create a custom notification for property deletion
                 // We're using the rejection notification but with a specific message
                 await sendPropertyRejectedNotification(
-                    property.vendorId,
+                    property.agentID,
                     propertyId,
                     property.title || 'Your property',
                     'This property has been removed from our platform by an administrator.'
                 );
-                console.log('Property deletion notification sent to vendor');
+                console.log('Property deletion notification sent to agent');
             }
         } catch (error) {
             console.error("Error deleting property:", error);
@@ -346,7 +346,7 @@ const PropertyManagement = () => {
                                         </div>
 
                                         <div className="flex items-center justify-between mb-4 text-sm">
-                                            <span>Listed by: {property.vendorName || 'Unknown'}</span>
+                                            <span>Listed by: {property.agentName || 'Unknown'}</span>
                                             <span>Added: {formatDate(property.createdAt)}</span>
                                         </div>
 

@@ -40,34 +40,34 @@ export const createNotification = async (
 };
 
 /**
- * Create vendor application approved notification
+ * Create agent application approved notification
  */
-export const sendVendorApprovedNotification = async (userId) => {
+export const sendAgentApprovedNotification = async (userId) => {
   return createNotification(
     userId,
-    'vendor_approved',
-    'Vendor Application Approved',
-    `Congratulations! Your application to become a vendor has been approved. You can now list properties on our platform.`,
+    'agent_approved',
+    'agent Application Approved',
+    `Congratulations! Your application to become a Agent has been approved. You can now list properties on our platform.`,
     { approved: true },
-    '/vendor'
+    '/agent'
   );
 };
 
 /**
- * Create vendor application rejected notification
+ * Create agent application rejected notification
  */
-export const sendVendorRejectedNotification = async (userId, reason = '') => {
+export const sendAgentRejectedNotification = async (userId, reason = '') => {
   const message = reason 
-    ? `Your vendor application has been rejected. Reason: ${reason}`
-    : 'Your vendor application has been rejected. Please contact support for more information.';
+    ? `Your Agent application has been rejected. Reason: ${reason}`
+    : 'Your Agent application has been rejected. Please contact support for more information.';
   
   return createNotification(
     userId,
-    'vendor_rejected',
-    'Vendor Application Rejected',
+    'agent_rejected',
+    'agent Application Rejected',
     message,
     { approved: false },
-    '/vendor-application'
+    '/agent-application'
   );
 };
 
@@ -99,53 +99,7 @@ export const sendPropertyRejectedNotification = async (userId, propertyId, prope
     'Property Listing Rejected',
     message,
     { propertyId },
-    `/vendor/properties/${propertyId}/edit`
-  );
-};
-
-/**
- * Create booking request notification for vendor
- */
-export const sendBookingRequestedNotification = async (vendorId, bookingId, propertyTitle, userName, date, time) => {
-  return createNotification(
-    vendorId,
-    'booking_requested',
-    'New Booking Request',
-    `${userName} has requested a viewing for "${propertyTitle}" on ${date} at ${time}.`,
-    { bookingId },
-    `/vendor/bookings/${bookingId}`
-  );
-};
-
-/**
- * Create booking confirmed notification for user
- */
-export const sendBookingConfirmedNotification = async (userId, bookingId, propertyTitle, date, time) => {
-  return createNotification(
-    userId,
-    'booking_confirmed',
-    'Booking Confirmed',
-    `Your booking request for "${propertyTitle}" on ${date} at ${time} has been confirmed.`,
-    { bookingId },
-    `/bookings/${bookingId}`
-  );
-};
-
-/**
- * Create booking canceled notification
- */
-export const sendBookingCanceledNotification = async (userId, propertyTitle, date, time, canceledBy, reason = '') => {
-  const message = reason
-    ? `Your booking for "${propertyTitle}" on ${date} at ${time} has been canceled by ${canceledBy}. Reason: ${reason}`
-    : `Your booking for "${propertyTitle}" on ${date} at ${time} has been canceled by ${canceledBy}.`;
-  
-  return createNotification(
-    userId,
-    'booking_canceled',
-    'Booking Canceled',
-    message,
-    {},
-    '/bookings'
+    `/agent/properties/${propertyId}/edit`
   );
 };
 
@@ -164,16 +118,16 @@ export const sendMessageReceivedNotification = async (userId, senderId, senderNa
 };
 
 /**
- * Create property view milestone notification for vendor
+ * Create property view milestone notification for agent
  */
-export const sendPropertyViewMilestoneNotification = async (vendorId, propertyId, propertyTitle, viewCount) => {
+export const sendPropertyViewMilestoneNotification = async (agentId, propertyId, propertyTitle, viewCount) => {
   return createNotification(
-    vendorId,
+    agentId,
     'property_view',
     'Property Milestone',
     `Your property "${propertyTitle}" has reached ${viewCount} views!`,
     { propertyId, viewCount },
-    `/vendor/properties/${propertyId}/stats`
+    `/agent/properties/${propertyId}/stats`
   );
 };
 

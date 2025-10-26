@@ -46,7 +46,7 @@ const PropertyAnalytics = () => {
   const [activeTab, setActiveTab] = useState('views'); // 'views' or 'favorites'
   const [dataLoading, setDataLoading] = useState(false);
   
-  // Fetch vendor's properties
+  // Fetch agent's properties
   useEffect(() => {
     const fetchProperties = async () => {
       if (!currentUser) return;
@@ -56,7 +56,7 @@ const PropertyAnalytics = () => {
         
         const propertiesQuery = query(
           collection(db, 'properties'),
-          where('vendorId', '==', currentUser.uid),
+          where('agentID', '==', currentUser.uid),
           orderBy('createdAt', 'desc')
         );
         
@@ -79,7 +79,7 @@ const PropertyAnalytics = () => {
         // Fetch bookings data
         const bookingsQuery = query(
           collection(db, 'bookings'),
-          where('vendorId', '==', currentUser.uid),
+          where('agentID', '==', currentUser.uid),
           where('status', 'in', ['pending', 'confirmed'])
         );
         
@@ -243,7 +243,7 @@ const PropertyAnalytics = () => {
   };
 
   return (
-    <DashboardLayout role="vendor">
+    <DashboardLayout role="agent">
       <div>
         <h2 className="mb-6 text-2xl font-bold text-gray-800">Property Analytics</h2>
         

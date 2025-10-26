@@ -123,39 +123,6 @@ const PropertyListing = () => {
                     property.price >= priceRange[0] && property.price <= priceRange[1]
                 );
 
-                // Filter by bedrooms (now using direct input value)
-                if (bedrooms && bedrooms !== '') {
-                    const bedsValue = parseInt(bedrooms);
-                    if (!isNaN(bedsValue)) {
-                        filtered = filtered.filter(property => property.beds === bedsValue);
-                    }
-                }
-
-                // Filter by location (case-insensitive partial match for both city and area)
-                if (location !== 'Any' && location !== '') {
-                    const searchTerm = location.toLowerCase().trim();
-                    
-                    filtered = filtered.filter(property => {
-                        // Check if city matches (case-insensitive)
-                        const cityMatch = property.city && 
-                            property.city.toLowerCase().includes(searchTerm);
-                        
-                        // Check if area matches (case-insensitive)
-                        const areaMatch = property.area && 
-                            property.area.toLowerCase().includes(searchTerm);
-                        
-                        // Return true if either city or area matches
-                        return cityMatch || areaMatch;
-                    });
-                }
-
-                // Filter by status (map UI status to data status)
-                if (propertyStatus !== 'Any') {
-                    filtered = filtered.filter(property => 
-                        property.listingStatus === propertyStatus
-                    );
-                }
-
                 // Calculate total for pagination
                 setTotalCount(filtered.length);
 
@@ -170,16 +137,6 @@ const PropertyListing = () => {
                 if (currentUser) {
                     await fetchUserFavorites();
                 }
-
-                // Log for debugging
-                console.log(`Found ${filtered.length} properties, showing ${paginatedResults.length} on page ${currentPage}`);
-                console.log('Applied filters:', {
-                    price: priceRange,
-                    beds: bedrooms,
-                    location,
-                    status: propertyStatus,
-                    type: propertyType
-                });
 
             } catch (error) {
                 console.error('Error fetching properties:', error);
@@ -277,18 +234,15 @@ const PropertyListing = () => {
             }
         } catch (error) {
             console.error('Error toggling favorite:', error);
-            toast.error('Failed to update favorites. Please try again.');
+            // toast.error('Failed to update favorites. Please try again.');
         }
     };
 
     const applyFilters = () => {
         // Update URL params
         setSearchParams({
-            type: propertyType,
-            beds: bedrooms,
             minPrice: priceRange[0],
             maxPrice: priceRange[1],
-            status: propertyStatus,
             location: location,
             sort: sortOption,
             page: 1 // Reset to first page on filter change
@@ -297,10 +251,7 @@ const PropertyListing = () => {
 
     const resetFilters = () => {
         setPriceRange([0, 2000000]);
-        setBedrooms('');
-        setPropertyType('Any');
-        setPropertyStatus('Any');
-        setLocation('Any');
+        setLocation(location);
         setSortOption('newest');
         setCurrentPage(1);
         setSearchParams({});
@@ -340,315 +291,242 @@ const PropertyListing = () => {
                 pauseOnHover
             />
 
-            <div className="container px-4 py-8 mx-auto">
-                <h1 className="mb-8 text-3xl font-bold">Property Listings</h1>
+            <div className="pb-16 md:pb-0">
+                <div className="container px-4 py-8 mx-auto">
+                    <h1 className="mb-8 text-3xl font-bold">Property Listings</h1>
 
-                {error && (
-                    <div className="flex items-start p-4 mb-6 text-red-700 rounded-lg bg-red-50">
-                        <FiAlertCircle className="mt-0.5 mr-2" size={18} />
-                        <div>{error}</div>
-                    </div>
-                )}
-
-                <div className="flex flex-col gap-6 lg:flex-row">
-                    {/* Filters Sidebar */}
-                    <div className={`lg:w-1/4 bg-white p-6 rounded-lg shadow-md ${showFilters ? 'block' : 'hidden lg:block'}`}>
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold">Filters</h2>
-                            <button
-                                onClick={resetFilters}
-                                className="text-sm text-emerald-600 hover:underline"
-                            >
-                                Reset All
-                            </button>
+                    {error && (
+                        <div className="flex items-start p-4 mb-6 text-red-700 rounded-lg bg-red-50">
+                            <FiAlertCircle className="mt-0.5 mr-2" size={18} />
+                            <div>{error}</div>
                         </div>
+                    )}
 
-                        {/* Price Range */}
-                        <div className="mb-6">
-                            <h3 className="mb-3 font-semibold">Price Range</h3>
-                            <div className="flex items-center gap-3">
-                                <div className="flex-1">
-                                    <label className="block mb-1 text-xs text-gray-500">Min Price</label>
-                                    <div className="relative">
-                                        <input
-                                            type="number"
-                                            className="w-full p-2 border rounded"
-                                            value={priceRange[0]}
-                                            onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
-                                        />
+                    <div className="flex flex-col gap-6 lg:flex-row">
+                        {/* Compact Filters Sidebar */}
+                        <div className={`lg:w-1/4 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+                            <div className="bg-white p-4 rounded-lg shadow-md h-fit">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-lg font-bold">Filters</h2>
+                                    <button
+                                        onClick={resetFilters}
+                                        className="text-sm text-emerald-600 hover:underline"
+                                    >
+                                        Reset
+                                    </button>
+                                </div>
+
+                                {/* Price Range */}
+                                <div className="mb-4">
+                                    <h3 className="mb-2 font-medium text-gray-700">Price Range</h3>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex-1">
+                                            <input
+                                                type="number"
+                                                placeholder="Min"
+                                                className="w-full p-2 text-sm border rounded focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                                value={priceRange[0]}
+                                                onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
+                                            />
+                                        </div>
+                                        <span className="text-gray-400">-</span>
+                                        <div className="flex-1">
+                                            <input
+                                                type="number"
+                                                placeholder="Max"
+                                                className="w-full p-2 text-sm border rounded focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                                value={priceRange[1]}
+                                                onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 0])}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="flex-1">
-                                    <label className="block mb-1 text-xs text-gray-500">Max Price</label>
-                                    <div className="relative">
-                                        <input
-                                            type="number"
-                                            className="w-full p-2 border rounded"
-                                            value={priceRange[1]}
-                                            onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 0])}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Bedrooms - Now an input field */}
-                        <div className="mb-6">
-                            <h3 className="mb-3 font-semibold">Bedrooms</h3>
-                            <input
-                                type="number"
-                                min="0"
-                                className="w-full p-2 border rounded"
-                                placeholder="Enter number of bedrooms"
-                                value={bedrooms}
-                                onChange={(e) => setBedrooms(e.target.value)}
-                            />
-                        </div>
-
-                        {/* Property Type */}
-                        <div className="mb-6">
-                            <h3 className="mb-3 font-semibold">Property Type</h3>
-                            <select
-                                className="w-full p-2 bg-white border rounded"
-                                value={propertyType}
-                                onChange={(e) => setPropertyType(e.target.value)}
-                            >
-                                <option value="Any">Any</option>
-                                <option value="House">House</option>
-                                <option value="Apartment">Apartment</option>
-                                <option value="Condo">Condo</option>
-                                <option value="Townhouse">Townhouse</option>
-                                <option value="Villa">Villa</option>
-                                <option value="Land">Land</option>
-                            </select>
-                        </div>
-
-                        {/* Property Status */}
-                        <div className="mb-6">
-                            <h3 className="mb-3 font-semibold">Listing Type</h3>
-                            <div className="flex flex-wrap gap-2">
-                                {['Any', 'For Sale', 'For Rent'].map(option => (
-                                    <button
-                                        key={option}
-                                        className={`px-4 py-2 rounded-full ${propertyStatus === option
-                                            ? 'bg-emerald-600 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                            }`}
-                                        onClick={() => setPropertyStatus(option)}
-                                    >
-                                        {option}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Location - Search for city or area */}
-                        <div className="mb-6">
-                            <h3 className="mb-3 font-semibold">Location</h3>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    className="w-full p-2 pr-8 border rounded"
-                                    placeholder="Search by city or area"
-                                    value={location === 'Any' ? '' : location}
-                                    onChange={(e) => setLocation(e.target.value ? e.target.value.trim() : 'Any')}
-                                />
-                                {location !== 'Any' && (
-                                    <button 
-                                        className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-500"
-                                        onClick={() => setLocation('Any')}
-                                    >
-                                        <span className="text-xl">&times;</span>
-                                    </button>
-                                )}
-                            </div>
-                            <p className="mt-1 text-xs text-gray-500">
-                                Searches both city and area fields
-                            </p>
-                        </div>
-
-                        <button
-                            onClick={applyFilters}
-                            className="w-full py-3 text-white transition rounded-lg bg-emerald-600 hover:bg-emerald-700"
-                        >
-                            Apply Filters
-                        </button>
-                    </div>
-
-                    {/* Property Listings */}
-                    <div className="lg:w-3/4">
-                        {/* Results Header */}
-                        <div className="flex flex-col justify-between gap-4 p-4 mb-6 bg-white rounded-lg shadow-md sm:flex-row sm:items-center">
-                            <div>
-                                <p className="text-gray-600">
-                                    {isLoading
-                                        ? 'Loading properties...'
-                                        : `${filteredProperties.length} properties found`
-                                    }
-                                </p>
-                            </div>
-
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center overflow-hidden border rounded">
-                                    <button
-                                        className={`p-2 ${viewMode === 'grid' ? 'bg-emerald-600 text-white' : 'bg-white text-gray-700'}`}
-                                        onClick={() => setViewMode('grid')}
-                                    >
-                                        <FiGrid />
-                                    </button>
-                                    <button
-                                        className={`p-2 ${viewMode === 'list' ? 'bg-emerald-600 text-white' : 'bg-white text-gray-700'}`}
-                                        onClick={() => setViewMode('list')}
-                                    >
-                                        <FiList />
-                                    </button>
-                                </div>
-
-                                <select
-                                    className="p-2 bg-white border rounded"
-                                    value={sortOption}
-                                    onChange={(e) => setSortOption(e.target.value)}
-                                >
-                                    <option value="newest">Newest</option>
-                                    <option value="price-asc">Price: Low to High</option>
-                                    <option value="price-desc">Price: High to Low</option>
-                                    <option value="beds-desc">Most Bedrooms</option>
-                                </select>
 
                                 <button
-                                    className="p-2 border rounded lg:hidden"
-                                    onClick={() => setShowFilters(!showFilters)}
+                                    onClick={applyFilters}
+                                    className="w-full py-2 text-sm font-medium text-white transition rounded-lg bg-emerald-600 hover:bg-emerald-700"
                                 >
-                                    <FiFilter /> {showFilters ? 'Hide Filters' : 'Show Filters'}
+                                    Apply Filters
                                 </button>
                             </div>
                         </div>
 
-                        {/* Properties Grid/List */}
-                        {isLoading ? (
-                            // Skeleton loading UI
-                            <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-6' : 'space-y-6'}>
-                                {[1, 2, 3, 4, 5, 6].map(i => (
-                                    <div key={i} className="overflow-hidden bg-white rounded-lg shadow-md animate-pulse">
-                                        <div className="w-full h-48 bg-gray-300"></div>
-                                        <div className="p-4">
-                                            <div className="w-3/4 h-6 mb-3 bg-gray-300 rounded"></div>
-                                            <div className="w-1/2 h-4 mb-3 bg-gray-300 rounded"></div>
-                                            <div className="w-1/4 h-5 mb-3 bg-gray-300 rounded"></div>
-                                            <div className="flex justify-between mb-3">
-                                                <div className="w-12 h-4 bg-gray-300 rounded"></div>
-                                                <div className="w-12 h-4 bg-gray-300 rounded"></div>
-                                                <div className="w-12 h-4 bg-gray-300 rounded"></div>
-                                            </div>
-                                            <div className="w-full bg-gray-300 rounded h-9"></div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <>
-                                {filteredProperties.length > 0 ? (
-                                    <div className="space-y-6">
-                                        <div className={viewMode === 'grid'
-                                            ? 'grid grid-cols-1 md:grid-cols-2 gap-6'
-                                            : 'space-y-6'
-                                        }>
-                                            {filteredProperties.map(property => (
-                                                <PropertyCard
-                                                    key={property.id}
-                                                    property={{
-                                                        ...property,
-                                                        isFavorite: Boolean(favorites[property.id]),
-                                                        // Match the expected field names in PropertyCard
-                                                        beds: property.beds || 0,
-                                                        baths: property.baths || 0,
-                                                        // Use listingStatus directly
-                                                        listingStatus: property.listingStatus || 'For Sale',
-                                                        propertyType: property.propertyType || 'Property',
-                                                        // Ensure price has a default value
-                                                        price: property.price || 0,
-                                                        // Use the first image from images array
-                                                        imageUrl: property.images?.[0] || 'https://placehold.co/800x500?text=No+Image'
-                                                    }}
-                                                    onFavoriteToggle={() => toggleFavorite(property.id)}
-                                                    viewMode={viewMode}
-                                                />
-                                            ))}
-                                        </div>
+                        {/* Property Listings */}
+                        <div className="lg:w-3/4">
+                            {/* Results Header */}
+                            <div className="flex flex-col justify-between gap-4 p-4 mb-6 bg-white rounded-lg shadow-md sm:flex-row sm:items-center">
+                                <div>
+                                    <p className="text-gray-600">
+                                        {isLoading
+                                            ? 'Loading properties...'
+                                            : `${filteredProperties.length} properties found`
+                                        }
+                                    </p>
+                                </div>
 
-                                        {/* Pagination */}
-                                        {totalPages > 1 && (
-                                            <div className="flex items-center justify-center mt-8 space-x-2">
-                                                <button
-                                                    onClick={() => goToPage(currentPage - 1)}
-                                                    disabled={currentPage === 1}
-                                                    className={`px-3 py-1 rounded ${currentPage === 1
-                                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                                        }`}
-                                                >
-                                                    Previous
-                                                </button>
-
-                                                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                                                    // Show limited page numbers with ellipsis
-                                                    .filter(page =>
-                                                        page === 1 ||
-                                                        page === totalPages ||
-                                                        (page >= currentPage - 1 && page <= currentPage + 1)
-                                                    )
-                                                    .map((page, index, array) => {
-                                                        // Add ellipsis
-                                                        if (index > 0 && array[index - 1] !== page - 1) {
-                                                            return (
-                                                                <span key={`ellipsis-${page}`} className="px-3 py-1">
-                                                                    ...
-                                                                </span>
-                                                            );
-                                                        }
-
-                                                        return (
-                                                            <button
-                                                                key={page}
-                                                                onClick={() => goToPage(page)}
-                                                                className={`px-3 py-1 rounded ${currentPage === page
-                                                                        ? 'bg-emerald-600 text-white'
-                                                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                                                    }`}
-                                                            >
-                                                                {page}
-                                                            </button>
-                                                        );
-                                                    })
-                                                }
-
-                                                <button
-                                                    onClick={() => goToPage(currentPage + 1)}
-                                                    disabled={currentPage === totalPages}
-                                                    className={`px-3 py-1 rounded ${currentPage === totalPages
-                                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                                        }`}
-                                                >
-                                                    Next
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="p-8 text-center bg-white rounded-lg shadow-md">
-                                        <h3 className="mb-2 text-xl font-semibold">No properties found</h3>
-                                        <p className="mb-4 text-gray-600">Try adjusting your search criteria or filters</p>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center overflow-hidden border rounded">
                                         <button
-                                            onClick={resetFilters}
-                                            className="px-4 py-2 text-white rounded-lg bg-emerald-600 hover:bg-emerald-700"
+                                            className={`p-2 ${viewMode === 'grid' ? 'bg-emerald-600 text-white' : 'bg-white text-gray-700'}`}
+                                            onClick={() => setViewMode('grid')}
                                         >
-                                            Reset Filters
+                                            <FiGrid />
+                                        </button>
+                                        <button
+                                            className={`p-2 ${viewMode === 'list' ? 'bg-emerald-600 text-white' : 'bg-white text-gray-700'}`}
+                                            onClick={() => setViewMode('list')}
+                                        >
+                                            <FiList />
                                         </button>
                                     </div>
-                                )}
-                            </>
-                        )}
+
+                                    <select
+                                        className="p-2 bg-white border rounded"
+                                        value={sortOption}
+                                        onChange={(e) => setSortOption(e.target.value)}
+                                    >
+                                        <option value="newest">Newest</option>
+                                        <option value="price-asc">Price: Low to High</option>
+                                        <option value="price-desc">Price: High to Low</option>
+                                        <option value="beds-desc">Most Bedrooms</option>
+                                    </select>
+
+                                    <button
+                                        className="flex items-center gap-1 p-2 border rounded lg:hidden"
+                                        onClick={() => setShowFilters(!showFilters)}
+                                    >
+                                        <FiFilter size={16} />
+                                        <span className="text-sm">{showFilters ? 'Hide' : 'Show'}</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Properties Grid/List */}
+                            {isLoading ? (
+                                // Skeleton loading UI
+                                <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-6' : 'space-y-6'}>
+                                    {[1, 2, 3, 4, 5, 6].map(i => (
+                                        <div key={i} className="overflow-hidden bg-white rounded-lg shadow-md animate-pulse">
+                                            <div className="w-full h-48 bg-gray-300"></div>
+                                            <div className="p-4">
+                                                <div className="w-3/4 h-6 mb-3 bg-gray-300 rounded"></div>
+                                                <div className="w-1/2 h-4 mb-3 bg-gray-300 rounded"></div>
+                                                <div className="w-1/4 h-5 mb-3 bg-gray-300 rounded"></div>
+                                                <div className="flex justify-between mb-3">
+                                                    <div className="w-12 h-4 bg-gray-300 rounded"></div>
+                                                    <div className="w-12 h-4 bg-gray-300 rounded"></div>
+                                                    <div className="w-12 h-4 bg-gray-300 rounded"></div>
+                                                </div>
+                                                <div className="w-full bg-gray-300 rounded h-9"></div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <>
+                                    {filteredProperties.length > 0 ? (
+                                        <div className="space-y-6">
+                                            <div className={viewMode === 'grid'
+                                                ? 'grid grid-cols-1 md:grid-cols-2 gap-6'
+                                                : 'space-y-6'
+                                            }>
+                                                {filteredProperties.map(property => (
+                                                    <PropertyCard
+                                                        key={property.id}
+                                                        property={{
+                                                            ...property,
+                                                            isFavorite: Boolean(favorites[property.id]),
+                                                            // Match the expected field names in PropertyCard
+                                                            beds: property.beds || 0,
+                                                            baths: property.baths || 0,
+                                                            // Use listingStatus directly
+                                                            listingStatus: property.listingStatus || 'For Sale',
+                                                            propertyType: property.propertyType || 'Property',
+                                                            // Ensure price has a default value
+                                                            price: property.price || 0,
+                                                            // Use the first image from images array
+                                                            imageUrl: property.images?.[0] || 'https://placehold.co/800x500?text=No+Image'
+                                                        }}
+                                                        onFavoriteToggle={() => toggleFavorite(property.id)}
+                                                        viewMode={viewMode}
+                                                    />
+                                                ))}
+                                            </div>
+
+                                            {/* Pagination */}
+                                            {totalPages > 1 && (
+                                                <div className="flex items-center justify-center mt-8 space-x-2">
+                                                    <button
+                                                        onClick={() => goToPage(currentPage - 1)}
+                                                        disabled={currentPage === 1}
+                                                        className={`px-3 py-1 rounded ${currentPage === 1
+                                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                            }`}
+                                                    >
+                                                        Previous
+                                                    </button>
+
+                                                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                                        // Show limited page numbers with ellipsis
+                                                        .filter(page =>
+                                                            page === 1 ||
+                                                            page === totalPages ||
+                                                            (page >= currentPage - 1 && page <= currentPage + 1)
+                                                        )
+                                                        .map((page, index, array) => {
+                                                            // Add ellipsis
+                                                            if (index > 0 && array[index - 1] !== page - 1) {
+                                                                return (
+                                                                    <span key={`ellipsis-${page}`} className="px-3 py-1">
+                                                                        ...
+                                                                    </span>
+                                                                );
+                                                            }
+
+                                                            return (
+                                                                <button
+                                                                    key={page}
+                                                                    onClick={() => goToPage(page)}
+                                                                    className={`px-3 py-1 rounded ${currentPage === page
+                                                                            ? 'bg-emerald-600 text-white'
+                                                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                                        }`}
+                                                                >
+                                                                    {page}
+                                                                </button>
+                                                            );
+                                                        })
+                                                    }
+
+                                                    <button
+                                                        onClick={() => goToPage(currentPage + 1)}
+                                                        disabled={currentPage === totalPages}
+                                                        className={`px-3 py-1 rounded ${currentPage === totalPages
+                                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                            }`}
+                                                    >
+                                                        Next
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="p-8 text-center bg-white rounded-lg shadow-md">
+                                            <h3 className="mb-2 text-xl font-semibold">No properties found</h3>
+                                            <p className="mb-4 text-gray-600">Try adjusting your search criteria or filters</p>
+                                            <button
+                                                onClick={resetFilters}
+                                                className="px-4 py-2 text-white rounded-lg bg-emerald-600 hover:bg-emerald-700"
+                                            >
+                                                Reset Filters
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

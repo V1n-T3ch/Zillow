@@ -184,7 +184,7 @@ const SavedProperties = () => {
                                             </div>
                                         </div>
 
-                                        <p className="text-2xl font-bold text-emerald-600">${property.price.toLocaleString()}</p>
+                                        <p className="text-2xl font-bold text-emerald-600">Ksh.{property.price.toLocaleString()}</p>
                                     </div>
 
                                     <div className="flex justify-between items-center mt-2">

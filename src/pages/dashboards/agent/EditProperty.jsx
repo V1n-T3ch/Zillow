@@ -61,7 +61,7 @@ const EditProperty = () => {
                 const propertyData = propertyDoc.data();
                 
                 // Check if the current user is the owner
-                if (propertyData.vendorId !== currentUser.uid) {
+                if (propertyData.agentID !== currentUser.uid) {
                     setError('You do not have permission to edit this property');
                     setIsLoading(false);
                     return;
@@ -229,7 +229,7 @@ const EditProperty = () => {
             toast.success('Property updated successfully!');
             
             // Redirect to manage properties
-            navigate('/vendor/properties');
+            navigate('/agent/properties');
             
         } catch (error) {
             console.error('Error updating property:', error);
@@ -243,7 +243,7 @@ const EditProperty = () => {
     
     if (isLoading) {
         return (
-            <DashboardLayout role="vendor">
+            <DashboardLayout role="agent">
                 <div className="animate-pulse space-y-4">
                     <div className="h-8 bg-gray-200 rounded w-1/2"></div>
                     <div className="h-64 bg-gray-200 rounded"></div>
@@ -256,13 +256,13 @@ const EditProperty = () => {
     
     if (error) {
         return (
-            <DashboardLayout role="vendor">
+            <DashboardLayout role="agent">
                 <div className="bg-red-50 p-4 rounded-lg mb-6 text-red-700 flex items-start">
                     <FiAlertCircle className="mt-0.5 mr-2" size={18} />
                     <div>{error}</div>
                 </div>
                 <button
-                    onClick={() => navigate('/vendor/properties')}
+                    onClick={() => navigate('/agent/properties')}
                     className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                 >
                     Back to Properties
@@ -272,7 +272,7 @@ const EditProperty = () => {
     }
     
     return (
-        <DashboardLayout role="vendor">
+        <DashboardLayout role="agent">
             <div>
                 <div className="mb-6">
                     <h2 className="text-2xl font-bold text-gray-800">Edit Property</h2>
@@ -648,7 +648,7 @@ const EditProperty = () => {
                     <div className="flex items-center justify-end space-x-4">
                         <button
                             type="button"
-                            onClick={() => navigate('/vendor/properties')}
+                            onClick={() => navigate('/agent/properties')}
                             className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                             disabled={isSubmitting}
                         >

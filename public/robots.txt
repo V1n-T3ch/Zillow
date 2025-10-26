@@ -4,26 +4,22 @@ User-agent: *
 Allow: /
 Allow: /properties
 Allow: /properties/*
-Allow: /neighborhoods
-Allow: /agents
 
 ## Disallow authentication pages
 
 Disallow: /login
 Disallow: /register
 Disallow: /forgot-password
-Disallow: /vendor-application
+Disallow: /agent-application
 
 ## Disallow all dashboard areas
 
 Disallow: /dashboard
 Disallow: /dashboard/*
-Disallow: /vendor
-Disallow: /vendor/*
 Disallow: /admin
 Disallow: /admin/*
 Disallow: /notifications
 
 ## Sitemap location
 
-Sitemap: <https://dwella.co.ke/sitemap.xml>
+Sitemap: https://dwella.co.ke/sitemap.xml

@@ -186,7 +186,7 @@ const UserManagement = () => {
                             >
                                 <option value="all">All Roles</option>
                                 <option value="user">User</option>
-                                <option value="vendor">Vendor</option>
+                                <option value="agent">Agent</option>
                                 <option value="admin">Admin</option>
                             </select>
                         </div>
@@ -273,13 +273,13 @@ const UserManagement = () => {
                                                         onChange={(e) => handleRoleChange(user.id, e.target.value)}
                                                         className={`text-sm rounded-full px-3 py-1 font-medium ${user.role === 'admin'
                                                                 ? 'bg-purple-100 text-purple-800'
-                                                                : user.role === 'vendor'
+                                                                : user.role === 'agent'
                                                                     ? 'bg-blue-100 text-blue-800'
                                                                     : 'bg-gray-100 text-gray-800'
                                                             }`}
                                                     >
                                                         <option value="user">User</option>
-                                                        <option value="vendor">Vendor</option>
+                                                        <option value="agent">agent</option>
                                                         <option value="admin">Admin</option>
                                                     </select>
                                                 </td>

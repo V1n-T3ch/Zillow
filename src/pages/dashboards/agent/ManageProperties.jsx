@@ -21,10 +21,10 @@ const ManageProperties = () => {
             if (!currentUser) return;
 
             try {
-                // Query properties where vendorId matches current user's ID
+                // Query properties where agentID matches current user's ID
                 const propertiesQuery = query(
                     collection(db, 'properties'),
-                    where('vendorId', '==', currentUser.uid),
+                    where('agentID', '==', currentUser.uid),
                     orderBy('createdAt', 'desc')
                 );
 
@@ -73,12 +73,12 @@ const ManageProperties = () => {
     };
 
     return (
-        <DashboardLayout role="vendor">
+        <DashboardLayout role="agent">
             <div>
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-gray-800">Manage Properties</h2>
                     <Link
-                        to="/vendor/list-property"
+                        to="/agent/list-property"
                         className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
                     >
                         <FiPlus className="mr-2" /> Add Property
@@ -109,7 +109,7 @@ const ManageProperties = () => {
                             <div className="bg-gray-50 p-8 rounded-lg text-center">
                                 <p className="text-gray-600 mb-4">You don't have any properties listed yet.</p>
                                 <Link
-                                    to="/vendor/list-property"
+                                    to="/agent/list-property"
                                     className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
                                 >
                                     <FiPlus className="mr-2" /> Add Your First Property
@@ -170,7 +170,7 @@ const ManageProperties = () => {
                                                     <FiEye />
                                                 </Link>
                                                 <Link
-                                                    to={`/vendor/edit-property/${property.id}`}
+                                                    to={`/agent/edit-property/${property.id}`}
                                                     className="p-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100"
                                                     title="Edit Property"
                                                 >

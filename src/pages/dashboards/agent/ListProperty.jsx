@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiImage, FiDollarSign, FiHome, FiLayers, FiPlus, FiXCircle } from 'react-icons/fi';
+import { FiImage, FiDollarSign, FiHome, FiLayers, FiPlus, FiXCircle, FiMapPin } from 'react-icons/fi';
 import DashboardLayout from '../../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../../hooks/useAuth';
 import { db } from '../../../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import axios from 'axios';
+// import LocationPicker from '../../../components/maps/LocationPicker';
 
 const ListProperty = () => {
     const { currentUser } = useAuth();
@@ -22,10 +23,8 @@ const ListProperty = () => {
         city: '',
         area: '',
         propertyType: '',
-        listingStatus: '',
         beds: '',
         baths: '',
-        yearBuilt: '',
         stories: '1',
         garage: '0',
         features: [],
@@ -38,11 +37,57 @@ const ListProperty = () => {
     const propertyTypes = [
         'House', 'Apartment', 'Condo', 'Townhouse', 'Villa', 'Land', 'Commercial'
     ];
-    
-    const listingStatus = [
-        'For Sale', 'For Rent'
-    ];
 
+    const kenyaCounties = [
+        'Baringo',
+        'Bomet',
+        'Bungoma',
+        'Busia',
+        'Elgeyo-Marakwet',
+        'Embu',
+        'Garissa',
+        'Homa Bay',
+        'Isiolo',
+        'Kajiado',
+        'Kakamega',
+        'Kericho',
+        'Kiambu',
+        'Kilifi',
+        'Kirinyaga',
+        'Kisii',
+        'Kisumu',
+        'Kitui',
+        'Kwale',
+        'Laikipia',
+        'Lamu',
+        'Machakos',
+        'Makueni',
+        'Mandera',
+        'Marsabit',
+        'Meru',
+        'Migori',
+        'Mombasa',
+        'Murang\'a',
+        'Nairobi',
+        'Nakuru',
+        'Nandi',
+        'Narok',
+        'Nyamira',
+        'Nyandarua',
+        'Nyeri',
+        'Samburu',
+        'Siaya',
+        'Taita-Taveta',
+        'Tana River',
+        'Tharaka-Nithi',
+        'Trans Nzoia',
+        'Turkana',
+        'Uasin Gishu',
+        'Vihiga',
+        'Wajir',
+        'West Pokot'
+    ];
+    
     const possibleFeatures = [
         'Air Conditioning', 'Balcony', 'Dishwasher', 'Fireplace', 'Garden',
         'Gym', 'Hardwood Floors', 'Parking', 'Pool', 'Security System',
@@ -54,7 +99,7 @@ const ListProperty = () => {
         const { name, value } = e.target;
 
         // Handle number inputs
-        if (['price', 'beds', 'baths', 'yearBuilt'].includes(name)) {
+        if (['price', 'beds', 'baths'].includes(name)) {
             const numberValue = value === '' ? '' : Number(value);
             setFormData({ ...formData, [name]: numberValue });
         } else {
@@ -216,29 +261,6 @@ const ListProperty = () => {
                             </div>
 
                             <div>
-                                <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="price">
-                                    Price (Ksh.) *
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                        <FiDollarSign className="text-gray-500" />
-                                    </div>
-                                    <input
-                                        id="price"
-                                        name="price"
-                                        type="number"
-                                        min="0"
-                                        step="1000"
-                                        value={formData.price}
-                                        onChange={handleChange}
-                                        required
-                                        className="block w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                        placeholder="450000"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
                                 <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="propertyType">
                                     Property Type *
                                 </label>
@@ -263,22 +285,26 @@ const ListProperty = () => {
                             </div>
 
                             <div>
-                                <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="listingStatus">
-                                    Listing Status *
+                                <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="price">
+                                    Price (Ksh.) *
                                 </label>
-                                <select
-                                    id="listingStatus"
-                                    name="listingStatus"
-                                    value={formData.listingStatus}
-                                    onChange={handleChange}
-                                    required
-                                    className="block w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                >
-                                    <option value="">Select Type</option>
-                                    {listingStatus.map(type => (
-                                        <option key={type} value={type}>{type}</option>
-                                    ))}
-                                </select>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
+                                        Ksh.
+                                    </div>
+                                    <input
+                                        id="price"
+                                        name="price"
+                                        type="number"
+                                        min="0"
+                                        step="1000"
+                                        value={formData.price}
+                                        onChange={handleChange}
+                                        required
+                                        className="block w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        placeholder="450000"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -290,23 +316,31 @@ const ListProperty = () => {
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div>
                                 <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="city">
-                                    City *
+                                    County *
                                 </label>
-                                <input
-                                    id="city"
-                                    name="city"
-                                    type="text"
-                                    value={formData.city}
-                                    onChange={handleChange}
-                                    required
-                                    className="block w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                    placeholder="e.g. Nairobi"
-                                />
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                        <FiMapPin className="text-gray-500" />
+                                    </div>
+                                    <select
+                                        id="city"
+                                        name="city"
+                                        value={formData.city}
+                                        onChange={handleChange}
+                                        required
+                                        className="block w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    >
+                                        <option value="">Select County</option>
+                                        {kenyaCounties.map(county => (
+                                            <option key={county} value={county}>{county}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
 
                             <div>
                                 <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="area">
-                                    Area *
+                                    Area/Neighborhood *
                                 </label>
                                 <input
                                     id="area"
@@ -316,7 +350,7 @@ const ListProperty = () => {
                                     onChange={handleChange}
                                     required
                                     className="block w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                    placeholder="e.g. Westlands"
+                                    placeholder="e.g. Westlands, Karen, Kilimani"
                                 />
                             </div>
                         </div>
@@ -356,22 +390,6 @@ const ListProperty = () => {
                                     value={formData.baths}
                                     onChange={handleChange}
                                     required
-                                    className="block w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="yearBuilt">
-                                    Year Built
-                                </label>
-                                <input
-                                    id="yearBuilt"
-                                    name="yearBuilt"
-                                    type="number"
-                                    min="1800"
-                                    max={new Date().getFullYear()}
-                                    value={formData.yearBuilt}
-                                    onChange={handleChange}
                                     className="block w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                 />
                             </div>
@@ -515,6 +533,9 @@ const ListProperty = () => {
                             </button>
                         )}
                     </div>
+
+                    {/* Map */}
+                    {/* <LocationPicker /> */}
                 </form>
             </div>
         </DashboardLayout>
