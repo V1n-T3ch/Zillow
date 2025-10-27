@@ -192,7 +192,7 @@ const ListProperty = () => {
                 images: imageUrls,
                 location: selectedLocation, // Add this line to save the location
                 address: address, // Optional: save the address string too
-                agentId: currentUser.uid,
+                agentID: currentUser.uid,
                 agentName: currentUser.displayName || 'Anonymous',
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),

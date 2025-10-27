@@ -21,8 +21,8 @@ const Home = () => {
         e.preventDefault();
         if (!searchTerm.trim()) return;
 
-        // Redirect to properties page with search term
-        navigate(`/properties?location=${encodeURIComponent(searchTerm)}`);
+        // Redirect to properties page with search term that will match both city and area
+        navigate(`/properties?search=${encodeURIComponent(searchTerm)}`);
     };
 
     // Handle category click
@@ -33,7 +33,7 @@ const Home = () => {
             setShowLocationModal(true);
         } else {
             // Location is set, navigate directly
-            navigate(`/category?propertyType=${propertyType}&location=${encodeURIComponent(searchTerm)}`);
+            navigate(`/category?propertyType=${propertyType}&search=${encodeURIComponent(searchTerm)}`);
         }
     };
 
@@ -45,7 +45,7 @@ const Home = () => {
         // Set the main search term and navigate
         setSearchTerm(modalLocation);
         setShowLocationModal(false);
-        navigate(`/category?propertyType=${selectedPropertyType}&location=${encodeURIComponent(modalLocation)}`);
+        navigate(`/category?propertyType=${selectedPropertyType}&search=${encodeURIComponent(modalLocation)}`);
         setModalLocation('');
     };
 
@@ -168,7 +168,7 @@ const Home = () => {
                         <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4">
                             {/* Studios & Bedsitters */}
                             <button 
-                                onClick={() => handleCategoryClick('House')}
+                                onClick={() => handleCategoryClick('Bedsitter')}
                                 className="p-4 text-center transition-all duration-300 bg-white border-2 border-emerald-200 group rounded-xl shadow-subtle hover:shadow-lg hover:-translate-y-1"
                             >
                                 <div className="inline-flex items-center justify-center w-12 h-12 mb-3 transition-colors rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white">

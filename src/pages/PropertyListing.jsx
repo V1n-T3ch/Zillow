@@ -30,6 +30,7 @@ const PropertyListing = () => {
     const [propertyStatus, setPropertyStatus] = useState('Any');
     const [showFilters, setShowFilters] = useState(true);
     const [location, setLocation] = useState('Any');
+    const [searchFilter, setSearchFilter] = useState(''); // New search filter for city/area
 
     // Sort state
     const [sortOption, setSortOption] = useState('newest');
@@ -41,12 +42,13 @@ const PropertyListing = () => {
 
     // Get filter values from URL params
     useEffect(() => {
-        const type = searchParams.get('type') || 'Any';
+        const type = searchParams.get('propertyType') || searchParams.get('type') || 'Any';
         const bedsParam = searchParams.get('beds') || '';
         const minPrice = parseInt(searchParams.get('minPrice') || '0');
         const maxPrice = parseInt(searchParams.get('maxPrice') || '2000000');
         const status = searchParams.get('status') || 'Any';
         const loc = searchParams.get('location') || 'Any';
+        const search = searchParams.get('search') || ''; // New search param
         const sort = searchParams.get('sort') || 'newest';
         const page = parseInt(searchParams.get('page') || '1');
 
@@ -55,6 +57,7 @@ const PropertyListing = () => {
         setPriceRange([minPrice, maxPrice]);
         setPropertyStatus(status);
         setLocation(loc);
+        setSearchFilter(search); // Set search filter
         setSortOption(sort);
         setCurrentPage(page);
     }, [searchParams]);
@@ -72,7 +75,7 @@ const PropertyListing = () => {
                     where('status', '==', 'active')
                 );
 
-                // Apply filters from URL parameters
+                // Apply property type filter from URL parameters
                 if (propertyType !== 'Any') {
                     propertiesQuery = query(
                         propertiesQuery,
@@ -94,6 +97,10 @@ const PropertyListing = () => {
                         break;
                     case 'price-desc':
                         sortField = 'price';
+                        sortDirection = 'desc';
+                        break;
+                    case 'beds-desc':
+                        sortField = 'beds';
                         sortDirection = 'desc';
                         break;
                     default:
@@ -118,10 +125,27 @@ const PropertyListing = () => {
                 // Apply client-side filters
                 let filtered = allProperties;
 
+                // Filter by search term (city or area)
+                if (searchFilter && searchFilter.trim() !== '') {
+                    const searchTerm = searchFilter.toLowerCase().trim();
+                    filtered = filtered.filter(property => 
+                        property.city?.toLowerCase().includes(searchTerm) ||
+                        property.area?.toLowerCase().includes(searchTerm)
+                    );
+                }
+
                 // Filter by price
                 filtered = filtered.filter(property => 
                     property.price >= priceRange[0] && property.price <= priceRange[1]
                 );
+
+                // Filter by bedrooms
+                if (bedrooms && bedrooms !== '') {
+                    const bedsNumber = parseInt(bedrooms);
+                    filtered = filtered.filter(property => 
+                        property.beds >= bedsNumber
+                    );
+                }
 
                 // Calculate total for pagination
                 setTotalCount(filtered.length);
@@ -148,7 +172,7 @@ const PropertyListing = () => {
         };
 
         fetchProperties();
-    }, [propertyType, propertyStatus, location, bedrooms, sortOption, currentPage, currentUser, priceRange]);
+    }, [propertyType, propertyStatus, location, bedrooms, sortOption, currentPage, currentUser, priceRange, searchFilter]);
 
     // Fetch user favorites
     const fetchUserFavorites = async () => {
@@ -176,7 +200,6 @@ const PropertyListing = () => {
 
     const toggleFavorite = async (propertyId) => {
         if (!currentUser) {
-            // Redirect to login or show login modal
             toast.info('Please login to save properties to your favorites');
             return;
         }
@@ -186,12 +209,10 @@ const PropertyListing = () => {
                 // Remove from favorites
                 await deleteDoc(doc(db, 'favorites', favorites[propertyId]));
 
-                // Update local state
                 const newFavorites = { ...favorites };
                 delete newFavorites[propertyId];
                 setFavorites(newFavorites);
 
-                // Update property favorites count
                 const propertyRef = doc(db, 'properties', propertyId);
                 const propertyDoc = await getDoc(propertyRef);
 
@@ -213,13 +234,11 @@ const PropertyListing = () => {
                     createdAt: serverTimestamp()
                 });
 
-                // Update local state
                 setFavorites({
                     ...favorites,
                     [propertyId]: docRef.id
                 });
 
-                // Update property favorites count
                 const propertyRef = doc(db, 'properties', propertyId);
                 const propertyDoc = await getDoc(propertyRef);
 
@@ -234,29 +253,48 @@ const PropertyListing = () => {
             }
         } catch (error) {
             console.error('Error toggling favorite:', error);
-            // toast.error('Failed to update favorites. Please try again.');
         }
     };
 
     const applyFilters = () => {
-        // Update URL params
-        setSearchParams({
+        // Update URL params with only the sidebar filters
+        const params = {
             minPrice: priceRange[0],
             maxPrice: priceRange[1],
-            location: location,
             sort: sortOption,
             page: 1 // Reset to first page on filter change
-        });
+        };
+
+        // Preserve existing URL params that aren't handled by sidebar
+        const existingSearch = searchParams.get('search');
+        const existingPropertyType = searchParams.get('propertyType');
+        const existingBeds = searchParams.get('beds');
+
+        if (existingSearch) params.search = existingSearch;
+        if (existingPropertyType) params.propertyType = existingPropertyType;
+        if (existingBeds) params.beds = existingBeds;
+
+        setSearchParams(params);
     };
 
     const resetFilters = () => {
+        // Only reset sidebar filters, keep URL-based filters
         setPriceRange([0, 2000000]);
-        setLocation(location);
         setSortOption('newest');
         setCurrentPage(1);
-        setSearchParams({});
+        
+        // Preserve search and property type from URL
+        const params = {};
+        const existingSearch = searchParams.get('search');
+        const existingPropertyType = searchParams.get('propertyType');
+        const existingBeds = searchParams.get('beds');
 
-        toast.info('Filters have been reset');
+        if (existingSearch) params.search = existingSearch;
+        if (existingPropertyType) params.propertyType = existingPropertyType;
+        if (existingBeds) params.beds = existingBeds;
+
+        setSearchParams(params);
+        toast.info('Price filters have been reset');
     };
 
     // Total pages for pagination
@@ -272,7 +310,6 @@ const PropertyListing = () => {
             page: page.toString()
         });
 
-        // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -293,7 +330,57 @@ const PropertyListing = () => {
 
             <div className="pb-16 md:pb-0">
                 <div className="container px-4 py-8 mx-auto">
-                    <h1 className="mb-8 text-3xl font-bold">Property Listings</h1>
+                    <div className="flex items-center justify-between mb-8">
+                        <h1 className="text-3xl font-bold">Property Listings</h1>
+                        {/* Show current filters if active */}
+                        <div className="flex flex-wrap gap-2">
+                            {searchFilter && (
+                                <div className="flex items-center gap-2 px-3 py-1 text-sm rounded-full bg-emerald-100 text-emerald-800">
+                                    <span>Location: "{searchFilter}"</span>
+                                    <button
+                                        onClick={() => {
+                                            const params = Object.fromEntries(searchParams);
+                                            delete params.search;
+                                            setSearchParams(params);
+                                        }}
+                                        className="ml-1 text-emerald-600 hover:text-emerald-800"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            )}
+                            {propertyType !== 'Any' && (
+                                <div className="flex items-center gap-2 px-3 py-1 text-sm text-blue-800 bg-blue-100 rounded-full">
+                                    <span>Type: {propertyType}</span>
+                                    <button
+                                        onClick={() => {
+                                            const params = Object.fromEntries(searchParams);
+                                            delete params.propertyType;
+                                            setSearchParams(params);
+                                        }}
+                                        className="ml-1 text-blue-600 hover:text-blue-800"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            )}
+                            {bedrooms && (
+                                <div className="flex items-center gap-2 px-3 py-1 text-sm text-purple-800 bg-purple-100 rounded-full">
+                                    <span>Bedrooms: {bedrooms}+</span>
+                                    <button
+                                        onClick={() => {
+                                            const params = Object.fromEntries(searchParams);
+                                            delete params.beds;
+                                            setSearchParams(params);
+                                        }}
+                                        className="ml-1 text-purple-600 hover:text-purple-800"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
 
                     {error && (
                         <div className="flex items-start p-4 mb-6 text-red-700 rounded-lg bg-red-50">
@@ -303,7 +390,7 @@ const PropertyListing = () => {
                     )}
 
                     <div className="flex flex-col gap-6 lg:flex-row">
-                        {/* Compact Filters Sidebar */}
+                        {/* Compact Filters Sidebar - Only Price Range */}
                         <div className={`lg:w-1/4 ${showFilters ? 'block' : 'hidden lg:block'}`}>
                             <div className="p-4 bg-white rounded-lg shadow-md h-fit">
                                 <div className="flex items-center justify-between mb-4">
@@ -359,8 +446,9 @@ const PropertyListing = () => {
                                     <p className="text-gray-600">
                                         {isLoading
                                             ? 'Loading properties...'
-                                            : `${filteredProperties.length} properties found`
+                                            : `${totalCount} properties found`
                                         }
+                                        {searchFilter && ` for "${searchFilter}"`}
                                     </p>
                                 </div>
 
@@ -436,13 +524,10 @@ const PropertyListing = () => {
                                                         property={{
                                                             ...property,
                                                             isFavorite: Boolean(favorites[property.id]),
-                                                            // Match the expected field names in PropertyCard
                                                             beds: property.beds || 0,
                                                             baths: property.baths || 0,                                                         
                                                             propertyType: property.propertyType || 'Property',
-                                                            // Ensure price has a default value
                                                             price: property.price || 0,
-                                                            // Use the first image from images array
                                                             imageUrl: property.images?.[0] || 'https://placehold.co/800x500?text=No+Image'
                                                         }}
                                                         onFavoriteToggle={() => toggleFavorite(property.id)}
@@ -466,14 +551,12 @@ const PropertyListing = () => {
                                                     </button>
 
                                                     {Array.from({ length: totalPages }, (_, i) => i + 1)
-                                                        // Show limited page numbers with ellipsis
                                                         .filter(page =>
                                                             page === 1 ||
                                                             page === totalPages ||
                                                             (page >= currentPage - 1 && page <= currentPage + 1)
                                                         )
                                                         .map((page, index, array) => {
-                                                            // Add ellipsis
                                                             if (index > 0 && array[index - 1] !== page - 1) {
                                                                 return (
                                                                     <span key={`ellipsis-${page}`} className="px-3 py-1">
@@ -513,12 +596,17 @@ const PropertyListing = () => {
                                     ) : (
                                         <div className="p-8 text-center bg-white rounded-lg shadow-md">
                                             <h3 className="mb-2 text-xl font-semibold">No properties found</h3>
-                                            <p className="mb-4 text-gray-600">Try adjusting your search criteria or filters</p>
+                                            <p className="mb-4 text-gray-600">
+                                                {searchFilter 
+                                                    ? `No properties found for "${searchFilter}". Try a different location or adjust your filters.`
+                                                    : 'Try adjusting your search criteria or filters'
+                                                }
+                                            </p>
                                             <button
-                                                onClick={resetFilters}
+                                                onClick={() => setSearchParams({})}
                                                 className="px-4 py-2 text-white rounded-lg bg-emerald-600 hover:bg-emerald-700"
                                             >
-                                                Reset Filters
+                                                Clear All Filters
                                             </button>
                                         </div>
                                     )}

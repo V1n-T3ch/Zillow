@@ -3,21 +3,26 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import Navbar from '../components/Navbar';
-import { FiMapPin, FiChevronRight, FiHome, FiFilter } from 'react-icons/fi';
+import { FiMapPin, FiChevronRight, FiHome, FiFilter, FiX } from 'react-icons/fi';
 import { motion as Motion } from 'framer-motion';
 
 const PropertyCategory = () => {
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const propertyType = searchParams.get('propertyType') || 'House';
+    const searchFilter = searchParams.get('search') || '';
+    const bedsFilter = searchParams.get('beds') || '';
+    const minPrice = parseInt(searchParams.get('minPrice') || '0');
+    const maxPrice = parseInt(searchParams.get('maxPrice') || '2000000');
     
     const [properties, setProperties] = useState([]);
     const [groupedProperties, setGroupedProperties] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [totalCount, setTotalCount] = useState(0);
 
     useEffect(() => {
         fetchPropertiesByType();
-    }, [propertyType]);
+    }, [propertyType, searchFilter, bedsFilter, minPrice, maxPrice]);
 
     const fetchPropertiesByType = async () => {
         try {
@@ -35,19 +40,41 @@ const PropertyCategory = () => {
             if (querySnapshot.empty) {
                 setProperties([]);
                 setGroupedProperties({});
+                setTotalCount(0);
                 setLoading(false);
                 return;
             }
 
-            const fetchedProperties = querySnapshot.docs.map(doc => ({
+            let fetchedProperties = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             }));
 
-            setProperties(fetchedProperties);
+            // Apply client-side filters
+            let filtered = fetchedProperties;
+
+            // Filter by search term (city or area)
+            if (searchFilter && searchFilter.trim() !== '') {
+                const searchTerm = searchFilter.toLowerCase().trim();
+                filtered = filtered.filter(property => 
+                    property.city?.toLowerCase().includes(searchTerm) ||
+                    property.area?.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            // Filter by bedrooms
+            if (bedsFilter && bedsFilter !== '') {
+                const bedsNumber = parseInt(bedsFilter);
+                filtered = filtered.filter(property => 
+                    property.beds >= bedsNumber
+                );
+            }
+
+            setProperties(filtered);
+            setTotalCount(filtered.length);
             
             // Group properties by number of bedrooms
-            const grouped = fetchedProperties.reduce((acc, property) => {
+            const grouped = filtered.reduce((acc, property) => {
                 const beds = parseInt(property.beds) || 0;
                 const key = beds === 0 ? 'Studio' : beds === 1 ? '1 Bedroom' : `${beds} Bedrooms`;
                 
@@ -68,6 +95,18 @@ const PropertyCategory = () => {
         }
     };
 
+    const removeFilter = (filterName) => {
+        const params = Object.fromEntries(searchParams);
+        delete params[filterName];
+        setSearchParams(params);
+    };
+
+    const clearAllFilters = () => {
+        setSearchParams({ propertyType });
+    };
+
+    const hasActiveFilters = searchFilter || bedsFilter || minPrice > 0 || maxPrice < 2000000;
+
     if (loading) {
         return (
             <div className="min-h-screen bg-white">
@@ -83,7 +122,7 @@ const PropertyCategory = () => {
         <div className="min-h-screen bg-gray-50">
             <Navbar />
             
-            <div className="pb-16 md:pb-0 mt-5" >
+            <div className="pb-16 mt-5 md:pb-0">
                 {/* Breadcrumb */}
                 <div className="bg-white border-b">
                     <div className="px-4 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -92,13 +131,66 @@ const PropertyCategory = () => {
                             <FiChevronRight size={16} />
                             <Link to="/properties" className="hover:text-emerald-600">Properties</Link>
                             <FiChevronRight size={16} />
-                            <span className="text-gray-900 font-medium">{propertyType}s</span>
+                            <span className="font-medium text-gray-900">{propertyType}s</span>
                         </nav>
                     </div>
                 </div>
 
+                {/* Active Filters */}
+                {hasActiveFilters && (
+                    <div className="bg-white border-b">
+                        <div className="px-4 py-3 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-sm font-medium text-gray-700">Active filters:</span>
+                                
+                                {searchFilter && (
+                                    <div className="flex items-center gap-1 px-3 py-1 text-sm rounded-full bg-emerald-100 text-emerald-800">
+                                        <span>Location: "{searchFilter}"</span>
+                                        <button
+                                            onClick={() => removeFilter('search')}
+                                            className="ml-1 text-emerald-600 hover:text-emerald-800"
+                                        >
+                                            <FiX size={14} />
+                                        </button>
+                                    </div>
+                                )}
+                                
+                                {bedsFilter && (
+                                    <div className="flex items-center gap-1 px-3 py-1 text-sm text-purple-800 bg-purple-100 rounded-full">
+                                        <span>Bedrooms: {bedsFilter}+</span>
+                                        <button
+                                            onClick={() => removeFilter('beds')}
+                                            className="ml-1 text-purple-600 hover:text-purple-800"
+                                        >
+                                            <FiX size={14} />
+                                        </button>
+                                    </div>
+                                )}
+                                
+                                <button
+                                    onClick={clearAllFilters}
+                                    className="text-sm text-gray-600 underline hover:text-gray-800"
+                                >
+                                    Clear all
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Content */}
                 <div className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    {/* Results Summary */}
+                    <div className="mb-6">
+                        <h1 className="mb-2 text-3xl font-bold text-gray-900">
+                            {propertyType}s {searchFilter && `in ${searchFilter}`}
+                        </h1>
+                        <p className="text-gray-600">
+                            {totalCount} {propertyType.toLowerCase()}{totalCount !== 1 ? 's' : ''} found
+                            {hasActiveFilters && ' with current filters'}
+                        </p>
+                    </div>
+
                     {error && (
                         <div className="p-4 mb-6 text-red-700 bg-red-100 border border-red-300 rounded-lg">
                             {error}
@@ -112,148 +204,93 @@ const PropertyCategory = () => {
                                 No {propertyType}s Found
                             </h2>
                             <p className="mb-8 text-gray-600">
-                                We couldn't find any {propertyType.toLowerCase()}s at the moment. Try checking other property types.
+                                {hasActiveFilters 
+                                    ? `No ${propertyType.toLowerCase()}s match your current filters. Try adjusting your search criteria.`
+                                    : `We couldn't find any ${propertyType.toLowerCase()}s at the moment. Try checking other property types.`
+                                }
                             </p>
-                            <Link
-                                to="/properties"
-                                className="inline-flex items-center px-6 py-3 font-medium text-white transition duration-300 rounded-lg bg-emerald-600 hover:bg-emerald-700"
-                            >
-                                Browse All Properties
-                                <FiChevronRight className="ml-2" />
-                            </Link>
+                            <div className="space-x-4">
+                                {hasActiveFilters && (
+                                    <button
+                                        onClick={clearAllFilters}
+                                        className="inline-flex items-center px-6 py-3 font-medium transition duration-300 border rounded-lg text-emerald-600 border-emerald-600 hover:bg-emerald-600 hover:text-white"
+                                    >
+                                        <FiFilter className="mr-2" />
+                                        Clear Filters
+                                    </button>
+                                )}
+                                <Link
+                                    to="/properties"
+                                    className="inline-flex items-center px-6 py-3 font-medium text-white transition duration-300 rounded-lg bg-emerald-600 hover:bg-emerald-700"
+                                >
+                                    Browse All Properties
+                                    <FiChevronRight className="ml-2" />
+                                </Link>
+                            </div>
                         </div>
                     ) : (
-                        <>
-                            {/* Mobile List View */}
-                            <div className="space-y-4 md:hidden">
-                                {Object.entries(groupedProperties)
-                                    .sort(([a], [b]) => {
-                                        if (a === 'Studio') return -1;
-                                        if (b === 'Studio') return 1;
-                                        const numA = parseInt(a);
-                                        const numB = parseInt(b);
-                                        return numA - numB;
-                                    })
-                                    .map(([bedroomCount, propertyList]) => (
-                                    <Link
-                                        key={bedroomCount}
-                                        to={`/properties?propertyType=${propertyType}&beds=${bedroomCount.split(' ')[0] === 'Studio' ? '0' : bedroomCount.split(' ')[0]}`}
-                                        className="block p-4 transition duration-300 bg-white border rounded-lg hover:shadow-md hover:border-emerald-300"
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <h3 className="text-lg font-semibold text-gray-900">
-                                                    {bedroomCount} {propertyType}s
-                                                </h3>
-                                                <p className="text-sm text-gray-600">
-                                                    {propertyList.length} {propertyList.length === 1 ? 'property' : 'properties'} available
-                                                </p>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <span className="px-2 py-1 text-xs font-medium text-emerald-600 bg-emerald-100 rounded-full">
-                                                    {propertyList.length}
-                                                </span>
-                                                <FiChevronRight className="text-gray-400" size={20} />
-                                            </div>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-
-                            {/* Desktop Card View */}
-                            <div className="hidden space-y-8 md:block">
-                                {Object.entries(groupedProperties)
-                                    .sort(([a], [b]) => {
-                                        if (a === 'Studio') return -1;
-                                        if (b === 'Studio') return 1;
-                                        const numA = parseInt(a);
-                                        const numB = parseInt(b);
-                                        return numA - numB;
-                                    })
-                                    .map(([bedroomCount, propertyList]) => (
-                                    <Motion.div
-                                        key={bedroomCount}
-                                        className="p-6 bg-white border rounded-xl shadow-sm"
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.5 }}
-                                    >
-                                        <div className="flex items-center justify-between mb-6">
-                                            <h2 className="text-2xl font-bold text-gray-900">
-                                                {bedroomCount} {propertyType}s
-                                            </h2>
-                                            <span className="px-3 py-1 text-sm font-medium text-emerald-600 bg-emerald-100 rounded-full">
-                                                {propertyList.length} {propertyList.length === 1 ? 'Property' : 'Properties'}
-                                            </span>
-                                        </div>
-
-                                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                                            {propertyList.map((property) => (
-                                                <Link
-                                                    key={property.id}
-                                                    to={`/properties/${property.id}`}
-                                                    className="block overflow-hidden transition duration-300 bg-white border rounded-lg hover:shadow-lg group"
-                                                >
-                                                    <div className="relative h-48">
-                                                        <img
-                                                            src={property.images?.[0] || 'https://placehold.co/400x300?text=No+Image'}
-                                                            alt={property.title}
-                                                            className="object-cover w-full h-full transition duration-300 group-hover:scale-105"
-                                                            onError={(e) => {
-                                                                e.target.src = 'https://placehold.co/400x300?text=No+Image';
-                                                            }}
-                                                        />
-                                                        <div className="absolute px-2 py-1 text-xs font-medium text-white rounded bg-emerald-600 top-3 left-3">
-                                                            {property.listingType === 'sale' ? 'For Sale' : 'For Rent'}
+                        <div className="space-y-4">
+                            {Object.entries(groupedProperties)
+                                .sort(([a], [b]) => {
+                                    if (a === 'Studio') return -1;
+                                    if (b === 'Studio') return 1;
+                                    const numA = parseInt(a);
+                                    const numB = parseInt(b);
+                                    return numA - numB;
+                                })
+                                .map(([bedroomCount, propertyList]) => {
+                                    const bedValue = bedroomCount.split(' ')[0] === 'Studio' ? '0' : bedroomCount.split(' ')[0];
+                                    const linkParams = new URLSearchParams({ 
+                                        propertyType, 
+                                        beds: bedValue,
+                                        ...(searchFilter && { search: searchFilter }),
+                                    });
+                                    
+                                    return (
+                                        <Motion.div
+                                            key={bedroomCount}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3 }}
+                                        >
+                                            <Link
+                                                to={`/properties?${linkParams.toString()}`}
+                                                className="block p-6 transition duration-300 bg-white border rounded-xl hover:shadow-lg hover:border-emerald-300 group"
+                                            >
+                                                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-50 group-hover:bg-emerald-100">
+                                                                <FiHome className="text-emerald-600" size={24} />
+                                                            </div>
+                                                            <div>
+                                                                <h3 className="text-xl font-bold text-gray-900 group-hover:text-emerald-600">
+                                                                    {bedroomCount} {propertyType}s
+                                                                </h3>
+                                                                <p className="text-sm text-gray-500">
+                                                                    {searchFilter && `in ${searchFilter}`}
+                                                                </p>
+                                                            </div>
                                                         </div>
-                                                    </div>
-
-                                                    <div className="p-4">
-                                                        <h3 className="mb-2 text-lg font-semibold text-gray-900 group-hover:text-emerald-600">
-                                                            {property.title}
-                                                        </h3>
                                                         
-                                                        <div className="flex items-center mb-3 text-gray-600">
-                                                            <FiMapPin className="mr-1 text-gray-400" size={16} />
-                                                            <span className="text-sm">
-                                                                {property.area}, {property.city}
-                                                            </span>
-                                                        </div>
-
-                                                        <div className="flex justify-between mb-3 text-sm text-gray-600">
-                                                            <span>{property.beds} {property.beds === 1 ? 'Bed' : 'Beds'}</span>
-                                                            <span>{property.baths} {property.baths === 1 ? 'Bath' : 'Baths'}</span>
-                                                            <span>{property.sqft} sqft</span>
-                                                        </div>
-
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="text-2xl font-bold text-emerald-600">
-                                                                Ksh {parseInt(property.price).toLocaleString()}
-                                                            </div>
-                                                            <div className="text-emerald-600 group-hover:text-emerald-700">
-                                                                <FiChevronRight size={20} />
-                                                            </div>
-                                                        </div>
+                                                        <p className="text-gray-600">
+                                                            {propertyList.length} {propertyList.length === 1 ? 'property' : 'properties'} available
+                                                        </p>
+                                                        
                                                     </div>
-                                                </Link>
-                                            ))}
-                                        </div>
-
-                                        {propertyList.length > 6 && (
-                                            <div className="mt-6 text-center">
-                                                <Link
-                                                    to={`/properties?propertyType=${propertyType}&beds=${bedroomCount.split(' ')[0] === 'Studio' ? '0' : bedroomCount.split(' ')[0]}`}
-                                                    className="inline-flex items-center px-4 py-2 font-medium text-emerald-600 transition duration-300 border border-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white"
-                                                >
-                                                    View All {bedroomCount} {propertyType}s
-                                                    <FiChevronRight className="ml-2" />
-                                                </Link>
-                                            </div>
-                                        )}
-                                    </Motion.div>
-                                ))}
-                            </div>
-                        </>
+                                                    
+                                                    <div className="flex items-center justify-between md:justify-end md:gap-4">
+                                                        <span className="px-3 py-1 text-sm font-medium rounded-full text-emerald-600 bg-emerald-100">
+                                                            {propertyList.length} {propertyList.length === 1 ? 'Property' : 'Properties'}
+                                                        </span>
+                                                        <FiChevronRight className="text-gray-400 group-hover:text-emerald-600" size={24} />
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        </Motion.div>
+                                    );
+                                })}
+                        </div>
                     )}
                 </div>
             </div>
