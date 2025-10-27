@@ -116,44 +116,57 @@ const Home = () => {
             {/* Add padding bottom for mobile tab navigator */}
             <div className="pb-16 md:pb-0">
                 {/* Hero Section */}
-                <section className="bg-emerald-700">
-                    <div className="flex items-center justify-center w-full px-4 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-                        <Motion.div
-                            className="w-full max-w-2xl overflow-hidden bg-transparent sm:bg-white shadow-none sm:shadow-xl mt-25 rounded-xl"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6 }}
-                        >
-                            <form onSubmit={handleSearch} className="p-0 sm:p-8">
-                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                                    <div className="relative flex-grow">
-                                        <FiMapPin className="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
-                                        <input
-                                            type="text"
-                                            placeholder="Enter a location"
-                                            className="block w-full py-4 pl-10 pr-4 border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white"
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                        />
-                                    </div>
-                                    <button
-                                        type="submit"
-                                        className="hidden sm:block px-8 py-4 font-medium text-white transition duration-300 rounded-lg bg-emerald-600 hover:bg-emerald-700 sm:w-auto"
-                                    >
-                                        <FiSearch className="inline-block mr-2" />
-                                        Search
-                                    </button>
-                                </div>
-                            </form>
-                        </Motion.div>
+                <section className="relative bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-600 min-h-[350px] flex items-center">
+                    <div className="relative w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                        <div className="text-center">
+                            <Motion.h1
+                                className="mb-4 font-serif text-4xl font-bold text-white md:text-5xl lg:text-6xl"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.8 }}
+                            >
+                                House Hunting made easy
+                            </Motion.h1>
+                            
+                            <div className="flex items-center justify-center w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                                <Motion.div
+                                    className="w-full max-w-2xl overflow-hidden bg-transparent shadow-none sm:bg-white sm:shadow-xl rounded-xl"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.6 }}
+                                >
+                                    <form onSubmit={handleSearch} className="p-0 sm:p-4">
+                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                                            <div className="relative flex-grow">
+                                                <FiMapPin className="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Enter a location"
+                                                    className="block w-full py-3 pl-10 pr-4 bg-white border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                />
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                className="hidden px-6 py-3 font-medium text-white transition duration-300 rounded-lg sm:block bg-emerald-600 hover:bg-emerald-700 sm:w-auto"
+                                            >
+                                                <FiSearch className="inline-block mr-2" />
+                                                Search
+                                            </button>
+                                        </div>
+                                    </form>
+                                </Motion.div>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
                 {/* Property Categories */}
-                <section className="py-16 bg-gray-50">
+                <section className="py-8 bg-gray-50">
                     <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-                        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3">
-                            {/* Houses */}
+                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4">
+                            {/* Studios & Bedsitters */}
                             <button 
                                 onClick={() => handleCategoryClick('House')}
                                 className="p-4 text-center transition-all duration-300 bg-white border-2 border-emerald-200 group rounded-xl shadow-subtle hover:shadow-lg hover:-translate-y-1"
@@ -161,10 +174,7 @@ const Home = () => {
                                 <div className="inline-flex items-center justify-center w-12 h-12 mb-3 transition-colors rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white">
                                     <TbBuildingEstate size={24} />
                                 </div>
-                                <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Houses</h3>
-                                <p className="mb-2 text-xs text-gray-600 group-hover:text-gray-700">
-                                    Family homes
-                                </p>
+                                <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Studio/Bedsitter</h3>
                                 <div className="flex items-center justify-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
                                     Browse <FiChevronRight className="ml-1 transition-transform group-hover:translate-x-1" />
                                 </div>
@@ -179,60 +189,62 @@ const Home = () => {
                                     <TbBuildingSkyscraper size={24} />
                                 </div>
                                 <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Apartments</h3>
-                                <p className="mb-2 text-xs text-gray-600 group-hover:text-gray-700">
-                                    City living
-                                </p>
                                 <div className="flex items-center justify-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
                                     Browse <FiChevronRight className="ml-1 transition-transform group-hover:translate-x-1" />
                                 </div>
                             </button>
 
-                            {/* Villas */}
+                            {/* Bungalows */}
                             <button 
-                                onClick={() => handleCategoryClick('Villa')}
+                                onClick={() => handleCategoryClick('Bungalows')}
                                 className="p-4 text-center transition-all duration-300 bg-white border-2 border-emerald-200 group rounded-xl shadow-subtle hover:shadow-lg hover:-translate-y-1"
                             >
                                 <div className="inline-flex items-center justify-center w-12 h-12 mb-3 transition-colors rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white">
                                     <TbBuildingCottage size={24} />
                                 </div>
-                                <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Villas</h3>
-                                <p className="mb-2 text-xs text-gray-600 group-hover:text-gray-700">
-                                    Luxury homes
-                                </p>
+                                <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Bungalows</h3>
                                 <div className="flex items-center justify-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
                                     Browse <FiChevronRight className="ml-1 transition-transform group-hover:translate-x-1" />
                                 </div>
                             </button>
 
-                            {/* Commercial */}
+                            {/* Mansionettes */}
                             <button 
-                                onClick={() => handleCategoryClick('Commercial')}
+                                onClick={() => handleCategoryClick('Mansionettes')}
                                 className="p-4 text-center transition-all duration-300 bg-white border-2 border-emerald-200 group rounded-xl shadow-subtle hover:shadow-lg hover:-translate-y-1"
                             >
                                 <div className="inline-flex items-center justify-center w-12 h-12 mb-3 transition-colors rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white">
                                     <TbBuildingStore size={24} />
                                 </div>
-                                <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Commercial</h3>
-                                <p className="mb-2 text-xs text-gray-600 group-hover:text-gray-700">
-                                    Office & retail
-                                </p>
+                                <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Mansionettes</h3>
                                 <div className="flex items-center justify-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
                                     Browse <FiChevronRight className="ml-1 transition-transform group-hover:translate-x-1" />
                                 </div>
                             </button>
 
-                            {/* Townhouses */}
+                            {/* Luxury Villas */}
                             <button 
-                                onClick={() => handleCategoryClick('Townhouse')}
+                                onClick={() => handleCategoryClick('Luxury Villas')}
                                 className="p-4 text-center transition-all duration-300 bg-white border-2 border-emerald-200 group rounded-xl shadow-subtle hover:shadow-lg hover:-translate-y-1"
                             >
                                 <div className="inline-flex items-center justify-center w-12 h-12 mb-3 transition-colors rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white">
                                     <TbBuildingEstate size={24} />
                                 </div>
-                                <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Townhouses</h3>
-                                <p className="mb-2 text-xs text-gray-600 group-hover:text-gray-700">
-                                    Connected homes
-                                </p>
+                                <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Luxury Villas</h3>
+                                <div className="flex items-center justify-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
+                                    Browse <FiChevronRight className="ml-1 transition-transform group-hover:translate-x-1" />
+                                </div>
+                            </button>
+
+                            {/* Commercials */}
+                            <button 
+                                onClick={() => handleCategoryClick('Commercials')}
+                                className="p-4 text-center transition-all duration-300 bg-white border-2 border-emerald-200 group rounded-xl shadow-subtle hover:shadow-lg hover:-translate-y-1"
+                            >
+                                <div className="inline-flex items-center justify-center w-12 h-12 mb-3 transition-colors rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white">
+                                    <TbBuildingSkyscraper size={24} />   
+                                </div>
+                                <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Commercials</h3>
                                 <div className="flex items-center justify-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
                                     Browse <FiChevronRight className="ml-1 transition-transform group-hover:translate-x-1" />
                                 </div>
@@ -247,9 +259,20 @@ const Home = () => {
                                     <TbBuildingSkyscraper size={24} />   
                                 </div>
                                 <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">BnB</h3>
-                                <p className="mb-2 text-xs text-gray-600 group-hover:text-gray-700">
-                                    Shared buildings
-                                </p>
+                                <div className="flex items-center justify-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
+                                    Browse <FiChevronRight className="ml-1 transition-transform group-hover:translate-x-1" />
+                                </div>
+                            </button>
+
+                            {/* Singles */}
+                            <button 
+                                onClick={() => handleCategoryClick('Singles')}
+                                className="p-4 text-center transition-all duration-300 bg-white border-2 border-emerald-200 group rounded-xl shadow-subtle hover:shadow-lg hover:-translate-y-1"
+                            >
+                                <div className="inline-flex items-center justify-center w-12 h-12 mb-3 transition-colors rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white">
+                                    <TbBuildingSkyscraper size={24} />   
+                                </div>
+                                <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Singles</h3>
                                 <div className="flex items-center justify-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
                                     Browse <FiChevronRight className="ml-1 transition-transform group-hover:translate-x-1" />
                                 </div>
@@ -270,48 +293,31 @@ const Home = () => {
                                         <span className="text-emerald-400">D</span>wella
                                     </h3>
                                     <p className="mb-6 text-gray-400">
-                                        Your trusted partner in finding the perfect property. Making real estate simple, secure, and successful since 2023.
+                                        Making house hunting simple, secure, and successful since 2025.
                                     </p>
-                                    <div className="flex space-x-4">
-                                        <a href="https://instagram.com/dwella_ke" target="_blank" rel="noopener noreferrer"
-                                           className="p-2 transition-colors bg-gray-800 rounded-full hover:bg-emerald-600">
-                                            <FiInstagram size={18} />
-                                        </a>
-                                        <a href="https://facebook.com/dwella_ke" target="_blank" rel="noopener noreferrer"
-                                           className="p-2 transition-colors bg-gray-800 rounded-full hover:bg-emerald-600">
-                                            <FiFacebook size={18} />
-                                        </a>
-                                        <a href="https://twitter.com/dwella_ke" target="_blank" rel="noopener noreferrer"
-                                           className="p-2 transition-colors bg-gray-800 rounded-full hover:bg-emerald-600">
-                                            <FiTwitter size={18} />
-                                        </a>
-                                        <a href="https://tiktok.com/@dwella_ke" target="_blank" rel="noopener noreferrer"
-                                           className="p-2 transition-colors bg-gray-800 rounded-full hover:bg-emerald-600">
-                                            <TbBrandTiktok size={18} />
-                                        </a>
+                                    <div className="flex flex-col space-y-4">
+                                        <div>
+                                            <h4 className="mb-2 text-sm font-semibold text-gray-300">Follow Us</h4>
+                                            <div className="flex space-x-3">
+                                                <a href="https://instagram.com/dwella_ke" target="_blank" rel="noopener noreferrer"
+                                                   className="p-2 transition-colors bg-gray-800 rounded-full hover:bg-emerald-600">
+                                                    <FiInstagram size={18} />
+                                                </a>
+                                                <a href="https://facebook.com/dwella_ke" target="_blank" rel="noopener noreferrer"
+                                                   className="p-2 transition-colors bg-gray-800 rounded-full hover:bg-emerald-600">
+                                                    <FiFacebook size={18} />
+                                                </a>
+                                                <a href="https://twitter.com/dwella_ke" target="_blank" rel="noopener noreferrer"
+                                                   className="p-2 transition-colors bg-gray-800 rounded-full hover:bg-emerald-600">
+                                                    <FiTwitter size={18} />
+                                                </a>
+                                                <a href="https://tiktok.com/@dwella_ke" target="_blank" rel="noopener noreferrer"
+                                                   className="p-2 transition-colors bg-gray-800 rounded-full hover:bg-emerald-600">
+                                                    <TbBrandTiktok size={18} />
+                                                </a>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-
-                                {/* Quick Links */}
-                                <div>
-                                    <h3 className="mb-6 text-lg font-semibold">Quick Links</h3>
-                                    <ul className="space-y-3">
-                                        <li>
-                                            <Link to="/properties" className="text-gray-400 transition-colors hover:text-emerald-400">
-                                                Browse Properties
-                                            </Link>
-                                        </li>
-                                        <li>
-                                            <Link to="/agent-application" className="text-gray-400 transition-colors hover:text-emerald-400">
-                                                List Your Property
-                                            </Link>
-                                        </li>
-                                        <li>
-                                            <Link to="/blog" className="text-gray-400 transition-colors hover:text-emerald-400">
-                                                Real Estate Blog
-                                            </Link>
-                                        </li>
-                                    </ul>
                                 </div>
 
                                 {/* Contact Information */}
@@ -321,7 +327,7 @@ const Home = () => {
                                         <li className="flex items-start">
                                             <FiLocation className="mt-1 mr-3 text-emerald-400" />
                                             <span className="text-gray-400">
-                                                Westlands Business Park<br />
+                                                Westlands<br />
                                                 Nairobi, Kenya
                                             </span>
                                         </li>
@@ -341,7 +347,7 @@ const Home = () => {
                                 </div>
 
                                 {/* Newsletter */}
-                                <div>
+                                {/* <div>
                                     <h3 className="mb-6 text-lg font-semibold">Newsletter</h3>
                                     <p className="mb-4 text-gray-400">
                                         Subscribe to get the latest property listings and real estate news
@@ -362,7 +368,7 @@ const Home = () => {
                                             Subscribe
                                         </button>
                                     </form>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                     </div>

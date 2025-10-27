@@ -4,7 +4,7 @@ import { FiUser, FiHeart, FiLogOut } from 'react-icons/fi';
 import { MdOutlineAdminPanelSettings } from "react-icons/md";
 import { FaBuildingColumns } from "react-icons/fa6";
 import { useAuth } from '../hooks/useAuth';
-import Logo from '/Dwella.jpg'
+import Logo from '/Dwella.jpeg'
 import NotificationBell from './NotificationBell';
 
 const Navbar = () => {

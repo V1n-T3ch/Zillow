@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { FiCrosshair, FiSearch } from 'react-icons/fi';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 const LocationPicker = ({ 
   onLocationSelect, 
@@ -9,28 +11,109 @@ const LocationPicker = ({
   state = '' 
 }) => {
   const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const markerRef = useRef(null); // Use ref instead of state for marker
   const [map, setMap] = useState(null);
-  const [marker, setMarker] = useState(null);
   const [searchValue, setSearchValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(initialLocation || null);
 
-  // Initialize the map
+  // Initialize the map with Leaflet
   useEffect(() => {
-    const googleMapScript = document.createElement('script');
-    googleMapScript.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places`;
-    googleMapScript.async = true;
-    googleMapScript.defer = true;
-    window.document.body.appendChild(googleMapScript);
+    if (!mapRef.current) return;
 
-    googleMapScript.addEventListener('load', () => {
-      initializeMap();
-    });
+    // Check if map is already initialized
+    if (mapRef.current._leaflet_id) {
+      return;
+    }
 
-    return () => {
-      googleMapScript.removeEventListener('load', initializeMap);
+    const initializeMap = () => {
+      try {
+        // Default center at Nairobi, Kenya if no initial location
+        const defaultLocation = initialLocation || { lat: -1.2921, lng: 36.8219 };
+        
+        const newMap = L.map(mapRef.current, {
+          center: [defaultLocation.lat, defaultLocation.lng],
+          zoom: 13,
+          zoomControl: true,
+        });
+
+        // Street map layer
+        const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19,
+        });
+
+        // Satellite layer
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: '© <a href="https://www.esri.com/">Esri</a>',
+          maxZoom: 19,
+        });
+
+        // Add default layer
+        streetLayer.addTo(newMap);
+
+        // Layer control
+        const baseLayers = {
+          "Street Map": streetLayer,
+          "Satellite": satelliteLayer
+        };
+
+        L.control.layers(baseLayers).addTo(newMap);
+
+        setMap(newMap);
+        mapInstanceRef.current = newMap; // Store map instance in ref
+
+        // Add click handler
+        newMap.on('click', (event) => {
+          const clickedLocation = {
+            lat: event.latlng.lat,
+            lng: event.latlng.lng
+          };
+          
+          setSelectedLocation(clickedLocation);
+          setMarkerOnMap(clickedLocation); // No need to pass mapInstance now
+          
+          // Get address from coordinates (reverse geocoding)
+          reverseGeocode(clickedLocation);
+          
+          // Call the parent component callback
+          onLocationSelect(clickedLocation);
+        });
+
+        // Set marker if initial location exists
+        if (initialLocation) {
+          setMarkerOnMap(initialLocation);
+        }
+      } catch (error) {
+        console.error('Error initializing map:', error);
+      }
     };
-  }, []);
+
+    initializeMap();
+
+    // Cleanup function
+    return () => {
+      if (mapRef.current && mapRef.current._leaflet_id) {
+        try {
+          // Clean up marker first
+          if (markerRef.current) {
+            markerRef.current.remove();
+            markerRef.current = null;
+          }
+          
+          // Clean up map
+          const mapInstance = mapInstanceRef.current;
+          if (mapInstance) {
+            mapInstance.remove();
+            mapInstanceRef.current = null;
+          }
+        } catch (error) {
+          console.error('Error cleaning up map:', error);
+        }
+      }
+    };
+  }, []); // Empty dependency array
 
   // Try to center map on address when provided
   useEffect(() => {
@@ -49,78 +132,53 @@ const LocationPicker = ({
     }
   }, [map, initialLocation]);
 
-  const initializeMap = () => {
-    if (!mapRef.current) return;
-    
-    // Default center at a neutral location if no initial location
-    const defaultLocation = { lat: 0, lng: 0 };
-    const mapOptions = {
-      center: initialLocation || defaultLocation,
-      zoom: 14,
-      mapTypeControl: true,
-      streetViewControl: false,
-      fullscreenControl: true,
-    };
-    
-    const newMap = new window.google.maps.Map(mapRef.current, mapOptions);
-    setMap(newMap);
-
-    // Add click handler
-    newMap.addListener('click', (event) => {
-      const clickedLocation = {
-        lat: event.latLng.lat(),
-        lng: event.latLng.lng()
-      };
-      
-      setSelectedLocation(clickedLocation);
-      setMarkerOnMap(clickedLocation);
-      
-      // Get address from coordinates (reverse geocoding)
-      reverseGeocode(clickedLocation);
-      
-      // Call the parent component callback
-      onLocationSelect(clickedLocation);
-    });
-
-    // Set marker if initial location exists
-    if (initialLocation) {
-      setMarkerOnMap(initialLocation);
-    }
-  };
-
   const setMarkerOnMap = (location) => {
-    // Remove existing marker if any
-    if (marker) {
-      marker.setMap(null);
+    const mapInstance = mapInstanceRef.current;
+    if (!mapInstance) return;
+
+    // Remove existing marker using ref
+    if (markerRef.current) {
+      try {
+        mapInstance.removeLayer(markerRef.current);
+      } catch (error) {
+        console.error('Error removing marker:', error);
+      }
+      markerRef.current = null;
     }
     
-    // Create new marker
-    const newMarker = new window.google.maps.Marker({
-      position: location,
-      map: map,
-      animation: window.google.maps.Animation.DROP,
-      draggable: true
-    });
-    
-    // Add drag end event
-    newMarker.addListener('dragend', () => {
-      const newPosition = {
-        lat: newMarker.getPosition().lat(),
-        lng: newMarker.getPosition().lng()
-      };
+    try {
+      // Create new marker
+      const newMarker = L.marker([location.lat, location.lng], {
+        draggable: true
+      }).addTo(mapInstance);
       
-      setSelectedLocation(newPosition);
-      reverseGeocode(newPosition);
-      onLocationSelect(newPosition);
-    });
-    
-    setMarker(newMarker);
+      // Add drag end event
+      newMarker.on('dragend', (event) => {
+        const newPosition = {
+          lat: event.target.getLatLng().lat,
+          lng: event.target.getLatLng().lng
+        };
+        
+        setSelectedLocation(newPosition);
+        reverseGeocode(newPosition);
+        onLocationSelect(newPosition);
+      });
+      
+      // Store marker in ref instead of state
+      markerRef.current = newMarker;
+    } catch (error) {
+      console.error('Error creating marker:', error);
+    }
   };
 
   const centerMap = (location) => {
-    if (map) {
-      map.setCenter(location);
-      map.setZoom(16);
+    const mapInstance = mapInstanceRef.current;
+    if (mapInstance) {
+      try {
+        mapInstance.setView([location.lat, location.lng], 16);
+      } catch (error) {
+        console.error('Error centering map:', error);
+      }
     }
   };
 
@@ -130,47 +188,63 @@ const LocationPicker = ({
     setIsLoading(true);
     
     try {
-      const geocoder = new window.google.maps.Geocoder();
+      // Use Nominatim API for geocoding
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressString)}&limit=1&countrycodes=ke`
+      );
       
-      geocoder.geocode({ address: addressString }, (results, status) => {
-        if (status === 'OK' && results[0]) {
-          const location = {
-            lat: results[0].geometry.location.lat(),
-            lng: results[0].geometry.location.lng()
-          };
-          
-          setSelectedLocation(location);
-          centerMap(location);
-          setMarkerOnMap(location);
-          onLocationSelect(location);
-        }
-        setIsLoading(false);
-      });
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const location = {
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lon)
+        };
+        
+        setSelectedLocation(location);
+        centerMap(location);
+        setMarkerOnMap(location);
+        onLocationSelect(location);
+      } else {
+        console.log('No results found for:', addressString);
+      }
     } catch (error) {
       console.error('Geocoding error:', error);
+    } finally {
       setIsLoading(false);
     }
   };
 
-  const reverseGeocode = (location) => {
+  const reverseGeocode = async (location) => {
     if (!location) return;
     
-    const geocoder = new window.google.maps.Geocoder();
-    
-    geocoder.geocode({ location }, (results, status) => {
-      if (status === 'OK' && results[0]) {
-        console.log('Address found:', results[0].formatted_address);
+    try {
+      // Use Nominatim API for reverse geocoding
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lng}&zoom=16&addressdetails=1`
+      );
+      
+      const data = await response.json();
+      
+      if (data && data.display_name) {
+        console.log('Address found:', data.display_name);
+        // You can use this address data as needed
       }
-    });
+    } catch (error) {
+      console.error('Reverse geocoding error:', error);
+    }
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
-    geocodeAddress(searchValue);
+    if (searchValue.trim()) {
+      geocodeAddress(searchValue);
+    }
   };
 
   const getUserLocation = () => {
     if (navigator.geolocation) {
+      setIsLoading(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const userLocation = {
@@ -182,9 +256,11 @@ const LocationPicker = ({
           centerMap(userLocation);
           setMarkerOnMap(userLocation);
           onLocationSelect(userLocation);
+          setIsLoading(false);
         },
         (error) => {
           console.error('Error getting location:', error);
+          setIsLoading(false);
         }
       );
     } else {
@@ -196,29 +272,33 @@ const LocationPicker = ({
     <div className="w-full">
       <div className="flex mb-4 space-x-2">
         <div className="relative flex-grow">
-          <form onSubmit={handleSearch}>
+          <div>
             <input
               type="text"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              placeholder="Search for address"
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+              placeholder="Search for address in Kenya"
               className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             />
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <FiSearch className="text-gray-500" />
             </div>
             <button 
-              type="submit"
+              type="button"
+              onClick={handleSearch}
               className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-emerald-600"
+              disabled={isLoading}
             >
-              Search
+              {isLoading ? 'Searching...' : 'Search'}
             </button>
-          </form>
+          </div>
         </div>
         <button
           type="button"
           onClick={getUserLocation}
-          className="flex items-center px-4 py-2 text-white rounded-lg bg-emerald-600 hover:bg-emerald-700"
+          disabled={isLoading}
+          className="flex items-center px-4 py-2 text-white rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400"
         >
           <FiCrosshair className="mr-2" />
           My Location
@@ -228,6 +308,7 @@ const LocationPicker = ({
       <div 
         ref={mapRef} 
         className="w-full border border-gray-300 rounded-lg shadow-md h-96"
+        style={{ height: '400px' }}
       ></div>
       
       {selectedLocation && (

@@ -305,7 +305,7 @@ const PropertyListing = () => {
                     <div className="flex flex-col gap-6 lg:flex-row">
                         {/* Compact Filters Sidebar */}
                         <div className={`lg:w-1/4 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-                            <div className="bg-white p-4 rounded-lg shadow-md h-fit">
+                            <div className="p-4 bg-white rounded-lg shadow-md h-fit">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-lg font-bold">Filters</h2>
                                     <button
@@ -438,9 +438,7 @@ const PropertyListing = () => {
                                                             isFavorite: Boolean(favorites[property.id]),
                                                             // Match the expected field names in PropertyCard
                                                             beds: property.beds || 0,
-                                                            baths: property.baths || 0,
-                                                            // Use listingStatus directly
-                                                            listingStatus: property.listingStatus || 'For Sale',
+                                                            baths: property.baths || 0,                                                         
                                                             propertyType: property.propertyType || 'Property',
                                                             // Ensure price has a default value
                                                             price: property.price || 0,

@@ -69,9 +69,6 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
                                 New
                             </span>
                         )}
-                        <span className={`${listingStatus === 'For Sale' ? 'bg-amber-500' : 'bg-violet-600'} text-white px-3 py-1 rounded-full text-xs font-medium tracking-wide shadow-sm`}>
-                            {listingStatus || 'For Sale'}
-                        </span>
                     </div>
 
                     {/* Photo count */}
@@ -184,9 +181,6 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
                             New
                         </span>
                     )}
-                    <span className={`${listingStatus === 'For Sale' ? 'bg-amber-500' : 'bg-violet-600'} text-white px-3 py-1 rounded-full text-xs font-medium tracking-wide shadow-sm`}>
-                        {listingStatus || 'For Sale'}
-                    </span>
                 </div>
 
                 {/* Photo count */}

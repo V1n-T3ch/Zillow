@@ -74,7 +74,7 @@ const AgentApplication = () => {
       // Update the user document with application data
       const userRef = doc(db, 'users', currentUser.uid);
       await updateDoc(userRef, {
-        vendorApplication: {
+        agentApplication: {
           ...formData,
           status: 'pending', // pending, approved, rejected
           submittedAt: serverTimestamp()
@@ -92,7 +92,7 @@ const AgentApplication = () => {
       });
 
     } catch (err) {
-      console.error('Error submitting vendor application:', err);
+      console.error('Error submitting agent application:', err);
       setError('Failed to submit application. Please try again.');
     } finally {
       setLoading(false);
@@ -122,7 +122,7 @@ const AgentApplication = () => {
                   </div>
                   <h2 className="mb-4 text-2xl font-bold text-emerald-700">Application Submitted!</h2>
                   <p className="mb-8 text-gray-700">
-                    Thank you for applying to become a property vendor. We'll review your application and get back to you shortly.
+                    Thank you for applying to become a property agent. We'll review your application and get back to you shortly.
                   </p>
                   <Motion.button
                     whileHover={{ scale: 1.03 }}
@@ -136,8 +136,8 @@ const AgentApplication = () => {
               ) : (
                 <>
                   <div className="mb-8 text-center">
-                    <h2 className="mb-2 text-2xl font-bold text-gray-800">Vendor Application</h2>
-                    <p className="text-gray-600">Fill out the form below to apply for vendor status</p>
+                    <h2 className="mb-2 text-2xl font-bold text-gray-800">Agent Application</h2>
+                    <p className="text-gray-600">Fill out the form below to apply for agent status</p>
                   </div>
                   
                   <div className="flex items-center p-4 mb-8 border-l-4 border-blue-500 bg-blue-50 rounded-r-md">
@@ -147,7 +147,7 @@ const AgentApplication = () => {
                       </svg>
                     </div>
                     <p className="text-sm text-blue-700">
-                      Becoming a vendor allows you to list properties, manage bookings, and connect with potential buyers directly.
+                      Becoming an agent allows you to list properties and connect with potential tenants directly.
                     </p>
                   </div>
                   
@@ -273,7 +273,7 @@ const AgentApplication = () => {
             
             <div className="mt-8 text-center">
               <p className="text-gray-600">
-                Already a vendor? <a href="/vendor" className="font-medium transition duration-150 text-emerald-600 hover:text-emerald-700">Go to Vendor Dashboard</a>
+                Already a agent? <a href="/agent" className="font-medium transition duration-150 text-emerald-600 hover:text-emerald-700">Go to Agent Dashboard</a>
               </p>
             </div>
             

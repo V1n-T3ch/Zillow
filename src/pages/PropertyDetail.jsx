@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
-import { 
-  FiCamera, FiChevronLeft, FiChevronRight, FiPlus, 
-  FiCheckCircle, FiHome, FiCalendar, FiMapPin, 
-  FiHeart, FiShare2, FiDollarSign, 
-  FiUsers, FiUser, FiPhone, FiMessageSquare
+import {
+    FiCamera, FiChevronLeft, FiChevronRight, FiPlus,
+    FiCheckCircle, FiHome, FiCalendar, FiMapPin,
+    FiHeart, FiShare2, FiDollarSign,
+    FiUsers, FiUser, FiPhone, FiMessageSquare
 } from 'react-icons/fi';
 import { db } from '../firebase';
-import { 
-  doc, getDoc, collection, addDoc, updateDoc, increment,
-  deleteDoc, getDocs, query, where, serverTimestamp 
+import {
+    doc, getDoc, collection, addDoc, updateDoc, increment,
+    deleteDoc, getDocs, query, where, serverTimestamp
 } from 'firebase/firestore';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'react-toastify';
@@ -23,48 +23,48 @@ const PropertyGallery = ({ images = [] }) => {
     const [showModal, setShowModal] = useState(false);
     const [touchStart, setTouchStart] = useState(0);
     const [touchEnd, setTouchEnd] = useState(0);
-    
+
     // Use placeholders if no images
     const allImages = images.length > 0 ? images : [
         'https://placehold.co/1200x800?text=No+Image+Available'
     ];
-    
+
     // Touch handlers for mobile swipe
     const handleTouchStart = (e) => {
         setTouchStart(e.targetTouches[0].clientX);
     };
-    
+
     const handleTouchMove = (e) => {
         setTouchEnd(e.targetTouches[0].clientX);
     };
-    
+
     const handleTouchEnd = () => {
         if (touchStart - touchEnd > 100) {
             // Swipe left
             goToNext();
         }
-        
+
         if (touchStart - touchEnd < -100) {
             // Swipe right
             goToPrevious();
         }
     };
-    
+
     const goToPrevious = () => {
         const newIndex = activeIndex === 0 ? allImages.length - 1 : activeIndex - 1;
         setActiveIndex(newIndex);
     };
-    
+
     const goToNext = () => {
         const newIndex = activeIndex === allImages.length - 1 ? 0 : activeIndex + 1;
         setActiveIndex(newIndex);
     };
-    
+
     // Keyboard navigation for accessibility
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (!showModal) return;
-            
+
             if (e.key === 'ArrowLeft') {
                 goToPrevious();
             } else if (e.key === 'ArrowRight') {
@@ -73,23 +73,23 @@ const PropertyGallery = ({ images = [] }) => {
                 setShowModal(false);
             }
         };
-        
+
         window.addEventListener('keydown', handleKeyDown);
-        
+
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
     }, [showModal, activeIndex]);
-    
+
     return (
         <>
             <div className="relative mb-8 overflow-hidden shadow-2xl rounded-xl">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 h-[70vh] max-h-[600px]">
-                    <div 
+                    <div
                         className="relative col-span-2 overflow-hidden cursor-pointer group"
                         onClick={() => setShowModal(true)}
                     >
-                        <Motion.img 
+                        <Motion.img
                             src={allImages[0]}
                             alt="Property main view"
                             className="object-cover w-full h-full"
@@ -110,15 +110,15 @@ const PropertyGallery = ({ images = [] }) => {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="hidden grid-rows-2 gap-2 md:grid">
                         {allImages.length > 1 ? (
                             <>
-                                <div 
+                                <div
                                     className="relative overflow-hidden cursor-pointer group"
                                     onClick={() => setShowModal(true)}
                                 >
-                                    <Motion.img 
+                                    <Motion.img
                                         src={allImages[1]}
                                         alt="Property view 2"
                                         className="object-cover w-full h-full"
@@ -132,13 +132,13 @@ const PropertyGallery = ({ images = [] }) => {
                                     />
                                     <div className="absolute inset-0 transition-opacity opacity-0 bg-black/20 group-hover:opacity-100"></div>
                                 </div>
-                                <div 
+                                <div
                                     className="relative overflow-hidden cursor-pointer group"
                                     onClick={() => setShowModal(true)}
                                 >
                                     {allImages.length > 2 ? (
                                         <>
-                                            <Motion.img 
+                                            <Motion.img
                                                 src={allImages[2]}
                                                 alt="Property view 3"
                                                 className="object-cover w-full h-full"
@@ -176,11 +176,11 @@ const PropertyGallery = ({ images = [] }) => {
                         )}
                     </div>
                 </div>
-                
+
                 <div className="absolute left-0 right-0 md:hidden bottom-4">
                     <div className="flex justify-center gap-1.5">
                         {allImages.map((_, index) => (
-                            <button 
+                            <button
                                 key={index}
                                 className={`w-2 h-2 rounded-full ${index === activeIndex ? 'bg-white' : 'bg-white/50'}`}
                                 onClick={() => setActiveIndex(index)}
@@ -188,7 +188,7 @@ const PropertyGallery = ({ images = [] }) => {
                         ))}
                     </div>
                 </div>
-                
+
                 <button
                     className="absolute flex items-center px-4 py-2 font-medium text-gray-800 transition-all rounded-lg shadow-lg right-4 bottom-4 bg-white/90 hover:bg-white"
                     onClick={() => setShowModal(true)}
@@ -197,16 +197,16 @@ const PropertyGallery = ({ images = [] }) => {
                     View All Photos
                 </button>
             </div>
-            
+
             <AnimatePresence>
                 {showModal && (
-                    <Motion.div 
+                    <Motion.div
                         className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                     >
-                        <button 
+                        <button
                             className="absolute p-2 text-white transition-colors rounded-full top-4 right-4 bg-black/40 hover:bg-black/60"
                             onClick={() => setShowModal(false)}
                         >
@@ -215,9 +215,9 @@ const PropertyGallery = ({ images = [] }) => {
                                 <line x1="6" y1="6" x2="18" y2="18"></line>
                             </svg>
                         </button>
-                        
+
                         <div className="relative w-full max-w-5xl h-[70vh]">
-                            <div 
+                            <div
                                 className="flex items-center justify-center w-full h-full"
                                 onTouchStart={handleTouchStart}
                                 onTouchMove={handleTouchMove}
@@ -240,33 +240,32 @@ const PropertyGallery = ({ images = [] }) => {
                                     />
                                 </AnimatePresence>
                             </div>
-                            
-                            <button 
+
+                            <button
                                 className="absolute p-3 text-white transition-colors -translate-y-1/2 rounded-full left-4 top-1/2 bg-black/40 hover:bg-black/60"
                                 onClick={goToPrevious}
                             >
                                 <FiChevronLeft size={24} />
                             </button>
-                            <button 
+                            <button
                                 className="absolute p-3 text-white transition-colors -translate-y-1/2 rounded-full right-4 top-1/2 bg-black/40 hover:bg-black/60"
                                 onClick={goToNext}
                             >
                                 <FiChevronRight size={24} />
                             </button>
                         </div>
-                        
+
                         <div className="w-full max-w-5xl px-4 mt-4">
                             <div className="flex gap-2 py-2 overflow-x-auto scrollbar-hide">
                                 {allImages.map((img, index) => (
                                     <button
                                         key={index}
                                         onClick={() => setActiveIndex(index)}
-                                        className={`flex-shrink-0 w-16 h-12 rounded-md overflow-hidden transition-all ${
-                                            activeIndex === index ? 'ring-2 ring-white scale-105' : 'opacity-60 hover:opacity-100'
-                                        }`}
+                                        className={`flex-shrink-0 w-16 h-12 rounded-md overflow-hidden transition-all ${activeIndex === index ? 'ring-2 ring-white scale-105' : 'opacity-60 hover:opacity-100'
+                                            }`}
                                     >
-                                        <img 
-                                            src={img} 
+                                        <img
+                                            src={img}
                                             alt={`Thumbnail ${index + 1}`}
                                             className="object-cover w-full h-full"
                                             onError={(e) => {
@@ -278,7 +277,7 @@ const PropertyGallery = ({ images = [] }) => {
                                 ))}
                             </div>
                         </div>
-                        
+
                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white bg-black/60 rounded-full px-4 py-1.5">
                             {activeIndex + 1} / {allImages.length}
                         </div>
@@ -299,7 +298,7 @@ const FeatureBadge = ({ icon: Icon, label, value, color = "emerald" }) => {
         purple: "bg-purple-50 text-purple-700 border-purple-100",
         indigo: "bg-indigo-50 text-indigo-700 border-indigo-100"
     };
-    
+
     // Icon colors
     const iconColorClasses = {
         emerald: "text-emerald-500",
@@ -308,7 +307,7 @@ const FeatureBadge = ({ icon: Icon, label, value, color = "emerald" }) => {
         purple: "text-purple-500",
         indigo: "text-indigo-500"
     };
-    
+
     // Label text colors
     const labelColorClasses = {
         emerald: "text-emerald-800/70",
@@ -317,7 +316,7 @@ const FeatureBadge = ({ icon: Icon, label, value, color = "emerald" }) => {
         purple: "text-purple-800/70",
         indigo: "text-indigo-800/70"
     };
-    
+
     return (
         <div className={`flex flex-col items-center p-4 rounded-xl border shadow-sm ${colorClasses[color]}`}>
             <Icon className={`mb-2 ${iconColorClasses[color]}`} size={24} />
@@ -329,7 +328,7 @@ const FeatureBadge = ({ icon: Icon, label, value, color = "emerald" }) => {
 
 // Animated Feature Amenity Component
 const FeatureAmenity = ({ children }) => (
-    <Motion.div 
+    <Motion.div
         className="px-4 py-2.5 bg-gradient-to-r from-emerald-50 to-emerald-100/50 text-emerald-800 rounded-lg flex items-center shadow-sm"
         whileHover={{ scale: 1.03, y: -2 }}
         transition={{ type: "spring", stiffness: 400, damping: 10 }}
@@ -349,54 +348,44 @@ const PropertyDetail = () => {
     const [error, setError] = useState(null);
     const [isFavorite, setIsFavorite] = useState(false);
     const [favoriteId, setFavoriteId] = useState(null);
-    const [selectedDate, setSelectedDate] = useState('');
-    const [selectedTime, setSelectedTime] = useState('');
-    const [showBookingForm, setShowBookingForm] = useState(false);
-    const [bookingSubmitted, setBookingSubmitted] = useState(false);
-    const [bookingLoading, setBookingLoading] = useState(false);
     const [similarProperties, setSimilarProperties] = useState([]);
-    const [userPhone, setUserPhone] = useState('');
     const [userEmail, setUserEmail] = useState('');
-    const [bookingNotes, setBookingNotes] = useState('');
-    const [bookingErrors, setBookingErrors] = useState({});
-    const [existingBookings, setExistingBookings] = useState([]);
-    const [hasCheckedBookings, setHasCheckedBookings] = useState(false);
     const [activeTab, setActiveTab] = useState('description');
     const [hasRecordedView, setHasRecordedView] = useState(false);
-    
+
     useEffect(() => {
         const fetchPropertyData = async () => {
             try {
                 setLoading(true);
                 setError(null);
-                
+
                 // Get property data
                 const propertyDoc = await getDoc(doc(db, 'properties', id));
-                
+
                 if (!propertyDoc.exists()) {
                     setError('Property not found');
                     setLoading(false);
                     return;
                 }
-                
+
                 const propertyData = {
                     id: propertyDoc.id,
                     ...propertyDoc.data()
                 };
-                
+
                 setProperty(propertyData);
-                
+
                 // Record the view after a short delay (to ensure it's an actual view, not just a page load)
                 if (!hasRecordedView) {
                     const viewTimer = setTimeout(() => {
                         incrementPropertyViews(id, propertyData.agentID);
                         setHasRecordedView(true);
                     }, 5000); // 5 second delay
-                    
+
                     // Clean up timer if component unmounts
                     return () => clearTimeout(viewTimer);
                 }
-                
+
                 // Check if this property is in user's favorites
                 if (currentUser) {
                     const favoritesQuery = query(
@@ -404,18 +393,18 @@ const PropertyDetail = () => {
                         where('userId', '==', currentUser.uid),
                         where('propertyId', '==', id)
                     );
-                    
+
                     const favoritesSnapshot = await getDocs(favoritesQuery);
-                    
+
                     if (!favoritesSnapshot.empty) {
                         setIsFavorite(true);
                         setFavoriteId(favoritesSnapshot.docs[0].id);
                     }
-                    
+
                     // Set user email from auth
                     setUserEmail(currentUser.email || '');
                 }
-                
+
                 // Fetch similar properties
                 const similarQuery = query(
                     collection(db, 'properties'),
@@ -423,21 +412,21 @@ const PropertyDetail = () => {
                     where('propertyType', '==', propertyData.propertyType),
                     where('id', '!=', id)
                 );
-                
+
                 const similarSnapshot = await getDocs(similarQuery);
                 const similarData = similarSnapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 })).slice(0, 3);
-                
+
                 setSimilarProperties(similarData);
-                
+
                 // Increment view counter after a short delay
                 // The delay prevents counting accidental/bounce views
                 const viewTimer = setTimeout(() => {
                     incrementPropertyViews(id, propertyData.agentID);
                 }, 5000); // 5 second delay
-                
+
                 return () => clearTimeout(viewTimer); // Clean up timer
             } catch (err) {
                 console.error('Error fetching property:', err);
@@ -446,7 +435,7 @@ const PropertyDetail = () => {
                 setLoading(false);
             }
         };
-        
+
         fetchPropertyData();
     }, [id, currentUser]);
 
@@ -457,30 +446,30 @@ const PropertyDetail = () => {
             navigate('/login', { state: { from: `/properties/${id}` } });
             return;
         }
-        
+
         try {
             // Reference to the property document
             const propertyRef = doc(db, 'properties', id);
-            
+
             if (isFavorite) {
                 // Remove from favorites collection
                 await deleteDoc(doc(db, 'favorites', favoriteId));
-                
+
                 // Decrement the favorites count in the property document
                 await updateDoc(propertyRef, {
                     favorites: increment(-1), // Decrement by 1
                     updatedAt: serverTimestamp()
                 });
-                
+
                 setIsFavorite(false);
                 setFavoriteId(null);
-                
+
                 // Update local state
                 setProperty(prev => ({
                     ...prev,
                     favorites: Math.max((prev.favorites || 0) - 1, 0) // Ensure it doesn't go below 0
                 }));
-                
+
                 toast.success('Removed from favorites');
             } else {
                 // Add to favorites collection
@@ -489,22 +478,22 @@ const PropertyDetail = () => {
                     propertyId: id,
                     createdAt: serverTimestamp()
                 });
-                
+
                 // Increment the favorites count in the property document
                 await updateDoc(propertyRef, {
                     favorites: increment(1), // Increment by 1
                     updatedAt: serverTimestamp()
                 });
-                
+
                 setIsFavorite(true);
                 setFavoriteId(favoriteRef.id);
-                
+
                 // Update local state
                 setProperty(prev => ({
                     ...prev,
                     favorites: (prev.favorites || 0) + 1
                 }));
-                
+
                 toast.success('Added to favorites');
             }
         } catch (err) {
@@ -512,137 +501,6 @@ const PropertyDetail = () => {
             toast.error('Failed to update favorites');
         }
     };
-
-    // Check for existing bookings
-    const checkExistingBookings = useCallback(async () => {
-        if (!currentUser || !id || hasCheckedBookings) return;
-        
-        try {
-            const bookingsQuery = query(
-                collection(db, 'bookings'),
-                where('userId', '==', currentUser.uid),
-                where('propertyId', '==', id)
-            );
-            
-            const bookingsSnapshot = await getDocs(bookingsQuery);
-            
-            if (!bookingsSnapshot.empty) {
-                const bookingsData = bookingsSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    bookingDate: doc.data().bookingDate?.toDate() || new Date()
-                }));
-                
-                setExistingBookings(bookingsData);
-            }
-            
-            setHasCheckedBookings(true);
-        } catch (err) {
-            console.error('Error checking bookings:', err);
-        }
-    }, [currentUser, id, hasCheckedBookings]);
-
-    useEffect(() => {
-        if (currentUser && id && !hasCheckedBookings) {
-            checkExistingBookings();
-            
-            // Pre-fill user email if available
-            if (currentUser.email) {
-                setUserEmail(currentUser.email);
-            }
-        }
-    }, [currentUser, checkExistingBookings, hasCheckedBookings, userEmail, id]);
-
-    // Submit booking request
-    const handleBookingSubmit = async (e) => {
-        e.preventDefault();
-        
-        if (!currentUser) {
-            toast.info('Please log in to book a viewing');
-            navigate('/login', { state: { from: `/properties/${id}` } });
-            return;
-        }
-        
-        // Validate form
-        const errors = {};
-        if (!selectedDate) errors.date = 'Please select a date';
-        if (!selectedTime) errors.time = 'Please select a time';
-        if (!userPhone) errors.phone = 'Please provide your phone number';
-        if (!userEmail) errors.email = 'Please provide your email';
-        
-        if (Object.keys(errors).length > 0) {
-            setBookingErrors(errors);
-            return;
-        }
-        
-        setBookingErrors({});
-        setBookingLoading(true);
-        
-        try {
-            // Create booking in Firestore
-            await addDoc(collection(db, 'bookings'), {
-                propertyId: id,
-                userId: currentUser.uid,
-                userEmail,
-                userPhone,
-                bookingDate: new Date(`${selectedDate}T00:00:00`),
-                bookingTime: selectedTime,
-                notes: bookingNotes,
-                status: 'pending',
-                createdAt: serverTimestamp(),
-                agentID: property.agentID,       // Make sure to include agentID
-                propertyTitle: property.title,     // Include property title
-                agentName: property.agentName     // Use agentName directly
-            });
-            
-            setBookingSubmitted(true);
-            
-            // Reset form
-            setTimeout(() => {
-                setShowBookingForm(false);
-                setBookingSubmitted(false);
-                setSelectedDate('');
-                setSelectedTime('');
-                setBookingNotes('');
-                
-                // Refresh bookings
-                checkExistingBookings();
-                setHasCheckedBookings(false);
-            }, 3000);
-            
-            toast.success('Booking request submitted successfully!');
-        } catch (err) {
-            console.error('Error submitting booking:', err);
-            toast.error('Failed to submit booking request');
-        } finally {
-            setBookingLoading(false);
-        }
-    };
-
-    // Cancel an existing booking
-    const handleCancelBooking = async (bookingId) => {
-        if (!window.confirm('Are you sure you want to cancel this booking?')) {
-            return;
-        }
-        
-        try {
-            await deleteDoc(doc(db, 'bookings', bookingId));
-            
-            // Update local state
-            setExistingBookings(existingBookings.filter(booking => booking.id !== bookingId));
-            
-            toast.success('Booking cancelled successfully');
-        } catch (err) {
-            console.error('Error cancelling booking:', err);
-            toast.error('Failed to cancel booking');
-        }
-    };
-
-    // Generate available times
-    const availableTimes = [
-        '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-        '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'
-    ];
 
     // Handle share functionality
     const handleShare = () => {
@@ -658,6 +516,8 @@ const PropertyDetail = () => {
         } else {
             copyToClipboard();
         }
+
+        toast.success('Property link copied to clipboard')
     };
 
     const copyToClipboard = () => {
@@ -720,23 +580,6 @@ const PropertyDetail = () => {
         );
     }
 
-    // Status display
-    const getStatusDisplay = () => {
-        if (property.listingStatus === 'For Rent') {
-            return 'For Rent';
-        } else {
-            return 'For Sale';
-        }
-    };
-    
-    // Status color classes
-    const getStatusColors = () => {
-        if (property.listingStatus === 'For Rent') {
-            return 'bg-violet-100 text-violet-800';
-        } else {
-            return 'bg-amber-100 text-amber-800';
-        }
-    };
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -753,9 +596,7 @@ const PropertyDetail = () => {
                             <div className="p-6 mb-6 bg-white rounded-xl shadow-subtle">
                                 <div className="flex items-start justify-between mb-4">
                                     <div>
-                                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColors()} mb-2`}>
-                                            {getStatusDisplay()}
-                                        </span>
+                                      
                                         <h1 className="mb-2 font-serif text-3xl font-bold text-gray-800">{property.title}</h1>
                                         <div className="flex items-center text-gray-600">
                                             <FiMapPin className="mr-2 text-gray-400" />
@@ -801,13 +642,13 @@ const PropertyDetail = () => {
                                         className={`flex items-center px-4 py-2 rounded-lg transition-colors ${isFavorite
                                             ? 'bg-red-50 text-red-600 border border-red-200'
                                             : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
-                                        }`}
+                                            }`}
                                     >
                                         <FiHeart className={`mr-2 ${isFavorite ? 'fill-red-500' : ''}`} />
                                         {isFavorite ? 'Saved' : 'Save'}
                                     </button>
 
-                                    <button 
+                                    <button
                                         className="flex items-center px-4 py-2 text-gray-700 transition-colors border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100"
                                         onClick={handleShare}
                                     >
@@ -821,24 +662,24 @@ const PropertyDetail = () => {
                             <div className="mb-6 overflow-hidden bg-white rounded-xl shadow-subtle">
                                 <div className="flex border-b border-gray-100">
                                     <button
-                                        className={`px-6 py-3 text-sm font-medium ${activeTab === 'description' 
-                                            ? 'text-emerald-600 border-b-2 border-emerald-600' 
+                                        className={`px-6 py-3 text-sm font-medium ${activeTab === 'description'
+                                            ? 'text-emerald-600 border-b-2 border-emerald-600'
                                             : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => setActiveTab('description')}
                                     >
                                         Description
                                     </button>
                                     <button
-                                        className={`px-6 py-3 text-sm font-medium ${activeTab === 'details' 
-                                            ? 'text-emerald-600 border-b-2 border-emerald-600' 
+                                        className={`px-6 py-3 text-sm font-medium ${activeTab === 'details'
+                                            ? 'text-emerald-600 border-b-2 border-emerald-600'
                                             : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => setActiveTab('details')}
                                     >
                                         Details
                                     </button>
                                     <button
-                                        className={`px-6 py-3 text-sm font-medium ${activeTab === 'features' 
-                                            ? 'text-emerald-600 border-b-2 border-emerald-600' 
+                                        className={`px-6 py-3 text-sm font-medium ${activeTab === 'features'
+                                            ? 'text-emerald-600 border-b-2 border-emerald-600'
                                             : 'text-gray-500 hover:text-gray-700'}`}
                                         onClick={() => setActiveTab('features')}
                                     >
@@ -865,20 +706,6 @@ const PropertyDetail = () => {
                                                         <div>
                                                             <span className="block text-sm text-gray-500">Property Type</span>
                                                             <span className="text-gray-800">{property.propertyType || 'N/A'}</span>
-                                                        </div>
-                                                    </li>
-                                                    <li className="flex items-start">
-                                                        <FiUsers className="mt-1 mr-2 text-emerald-500" />
-                                                        <div>
-                                                            <span className="block text-sm text-gray-500">Year Built</span>
-                                                            <span className="text-gray-800">{property.yearBuilt || 'N/A'}</span>
-                                                        </div>
-                                                    </li>
-                                                    <li className="flex items-start">
-                                                        <FiDollarSign className="mt-1 mr-2 text-emerald-500" />
-                                                        <div>
-                                                            <span className="block text-sm text-gray-500">Listing Status</span>
-                                                            <span className="text-gray-800">{property.listingStatus || 'For Sale'}</span>
                                                         </div>
                                                     </li>
                                                     <li className="flex items-start">
@@ -974,6 +801,7 @@ const PropertyDetail = () => {
                                     color="purple"
                                 />
                             </div>
+
                         </div>
 
                         {/* Sidebar */}
@@ -990,43 +818,6 @@ const PropertyDetail = () => {
                                     </div>
                                 </div>
 
-                                {existingBookings.length > 0 ? (
-                                    <div className="mb-6">
-                                        <h4 className="mb-3 font-medium text-gray-800">Your Bookings</h4>
-                                        {existingBookings.map((booking) => (
-                                            <div key={booking.id} className="p-4 mb-2 rounded-lg bg-blue-50">
-                                                <div className="flex justify-between">
-                                                    <div>
-                                                        <p className="font-medium text-gray-800">
-                                                            {new Date(booking.bookingDate).toLocaleDateString()} at {booking.bookingTime}
-                                                        </p>
-                                                        <p className="text-sm text-gray-600">
-                                                            Status: 
-                                                            <span className={`ml-1 ${
-                                                                booking.status === 'confirmed' 
-                                                                    ? 'text-green-600' 
-                                                                    : booking.status === 'cancelled' 
-                                                                    ? 'text-red-600' 
-                                                                    : 'text-amber-600'
-                                                            }`}>
-                                                                {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                                                            </span>
-                                                        </p>
-                                                    </div>
-                                                    {booking.status !== 'cancelled' && (
-                                                        <button
-                                                            onClick={() => handleCancelBooking(booking.id)}
-                                                            className="text-sm text-red-600 hover:text-red-800"
-                                                        >
-                                                            Cancel
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : null}
-
                                 <div className="mb-6 space-y-4">
                                     <a href="tel:123-456-7890" className="flex items-center text-gray-700 hover:text-emerald-600">
                                         <FiPhone className="mr-3 text-emerald-500" />
@@ -1038,180 +829,76 @@ const PropertyDetail = () => {
                                     </a>
                                 </div>
 
-                                <button 
-                                    onClick={() => setShowBookingForm(!showBookingForm)}
-                                    className="flex items-center justify-center w-full py-3 font-medium text-white transition-colors rounded-lg bg-emerald-600 hover:bg-emerald-700"
-                                >
-                                    <FiCalendar className="mr-2" />
-                                    Schedule a Viewing
-                                </button>
-                            </div>
+                                {/* Google Maps Buttons - Moved here */}
+                                {property.location && (
+                                    <div className="mb-6 space-y-3">
+                                        <button
+                                            onClick={() => {
+                                                const { lat, lng } = property.location;
+                                                const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+                                                window.open(googleMapsUrl, '_blank');
+                                            }}
+                                            className="flex items-center justify-center w-full px-4 py-3 font-medium text-white transition-colors rounded-lg bg-emerald-600 hover:bg-emerald-700"
+                                        >
+                                            <FiMapPin className="mr-2" />
+                                            Open in Google Maps
+                                        </button>
 
-                            {/* Booking Form */}
-                            {showBookingForm && (
-                                <div className="p-6 mb-6 bg-white rounded-xl shadow-subtle">
-                                    <h3 className="mb-4 font-bold text-gray-800">Schedule a Viewing</h3>
-                                    
-                                    {bookingSubmitted ? (
-                                        <div className="p-4 text-center rounded-lg bg-emerald-50 text-emerald-700">
-                                            <FiCheckCircle className="mx-auto mb-2 text-2xl" />
-                                            <p className="font-medium">Booking request sent!</p>
-                                            <p className="mt-1 text-sm">We'll contact you to confirm your appointment.</p>
-                                        </div>
-                                    ) : (
-                                        <form onSubmit={handleBookingSubmit}>
-                                            <div className="mb-4">
-                                                <label className="block mb-2 text-sm font-medium text-gray-700">
-                                                    Select Date*
-                                                </label>
-                                                <input
-                                                    type="date"
-                                                    min={new Date().toISOString().split('T')[0]}
-                                                    value={selectedDate}
-                                                    onChange={(e) => setSelectedDate(e.target.value)}
-                                                    className={`w-full p-2 border rounded-lg ${
-                                                        bookingErrors.date ? 'border-red-500' : 'border-gray-300'
-                                                    } focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
-                                                />
-                                                {bookingErrors.date && (
-                                                    <p className="mt-1 text-xs text-red-500">{bookingErrors.date}</p>
-                                                )}
-                                            </div>
-                                            
-                                            <div className="mb-4">
-                                                <label className="block mb-2 text-sm font-medium text-gray-700">
-                                                    Select Time*
-                                                </label>
-                                                <select
-                                                    value={selectedTime}
-                                                    onChange={(e) => setSelectedTime(e.target.value)}
-                                                    className={`w-full p-2 border rounded-lg ${
-                                                        bookingErrors.time ? 'border-red-500' : 'border-gray-300'
-                                                    } focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
-                                                >
-                                                    <option value="">Select a time</option>
-                                                    {availableTimes.map((time) => (
-                                                        <option key={time} value={time}>
-                                                            {time}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                {bookingErrors.time && (
-                                                    <p className="mt-1 text-xs text-red-500">{bookingErrors.time}</p>
-                                                )}
-                                            </div>
-                                            
-                                            <div className="mb-4">
-                                                <label className="block mb-2 text-sm font-medium text-gray-700">
-                                                    Your Phone Number*
-                                                </label>
-                                                <input
-                                                    type="tel"
-                                                    value={userPhone}
-                                                    onChange={(e) => setUserPhone(e.target.value)}
-                                                    className={`w-full p-2 border rounded-lg ${
-                                                        bookingErrors.phone ? 'border-red-500' : 'border-gray-300'
-                                                    } focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
-                                                    placeholder="Your phone number"
-                                                />
-                                                {bookingErrors.phone && (
-                                                    <p className="mt-1 text-xs text-red-500">{bookingErrors.phone}</p>
-                                                )}
-                                            </div>
-                                            
-                                            <div className="mb-4">
-                                                <label className="block mb-2 text-sm font-medium text-gray-700">
-                                                    Your Email*
-                                                </label>
-                                                <input
-                                                    type="email"
-                                                    value={userEmail}
-                                                    onChange={(e) => setUserEmail(e.target.value)}
-                                                    className={`w-full p-2 border rounded-lg ${
-                                                        bookingErrors.email ? 'border-red-500' : 'border-gray-300'
-                                                    } focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
-                                                    placeholder="Your email address"
-                                                />
-                                                {bookingErrors.email && (
-                                                    <p className="mt-1 text-xs text-red-500">{bookingErrors.email}</p>
-                                                )}
-                                            </div>
-                                            
-                                            <div className="mb-4">
-                                                <label className="block mb-2 text-sm font-medium text-gray-700">
-                                                    Notes (optional)
-                                                </label>
-                                                <textarea
-                                                    value={bookingNotes}
-                                                    onChange={(e) => setBookingNotes(e.target.value)}
-                                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                                    placeholder="Any special requests or questions?"
-                                                    rows="3"
-                                                ></textarea>
-                                            </div>
-                                            
-                                            <button
-                                                type="submit"
-                                                className="flex items-center justify-center w-full py-3 font-medium text-white transition-colors rounded-lg bg-emerald-600 hover:bg-emerald-700"
-                                                disabled={bookingLoading}
-                                            >
-                                                {bookingLoading ? (
-                                                    <>
-                                                        <svg className="w-4 h-4 mr-2 -ml-1 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                        </svg>
-                                                        Processing...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        Confirm Booking
-                                                    </>
-                                                )}
-                                            </button>
-                                        </form>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Similar Properties */}
-                            {similarProperties.length > 0 && (
-                                <div className="p-6 bg-white rounded-xl shadow-subtle">
-                                    <h3 className="mb-4 font-bold text-gray-800">Similar Properties</h3>
-                                    <div className="space-y-4">
-                                        {similarProperties.map((similar) => (
-                                            <div key={similar.id} className="flex pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-                                                <div className="flex-shrink-0 w-24 h-20 overflow-hidden rounded-lg">
-                                                    <img
-                                                        src={similar.images?.[0] || 'https://placehold.co/800x600?text=No+Image'}
-                                                        alt={similar.title}
-                                                        className="object-cover w-full h-full"
-                                                        onError={(e) => {
-                                                            e.target.onerror = null;
-                                                            e.target.src = 'https://placehold.co/800x600?text=No+Image';
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="flex-1 ml-3">
-                                                    <h4 className="text-sm font-medium text-gray-800 line-clamp-1">{similar.title}</h4>
-                                                    <p className="text-sm font-semibold text-emerald-600">${similar.price?.toLocaleString() || '0'}</p>
-                                                    <div className="flex mt-1 text-xs text-gray-500">
-                                                        <span className="mr-2">{similar.beds || 0} bd</span>
-                                                        <span className="mr-2">{similar.baths || 0} ba</span>
-                                                        <span>{similar.city}, {similar.area}</span>
-                                                    </div>
-                                                    <a
-                                                        href={`/properties/${similar.id}`}
-                                                        className="inline-block mt-1 text-xs font-medium text-emerald-600 hover:text-emerald-700"
-                                                    >
-                                                        View Details
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        ))}
+                                        <button
+                                            onClick={() => {
+                                                const { lat, lng } = property.location;
+                                                const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+                                                window.open(directionsUrl, '_blank');
+                                            }}
+                                            className="flex items-center justify-center w-full px-4 py-3 font-medium transition-colors border rounded-lg text-emerald-600 border-emerald-600 hover:bg-emerald-50"
+                                        >
+                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m0 0L9 7" />
+                                            </svg>
+                                            Get Directions
+                                        </button>
                                     </div>
-                                </div>
-                            )}
+                                )}
+
+                                {/* Similar Properties */}
+                                {similarProperties.length > 0 && (
+                                    <div className="p-6 bg-white rounded-xl shadow-subtle">
+                                        <h3 className="mb-4 font-bold text-gray-800">Similar Properties</h3>
+                                        <div className="space-y-4">
+                                            {similarProperties.map((similar) => (
+                                                <div key={similar.id} className="flex pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                                                    <div className="flex-shrink-0 w-24 h-20 overflow-hidden rounded-lg">
+                                                        <img
+                                                            src={similar.images?.[0] || 'https://placehold.co/800x600?text=No+Image'}
+                                                            alt={similar.title}
+                                                            className="object-cover w-full h-full"
+                                                            onError={(e) => {
+                                                                e.target.onerror = null;
+                                                                e.target.src = 'https://placehold.co/800x600?text=No+Image';
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="flex-1 ml-3">
+                                                        <h4 className="text-sm font-medium text-gray-800 line-clamp-1">{similar.title}</h4>
+                                                        <p className="text-sm font-semibold text-emerald-600">${similar.price?.toLocaleString() || '0'}</p>
+                                                        <div className="flex mt-1 text-xs text-gray-500">
+                                                            <span className="mr-2">{similar.beds || 0} bd</span>
+                                                            <span className="mr-2">{similar.baths || 0} ba</span>
+                                                            <span>{similar.city}, {similar.area}</span>
+                                                        </div>
+                                                        <a
+                                                            href={`/properties/${similar.id}`}
+                                                            className="inline-block mt-1 text-xs font-medium text-emerald-600 hover:text-emerald-700"
+                                                        >
+                                                            View Details
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiImage, FiDollarSign, FiHome, FiLayers, FiPlus, FiXCircle, FiMapPin } from 'react-icons/fi';
+import { FiImage, FiHome, FiLayers, FiXCircle, FiMapPin } from 'react-icons/fi';
 import DashboardLayout from '../../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../../hooks/useAuth';
 import { db } from '../../../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import axios from 'axios';
-// import LocationPicker from '../../../components/maps/LocationPicker';
+import LocationPicker from '../../../components/maps/LocationPicker';
 
 const ListProperty = () => {
     const { currentUser } = useAuth();
@@ -15,6 +15,16 @@ const ListProperty = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
     const [uploadProgress, setUploadProgress] = useState(0);
+    
+    // Get API URL with fallback
+    const getApiUrl = () => {
+        const envUrl = import.meta.env.VITE_APP_B2_API_URL;
+        if (!envUrl) {
+            console.warn('VITE_APP_B2_API_URL not found in environment variables');
+            return 'http://localhost:5000'; // fallback for development
+        }
+        return envUrl;
+    };
 
     const [formData, setFormData] = useState({
         title: '',
@@ -34,58 +44,47 @@ const ListProperty = () => {
     const [imageFiles, setImageFiles] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
 
+    // Location picker state
+    const [selectedLocation, setSelectedLocation] = useState(null);
+    const [address, setAddress] = useState('');
+    const [city, setCity] = useState('');
+    const [state, setState] = useState('');
+
+    const handleLocationSelect = (location) => {
+        // Expecting location to be an object like:
+        // { lat: number, lng: number, address: string, city: string, state: string }
+        if (!location) return;
+
+        setSelectedLocation({
+            lat: location.lat,
+            lng: location.lng
+        });
+
+        setAddress(location.address || '');
+        setCity(location.city || '');
+        setState(location.state || '');
+
+        // Also update formData fields that correspond to location if provided
+        setFormData(prev => ({
+            ...prev,
+            city: location.city || prev.city,
+            area: location.address || prev.area
+        }));
+    };
+
     const propertyTypes = [
-        'House', 'Apartment', 'Condo', 'Townhouse', 'Villa', 'Land', 'Commercial'
+        'Studio','Bedsitter', 'Apartment', 'Bungalow', 'Mansionette', 'Villa', 'Commercial', 'BnB', 'Singles'
     ];
 
     const kenyaCounties = [
-        'Baringo',
-        'Bomet',
-        'Bungoma',
-        'Busia',
-        'Elgeyo-Marakwet',
-        'Embu',
-        'Garissa',
-        'Homa Bay',
-        'Isiolo',
-        'Kajiado',
-        'Kakamega',
-        'Kericho',
-        'Kiambu',
-        'Kilifi',
-        'Kirinyaga',
-        'Kisii',
-        'Kisumu',
-        'Kitui',
-        'Kwale',
-        'Laikipia',
-        'Lamu',
-        'Machakos',
-        'Makueni',
-        'Mandera',
-        'Marsabit',
-        'Meru',
-        'Migori',
-        'Mombasa',
-        'Murang\'a',
-        'Nairobi',
-        'Nakuru',
-        'Nandi',
-        'Narok',
-        'Nyamira',
-        'Nyandarua',
-        'Nyeri',
-        'Samburu',
-        'Siaya',
-        'Taita-Taveta',
-        'Tana River',
-        'Tharaka-Nithi',
-        'Trans Nzoia',
-        'Turkana',
-        'Uasin Gishu',
-        'Vihiga',
-        'Wajir',
-        'West Pokot'
+        'Baringo', 'Bomet', 'Bungoma', 'Busia', 'Elgeyo-Marakwet', 'Embu',
+        'Garissa', 'Homa Bay', 'Isiolo', 'Kajiado', 'Kakamega', 'Kericho',
+        'Kiambu', 'Kilifi', 'Kirinyaga', 'Kisii', 'Kisumu', 'Kitui', 'Kwale',
+        'Laikipia', 'Lamu', 'Machakos', 'Makueni', 'Mandera', 'Marsabit',
+        'Meru', 'Migori', 'Mombasa', 'Murang\'a', 'Nairobi', 'Nakuru',
+        'Nandi', 'Narok', 'Nyamira', 'Nyandarua', 'Nyeri', 'Samburu',
+        'Siaya', 'Taita-Taveta', 'Tana River', 'Tharaka-Nithi', 'Trans Nzoia',
+        'Turkana', 'Uasin Gishu', 'Vihiga', 'Wajir', 'West Pokot'
     ];
     
     const possibleFeatures = [
@@ -98,7 +97,6 @@ const ListProperty = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        // Handle number inputs
         if (['price', 'beds', 'baths'].includes(name)) {
             const numberValue = value === '' ? '' : Number(value);
             setFormData({ ...formData, [name]: numberValue });
@@ -123,12 +121,8 @@ const ListProperty = () => {
 
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files);
-
-        // Create previews
         const newPreviews = files.map(file => URL.createObjectURL(file));
         setImagePreviews([...imagePreviews, ...newPreviews]);
-
-        // Save files for upload
         setImageFiles([...imageFiles, ...files]);
     };
 
@@ -136,9 +130,7 @@ const ListProperty = () => {
         const newPreviews = [...imagePreviews];
         const newFiles = [...imageFiles];
 
-        // Revoke object URL to avoid memory leaks
         URL.revokeObjectURL(newPreviews[index]);
-
         newPreviews.splice(index, 1);
         newFiles.splice(index, 1);
 
@@ -154,32 +146,41 @@ const ListProperty = () => {
             return;
         }
 
+        // Add location validation
+        if (!selectedLocation) {
+            setSubmitError('Please select a location on the map');
+            return;
+        }
+
         setIsSubmitting(true);
         setSubmitError('');
 
         try {
+            const apiUrl = getApiUrl();
+            
             // Upload images to B2 via backend
             const imageUrls = [];
             for (let i = 0; i < imageFiles.length; i++) {
                 const file = imageFiles[i];
-                const formData = new FormData();
-                formData.append('image', file);
+                const uploadFormData = new FormData();
+                uploadFormData.append('image', file);
 
-                // POST to your backend B2 server
-                const res = await axios.post(
-                    `${import.meta.env.REACT_APP_B2_API_URL || 'http://localhost:5000'}/api/images/upload`,
-                    formData,
-                    {
-                        headers: {
-                            'Content-Type': 'multipart/form-data'
-                        }
-                    }
-                );
+                const uploadUrl = `${apiUrl}/api/images/upload`;
+                console.log('Uploading to:', uploadUrl);
+
+                const res = await axios.post(uploadUrl, uploadFormData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    },
+                    timeout: 30000 // 30 second timeout
+                });
+
+                console.log('Upload response:', res.data);
 
                 if (res.data.status === 'success' && res.data.data?.fileUrl) {
                     imageUrls.push(res.data.data.fileUrl);
                 } else {
-                    throw new Error('Image upload failed');
+                    throw new Error(`Image upload failed: ${res.data.message || 'Unknown error'}`);
                 }
 
                 setUploadProgress(Math.round(((i + 1) / imageFiles.length) * 100));
@@ -189,33 +190,46 @@ const ListProperty = () => {
             const propertyData = {
                 ...formData,
                 images: imageUrls,
-                vendorId: currentUser.uid,
-                vendorName: currentUser.displayName || 'Anonymous',
+                location: selectedLocation, // Add this line to save the location
+                address: address, // Optional: save the address string too
+                agentId: currentUser.uid,
+                agentName: currentUser.displayName || 'Anonymous',
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 views: 0,
                 favorites: 0,
-                status: 'pending' // Set initial status to pending for admin approval
+                status: 'pending'
             };
 
+            console.log('Creating property with data:', propertyData);
             const docRef = await addDoc(collection(db, 'properties'), propertyData);
 
-            // Redirect to vendor properties with success parameter
-            navigate(`/vendor/properties?success=true&propertyId=${docRef.id}`);
+            navigate(`/agent/properties?success=true&propertyId=${docRef.id}`);
 
         } catch (error) {
             console.error('Error adding property:', error);
-            setSubmitError('Failed to add property. Please try again.');
+            
+            // More detailed error messages
+            if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+                setSubmitError('Network error. Please check your connection and try again.');
+            } else if (error.response) {
+                setSubmitError(`Server error: ${error.response.data?.message || error.response.statusText}`);
+            } else if (error.message.includes('timeout')) {
+                setSubmitError('Upload timeout. Please try again with smaller images.');
+            } else {
+                setSubmitError(`Failed to add property: ${error.message}`);
+            }
         } finally {
             setIsSubmitting(false);
+            setUploadProgress(0);
         }
     };
 
     return (
-        <DashboardLayout role="vendor">
+        <DashboardLayout role="agent">
             <div>
                 <h2 className="mb-6 text-2xl font-bold text-gray-800">List a New Property</h2>
-
+                
                 {submitError && (
                     <div className="p-4 mb-6 text-red-700 rounded-lg bg-red-50">
                         {submitError}
@@ -533,10 +547,19 @@ const ListProperty = () => {
                             </button>
                         )}
                     </div>
-
-                    {/* Map */}
-                    {/* <LocationPicker /> */}
                 </form>
+
+                {/* Map */}
+                <div className="p-6 bg-white shadow-sm rounded-xl">
+                    <h3 className="mb-4 text-lg font-bold text-gray-800">Property Location</h3>
+                    <LocationPicker
+                        onLocationSelect={handleLocationSelect}
+                        initialLocation={selectedLocation}
+                        address={address}
+                        city={city}
+                        state={state}
+                    />
+                </div>
             </div>
         </DashboardLayout>
     );

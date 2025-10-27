@@ -4,9 +4,9 @@ import { doc, updateDoc, increment, serverTimestamp, collection, addDoc } from '
 /**
  * Increment the view count for a property
  * @param {string} propertyId - The ID of the property being viewed
- * @param {string} agentID - The agent ID who owns the property (for analytics)
+ * @param {string} agentId - The agent ID who owns the property (for analytics)
  */
-export const incrementPropertyViews = async (propertyId, agentID) => {
+export const incrementPropertyViews = async (propertyId, agentId) => {
   try {
     // Check if this session has already viewed this property recently
     const sessionKey = `property_viewed_${propertyId}`;
@@ -31,7 +31,7 @@ export const incrementPropertyViews = async (propertyId, agentID) => {
     // Record the view in a separate collection for detailed analytics
     await addDoc(collection(db, 'property_views'), {
       propertyId,
-      agentID,
+      agentId,
       timestamp: serverTimestamp(),
     });
 
