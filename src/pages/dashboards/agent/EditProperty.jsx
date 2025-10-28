@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { FiSave, FiAlertCircle, FiX, FiUpload, FiHome } from 'react-icons/fi';
+import { FiSave, FiAlertCircle, FiX, FiUpload, FiHome, FiImage, FiVideo, FiPlay } from 'react-icons/fi';
 import DashboardLayout from '../../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../../hooks/useAuth';
 import { db } from '../../../firebase';
@@ -17,8 +17,9 @@ const EditProperty = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [property, setProperty] = useState(null);
-    const [imageFiles, setImageFiles] = useState([]);
+    const [mediaFiles, setMediaFiles] = useState([]); // Combined images and videos
     const [existingImages, setExistingImages] = useState([]);
+    const [existingVideos, setExistingVideos] = useState([]);
     const [uploadProgress, setUploadProgress] = useState(0);
     
     const { register, handleSubmit, formState: { errors }, reset, watch } = useForm();
@@ -32,15 +33,20 @@ const EditProperty = () => {
     
     // Property type options
     const propertyTypes = [
-        'House', 'Apartment', 'Condo', 'Townhouse', 'Villa', 'Land'
+        'Studio','Bedsitter', 'Apartment', 'Bungalow', 'Mansionette', 'Villa', 'Commercial', 'BnB', 'Singles'
     ];
     
     // Get form values for dynamic preview
     const watchTitle = watch('title', '');
     const watchPrice = watch('price', '');
-    const watchArea = watch('area', '');  // Changed from watchAddress
+    const watchArea = watch('area', '');
     const watchCity = watch('city', '');
     const watchFeatures = watch('features', []);
+
+    // Helper functions
+    const isVideoFile = (file) => file.type.startsWith('video/');
+    const isImageFile = (file) => file.type.startsWith('image/');
+    const getFileSizeInMB = (file) => (file.size / (1024 * 1024)).toFixed(2);
     
     // Fetch property data on component mount
     useEffect(() => {
@@ -69,17 +75,18 @@ const EditProperty = () => {
                 
                 setProperty(propertyData);
                 setExistingImages(propertyData.images || []);
+                setExistingVideos(propertyData.videos || []);
                 
                 // Reset form with property data
                 reset({
                     title: propertyData.title || '',
                     price: propertyData.price || '',
-                    area: propertyData.area || '',  // Changed from address to area
+                    area: propertyData.area || '',
                     city: propertyData.city || '',
                     state: propertyData.state || '',
                     zip: propertyData.zip || '',
                     description: propertyData.description || '',
-                    propertyType: propertyData.propertyType || 'House',
+                    propertyType: propertyData.propertyType || 'Bedsitter',
                     beds: propertyData.beds || '',
                     baths: propertyData.baths || '',
                     sqft: propertyData.sqft || '',
@@ -101,41 +108,66 @@ const EditProperty = () => {
         fetchProperty();
     }, [id, currentUser, reset]);
     
-    // Clean up object URLs when component unmounts or when imageFiles change
+    // Clean up object URLs when component unmounts or when mediaFiles change
     useEffect(() => {
         return () => {
             // Revoke object URLs to avoid memory leaks
-            imageFiles.forEach(file => {
+            mediaFiles.forEach(file => {
                 if (file.preview) {
                     URL.revokeObjectURL(file.preview);
                 }
             });
         };
-    }, [imageFiles]);
+    }, [mediaFiles]);
     
-    // Handle image upload
-    const handleImageChange = (e) => {
+    // Handle media upload (images and videos)
+    const handleMediaChange = (e) => {
         const files = Array.from(e.target.files);
         
-        // Basic validation
-        const validFiles = files.filter(file => {
-            const isValid = file.type.startsWith('image/');
-            if (!isValid) {
-                toast.error(`${file.name} is not a valid image file`);
+        // Validate files
+        const validFiles = [];
+        const errors = [];
+
+        files.forEach(file => {
+            const isImage = isImageFile(file);
+            const isVideo = isVideoFile(file);
+            const sizeInMB = parseFloat(getFileSizeInMB(file));
+
+            if (!isImage && !isVideo) {
+                errors.push(`${file.name}: Only images and videos are allowed`);
+                return;
             }
-            return isValid;
-        }).map(file => {
-            // Add preview URL property for display
+
+            if (isImage && sizeInMB > 10) {
+                errors.push(`${file.name}: Image size must be less than 10MB`);
+                return;
+            }
+
+            if (isVideo && sizeInMB > 100) {
+                errors.push(`${file.name}: Video size must be less than 100MB`);
+                return;
+            }
+
+            // Add preview URL and metadata
             file.preview = URL.createObjectURL(file);
-            return file;
+            file.isVideo = isVideo;
+            file.isImage = isImage;
+            file.sizeInMB = sizeInMB;
+            
+            validFiles.push(file);
         });
+
+        if (errors.length > 0) {
+            toast.error(errors.join(', '));
+            return;
+        }
         
-        setImageFiles(prev => [...prev, ...validFiles]);
+        setMediaFiles(prev => [...prev, ...validFiles]);
     };
     
-    // Remove image from upload queue
-    const removeImageFile = (index) => {
-        setImageFiles(prev => {
+    // Remove media file from upload queue
+    const removeMediaFile = (index) => {
+        setMediaFiles(prev => {
             const newFiles = [...prev];
             // Revoke the URL of the removed file
             if (newFiles[index].preview) {
@@ -150,6 +182,11 @@ const EditProperty = () => {
     const removeExistingImage = (index) => {
         setExistingImages(prev => prev.filter((_, i) => i !== index));
     };
+
+    // Remove existing video
+    const removeExistingVideo = (index) => {
+        setExistingVideos(prev => prev.filter((_, i) => i !== index));
+    };
     
     // Submit form handler
     const onSubmit = async (data) => {
@@ -157,24 +194,29 @@ const EditProperty = () => {
         setError(null);
         
         try {
-            // Upload new images if any
+            // Upload new media if any
             const newImageUrls = [];
+            const newVideoUrls = [];
             
-            if (imageFiles.length > 0) {
-                for (let i = 0; i < imageFiles.length; i++) {
-                    const file = imageFiles[i];
+            if (mediaFiles.length > 0) {
+                for (let i = 0; i < mediaFiles.length; i++) {
+                    const file = mediaFiles[i];
                     const formData = new FormData();
-                    formData.append('image', file);
+                    formData.append('image', file); // Backend expects 'image' field for both
                     
                     try {
+                        // Get API URL with fallback
+                        const apiUrl = import.meta.env.VITE_APP_B2_API_URL || 'http://localhost:5000';
+                        
                         // Upload to B2 via backend
                         const res = await axios.post(
-                            `${import.meta.env.REACT_APP_B2_API_URL || 'http://localhost:5000'}/api/images/upload`,
+                            `${apiUrl}/api/images/upload`,
                             formData,
                             {
                                 headers: {
                                     'Content-Type': 'multipart/form-data'
                                 },
+                                timeout: 120000, // 2 minute timeout for videos
                                 onUploadProgress: (progressEvent) => {
                                     const percentCompleted = Math.round(
                                         (progressEvent.loaded * 100) / progressEvent.total
@@ -185,22 +227,27 @@ const EditProperty = () => {
                         );
                         
                         if (res.data.status === 'success' && res.data.data?.fileUrl) {
-                            newImageUrls.push(res.data.data.fileUrl);
+                            if (file.isImage) {
+                                newImageUrls.push(res.data.data.fileUrl);
+                            } else if (file.isVideo) {
+                                newVideoUrls.push(res.data.data.fileUrl);
+                            }
                         } else {
-                            throw new Error('Image upload failed');
+                            throw new Error('Media upload failed');
                         }
                     } catch (uploadError) {
-                        console.error('Error uploading image:', uploadError);
-                        toast.error(`Failed to upload image: ${file.name}`);
-                        // Continue with next image even if one fails
+                        console.error('Error uploading media:', uploadError);
+                        toast.error(`Failed to upload ${file.isVideo ? 'video' : 'image'}: ${file.name}`);
+                        // Continue with next file even if one fails
                     }
                     
-                    setUploadProgress(Math.round(((i + 1) / imageFiles.length) * 100));
+                    setUploadProgress(Math.round(((i + 1) / mediaFiles.length) * 100));
                 }
             }
             
-            // Combine existing and new images
+            // Combine existing and new media
             const allImages = [...existingImages, ...newImageUrls];
+            const allVideos = [...existingVideos, ...newVideoUrls];
             
             // Update property in Firestore
             const propertyRef = doc(db, 'properties', id);
@@ -210,19 +257,15 @@ const EditProperty = () => {
                 price: Number(data.price),
                 area: data.area,
                 city: data.city,
-                state: data.state,
-                zip: data.zip,
                 description: data.description,
                 propertyType: data.propertyType,
                 beds: Number(data.beds),
                 baths: Number(data.baths),
-                sqft: Number(data.sqft),
-                lotSize: data.lotSize,
-                yearBuilt: Number(data.yearBuilt),
                 stories: data.stories,
                 garage: data.garage,
                 features: data.features,
                 images: allImages,
+                videos: allVideos,
                 updatedAt: serverTimestamp()
             });
             
@@ -297,9 +340,9 @@ const EditProperty = () => {
                                             e.target.src = 'https://placehold.co/800x500?text=No+Image';
                                         }}
                                     />
-                                ) : imageFiles.length > 0 ? (
+                                ) : mediaFiles.find(f => f.isImage) ? (
                                     <img 
-                                        src={imageFiles[0].preview} 
+                                        src={mediaFiles.find(f => f.isImage).preview} 
                                         alt="Property preview" 
                                         className="w-full h-full object-cover" 
                                     />
@@ -415,7 +458,7 @@ const EditProperty = () => {
                             
                             <div>
                                 <label className="block text-gray-700 text-sm font-medium mb-2">
-                                    Location*
+                                    City*
                                 </label>
                                 <input
                                     type="text"
@@ -433,7 +476,7 @@ const EditProperty = () => {
                                 <input
                                     type="text"
                                     className={`w-full p-3 border rounded-lg ${errors.state ? 'border-red-500' : 'border-gray-300'}`}
-                                    placeholder="e.g. Westlands"
+                                    placeholder="e.g. Nairobi County"
                                     {...register('state', { required: 'State/County is required' })}
                                 />
                                 {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state.message}</p>}
@@ -540,17 +583,18 @@ const EditProperty = () => {
                         </div>
                     </div>
                     
-                    {/* Images */}
+                    {/* Media Section */}
                     <div className="bg-white p-6 rounded-lg shadow-subtle">
-                        <h3 className="font-bold text-lg mb-4 text-gray-700">Property Images</h3>
+                        <h3 className="font-bold text-lg mb-4 text-gray-700">Property Media</h3>
                         
-                        {/* Existing Images */}
-                        {existingImages.length > 0 && (
+                        {/* Existing Media */}
+                        {(existingImages.length > 0 || existingVideos.length > 0) && (
                             <div className="mb-6">
-                                <h4 className="font-medium text-gray-700 mb-2">Current Images</h4>
+                                <h4 className="font-medium text-gray-700 mb-2">Current Media</h4>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                    {/* Existing Images */}
                                     {existingImages.map((image, index) => (
-                                        <div key={index} className="relative group">
+                                        <div key={`img-${index}`} className="relative group">
                                             <div className="h-32 rounded-lg overflow-hidden">
                                                 <img 
                                                     src={image} 
@@ -562,9 +606,38 @@ const EditProperty = () => {
                                                     }}
                                                 />
                                             </div>
+                                            <div className="absolute top-2 left-2 px-2 py-1 bg-black bg-opacity-70 text-white text-xs rounded">
+                                                <FiImage size={12} />
+                                            </div>
                                             <button
                                                 type="button"
                                                 onClick={() => removeExistingImage(index)}
+                                                className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <FiX size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    
+                                    {/* Existing Videos */}
+                                    {existingVideos.map((video, index) => (
+                                        <div key={`vid-${index}`} className="relative group">
+                                            <div className="h-32 rounded-lg overflow-hidden bg-gray-200">
+                                                <video
+                                                    src={video}
+                                                    className="w-full h-full object-cover"
+                                                    muted
+                                                />
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                                                    <FiPlay className="w-8 h-8 text-white" />
+                                                </div>
+                                            </div>
+                                            <div className="absolute top-2 left-2 px-2 py-1 bg-black bg-opacity-70 text-white text-xs rounded">
+                                                <FiVideo size={12} />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeExistingVideo(index)}
                                                 className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                                             >
                                                 <FiX size={16} />
@@ -575,50 +648,84 @@ const EditProperty = () => {
                             </div>
                         )}
                         
-                        {/* New Images */}
+                        {/* New Media Upload */}
                         <div>
-                            <h4 className="font-medium text-gray-700 mb-2">Add New Images</h4>
+                            <h4 className="font-medium text-gray-700 mb-2">Add New Media</h4>
                             
-                            {/* Image Upload */}
+                            {/* Media Upload */}
                             <div className="mb-4">
                                 <label className="block text-gray-700 text-sm font-medium mb-2">
-                                    Upload Images
+                                    Upload Images & Videos
                                 </label>
                                 <div className="flex items-center">
                                     <label className="cursor-pointer flex items-center justify-center w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-emerald-500 transition-colors">
                                         <input
                                             type="file"
                                             className="hidden"
-                                            accept="image/*"
+                                            accept="image/*,video/*"
                                             multiple
-                                            onChange={handleImageChange}
+                                            onChange={handleMediaChange}
                                         />
                                         <div className="text-center">
-                                            <FiUpload className="mx-auto text-gray-400 mb-2" size={24} />
-                                            <p className="text-sm text-gray-600">Click to upload images</p>
-                                            <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 10MB</p>
+                                            <div className="flex items-center space-x-2 mb-3 justify-center">
+                                                <FiImage className="text-gray-400" size={24} />
+                                                <FiVideo className="text-gray-400" size={24} />
+                                            </div>
+                                            <p className="text-sm text-gray-600">Click to upload images and videos</p>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Images: PNG, JPG (Max: 10MB) | Videos: MP4, MOV (Max: 100MB)
+                                            </p>
                                         </div>
                                     </label>
                                 </div>
                             </div>
                             
-                            {/* Image Preview */}
-                            {imageFiles.length > 0 && (
+                            {/* New Media Preview */}
+                            {mediaFiles.length > 0 && (
                                 <div>
-                                    <h4 className="font-medium text-gray-700 mb-2">New Images to Upload</h4>
+                                    <h4 className="font-medium text-gray-700 mb-2">New Media to Upload</h4>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                        {imageFiles.map((file, index) => (
+                                        {mediaFiles.map((file, index) => (
                                             <div key={index} className="relative group">
                                                 <div className="h-32 rounded-lg overflow-hidden">
-                                                    <img 
-                                                        src={file.preview} 
-                                                        alt={`Upload preview ${index + 1}`} 
-                                                        className="w-full h-full object-cover" 
-                                                    />
+                                                    {file.isImage ? (
+                                                        <img 
+                                                            src={file.preview} 
+                                                            alt={`Upload preview ${index + 1}`} 
+                                                            className="w-full h-full object-cover" 
+                                                        />
+                                                    ) : (
+                                                        <div className="relative w-full h-full bg-gray-200">
+                                                            <video
+                                                                src={file.preview}
+                                                                className="w-full h-full object-cover"
+                                                                muted
+                                                            />
+                                                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                                                                <FiPlay className="w-8 h-8 text-white" />
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
+                                                
+                                                {/* File info overlay */}
+                                                <div className="absolute bottom-0 left-0 right-0 p-2 bg-black bg-opacity-70 text-white text-xs rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="truncate">{file.name}</div>
+                                                    <div>{file.sizeInMB}MB</div>
+                                                </div>
+                                                
+                                                {/* Media type indicator */}
+                                                <div className="absolute top-2 left-2 px-2 py-1 bg-black bg-opacity-70 text-white text-xs rounded">
+                                                    {file.isImage ? (
+                                                        <FiImage size={12} />
+                                                    ) : (
+                                                        <FiVideo size={12} />
+                                                    )}
+                                                </div>
+                                                
                                                 <button
                                                     type="button"
-                                                    onClick={() => removeImageFile(index)}
+                                                    onClick={() => removeMediaFile(index)}
                                                     className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                                                 >
                                                     <FiX size={16} />
@@ -631,13 +738,13 @@ const EditProperty = () => {
                         </div>
                     </div>
                     
-                    {/* Progress Bar for Image Uploads */}
-                    {isSubmitting && imageFiles.length > 0 && (
+                    {/* Progress Bar for Media Uploads */}
+                    {isSubmitting && mediaFiles.length > 0 && (
                         <div className="bg-white p-4 rounded-lg shadow-subtle">
-                            <h4 className="font-medium text-gray-700 mb-2">Uploading Images: {uploadProgress}%</h4>
+                            <h4 className="font-medium text-gray-700 mb-2">Uploading Media: {uploadProgress}%</h4>
                             <div className="w-full bg-gray-200 rounded-full h-2.5">
                                 <div 
-                                    className="bg-emerald-600 h-2.5 rounded-full" 
+                                    className="bg-emerald-600 h-2.5 rounded-full transition-all duration-300" 
                                     style={{ width: `${uploadProgress}%` }}
                                 ></div>
                             </div>

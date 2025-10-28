@@ -1,7 +1,42 @@
 import { useState, useEffect, useRef } from 'react';
-import { FiCrosshair, FiSearch } from 'react-icons/fi';
+import { FiSearch } from 'react-icons/fi';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+
+// Fix for Leaflet marker icon
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+// custom marker icon
+const customIcon = L.divIcon({
+  className: 'custom-marker',
+  html: `<div style="
+    background-color: #105fb9ff;
+    width: 25px;
+    height: 25px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    border: 3px solid #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  ">
+    <div style="
+      color: white;
+      font-size: 12px;
+      transform: rotate(45deg);
+      font-weight: bold;
+    ">📍</div>
+  </div>`,
+  iconSize: [25, 25],
+  iconAnchor: [12, 25],
+  popupAnchor: [0, -25]
+});
 
 const LocationPicker = ({ 
   onLocationSelect, 
@@ -12,7 +47,7 @@ const LocationPicker = ({
 }) => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
-  const markerRef = useRef(null); // Use ref instead of state for marker
+  const markerRef = useRef(null);
   const [map, setMap] = useState(null);
   const [searchValue, setSearchValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -72,7 +107,7 @@ const LocationPicker = ({
           };
           
           setSelectedLocation(clickedLocation);
-          setMarkerOnMap(clickedLocation); // No need to pass mapInstance now
+          setMarkerOnMap(clickedLocation);
           
           // Get address from coordinates (reverse geocoding)
           reverseGeocode(clickedLocation);
@@ -113,7 +148,7 @@ const LocationPicker = ({
         }
       }
     };
-  }, []); // Empty dependency array
+  }, []);
 
   // Try to center map on address when provided
   useEffect(() => {
@@ -147,9 +182,10 @@ const LocationPicker = ({
     }
     
     try {
-      // Create new marker
+      // Create new marker with custom icon
       const newMarker = L.marker([location.lat, location.lng], {
-        draggable: true
+        draggable: true,
+        icon: customIcon // Use the custom icon
       }).addTo(mapInstance);
       
       // Add drag end event
@@ -242,34 +278,16 @@ const LocationPicker = ({
     }
   };
 
-  const getUserLocation = () => {
-    if (navigator.geolocation) {
-      setIsLoading(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const userLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          
-          setSelectedLocation(userLocation);
-          centerMap(userLocation);
-          setMarkerOnMap(userLocation);
-          onLocationSelect(userLocation);
-          setIsLoading(false);
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          setIsLoading(false);
-        }
-      );
-    } else {
-      console.error('Geolocation is not supported by this browser.');
-    }
-  };
-
   return (
     <div className="w-full">
+      {/* CSS for custom marker */}
+      <style jsx>{`
+        .custom-marker {
+          background: transparent !important;
+          border: none !important;
+        }
+      `}</style>
+      
       <div className="flex mb-4 space-x-2">
         <div className="relative flex-grow">
           <div>
@@ -278,7 +296,7 @@ const LocationPicker = ({
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
-              placeholder="Search for address in Kenya"
+              placeholder="Search location"
               className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             />
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -294,15 +312,6 @@ const LocationPicker = ({
             </button>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={getUserLocation}
-          disabled={isLoading}
-          className="flex items-center px-4 py-2 text-white rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400"
-        >
-          <FiCrosshair className="mr-2" />
-          My Location
-        </button>
       </div>
 
       <div 

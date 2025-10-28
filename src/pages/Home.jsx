@@ -6,7 +6,7 @@ import {
     FiMail, FiPhone, 
     FiMapPin as FiLocation, FiInstagram, FiTwitter, FiFacebook 
 } from 'react-icons/fi';
-import { TbBrandTiktok, TbBuildingSkyscraper, TbBuildingEstate, TbBuildingCottage, TbBuildingStore } from 'react-icons/tb';
+import { TbBrandTiktok } from 'react-icons/tb';
 import { motion as Motion } from 'framer-motion';
 
 const Home = () => {
@@ -163,16 +163,33 @@ const Home = () => {
                 </section>
 
                 {/* Property Categories */}
-                <section className="py-8 bg-gray-50">
+                <section className="py-12 bg-gray-50">
                     <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                        {/* Section Title */}
+                        <div className="mb-10 text-center">
+                            <h2 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">
+                                What are you looking for?
+                            </h2>
+                            <p className="text-lg text-gray-600">
+                                Browse properties by category to find your perfect home
+                            </p>
+                        </div>
+
                         <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4">
                             {/* Studios & Bedsitters */}
                             <button 
                                 onClick={() => handleCategoryClick('Bedsitter')}
                                 className="p-4 text-center transition-all duration-300 bg-white border-2 border-emerald-200 group rounded-xl shadow-subtle hover:shadow-lg hover:-translate-y-1"
                             >
-                                <div className="inline-flex items-center justify-center w-12 h-12 mb-3 transition-colors rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white">
-                                    <TbBuildingEstate size={24} />
+                                <div className="flex items-center justify-center w-16 h-16 mx-auto mb-3 overflow-hidden rounded-lg">
+                                    <img 
+                                        src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=80&h=80&fit=crop&crop=center" 
+                                        alt="Studio/Bedsitter"
+                                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                                        onError={(e) => {
+                                            e.target.src = 'https://placehold.co/80x80/10b981/white?text=🏠';
+                                        }}
+                                    />
                                 </div>
                                 <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Studio/Bedsitter</h3>
                                 <div className="flex items-center justify-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
@@ -185,8 +202,15 @@ const Home = () => {
                                 onClick={() => handleCategoryClick('Apartment')}
                                 className="p-4 text-center transition-all duration-300 bg-white border-2 border-emerald-200 group rounded-xl shadow-subtle hover:shadow-lg hover:-translate-y-1"
                             >
-                                <div className="inline-flex items-center justify-center w-12 h-12 mb-3 transition-colors rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white">
-                                    <TbBuildingSkyscraper size={24} />
+                                <div className="flex items-center justify-center w-16 h-16 mx-auto mb-3 overflow-hidden rounded-lg">
+                                    <img 
+                                        src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=80&h=80&fit=crop&crop=center" 
+                                        alt="Apartments"
+                                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                                        onError={(e) => {
+                                            e.target.src = 'https://placehold.co/80x80/10b981/white?text=🏢';
+                                        }}
+                                    />
                                 </div>
                                 <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Apartments</h3>
                                 <div className="flex items-center justify-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
@@ -196,11 +220,18 @@ const Home = () => {
 
                             {/* Bungalows */}
                             <button 
-                                onClick={() => handleCategoryClick('Bungalows')}
+                                onClick={() => handleCategoryClick('Bungalow')}
                                 className="p-4 text-center transition-all duration-300 bg-white border-2 border-emerald-200 group rounded-xl shadow-subtle hover:shadow-lg hover:-translate-y-1"
                             >
-                                <div className="inline-flex items-center justify-center w-12 h-12 mb-3 transition-colors rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white">
-                                    <TbBuildingCottage size={24} />
+                                <div className="flex items-center justify-center w-16 h-16 mx-auto mb-3 overflow-hidden rounded-lg">
+                                    <img 
+                                        src="https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=80&h=80&fit=crop&crop=center" 
+                                        alt="Bungalows"
+                                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                                        onError={(e) => {
+                                            e.target.src = 'https://placehold.co/80x80/10b981/white?text=🏘️';
+                                        }}
+                                    />
                                 </div>
                                 <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Bungalows</h3>
                                 <div className="flex items-center justify-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
@@ -210,11 +241,18 @@ const Home = () => {
 
                             {/* Mansionettes */}
                             <button 
-                                onClick={() => handleCategoryClick('Mansionettes')}
+                                onClick={() => handleCategoryClick('Mansionette')}
                                 className="p-4 text-center transition-all duration-300 bg-white border-2 border-emerald-200 group rounded-xl shadow-subtle hover:shadow-lg hover:-translate-y-1"
                             >
-                                <div className="inline-flex items-center justify-center w-12 h-12 mb-3 transition-colors rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white">
-                                    <TbBuildingStore size={24} />
+                                <div className="flex items-center justify-center w-16 h-16 mx-auto mb-3 overflow-hidden rounded-lg">
+                                    <img 
+                                        src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=80&h=80&fit=crop&crop=center" 
+                                        alt="Mansionettes"
+                                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                                        onError={(e) => {
+                                            e.target.src = 'https://placehold.co/80x80/10b981/white?text=🏡';
+                                        }}
+                                    />
                                 </div>
                                 <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Mansionettes</h3>
                                 <div className="flex items-center justify-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
@@ -224,11 +262,18 @@ const Home = () => {
 
                             {/* Luxury Villas */}
                             <button 
-                                onClick={() => handleCategoryClick('Luxury Villas')}
+                                onClick={() => handleCategoryClick('Villa')}
                                 className="p-4 text-center transition-all duration-300 bg-white border-2 border-emerald-200 group rounded-xl shadow-subtle hover:shadow-lg hover:-translate-y-1"
                             >
-                                <div className="inline-flex items-center justify-center w-12 h-12 mb-3 transition-colors rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white">
-                                    <TbBuildingEstate size={24} />
+                                <div className="flex items-center justify-center w-16 h-16 mx-auto mb-3 overflow-hidden rounded-lg">
+                                    <img 
+                                        src="https://images.unsplash.com/photo-1613977257363-707ba9348227?w=80&h=80&fit=crop&crop=center" 
+                                        alt="Luxury Villas"
+                                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                                        onError={(e) => {
+                                            e.target.src = 'https://placehold.co/80x80/10b981/white?text=🏰';
+                                        }}
+                                    />
                                 </div>
                                 <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Luxury Villas</h3>
                                 <div className="flex items-center justify-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
@@ -238,11 +283,18 @@ const Home = () => {
 
                             {/* Commercials */}
                             <button 
-                                onClick={() => handleCategoryClick('Commercials')}
+                                onClick={() => handleCategoryClick('Commercial')}
                                 className="p-4 text-center transition-all duration-300 bg-white border-2 border-emerald-200 group rounded-xl shadow-subtle hover:shadow-lg hover:-translate-y-1"
                             >
-                                <div className="inline-flex items-center justify-center w-12 h-12 mb-3 transition-colors rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white">
-                                    <TbBuildingSkyscraper size={24} />   
+                                <div className="flex items-center justify-center w-16 h-16 mx-auto mb-3 overflow-hidden rounded-lg">
+                                    <img 
+                                        src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=80&h=80&fit=crop&crop=center" 
+                                        alt="Commercial Properties"
+                                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                                        onError={(e) => {
+                                            e.target.src = 'https://placehold.co/80x80/10b981/white?text=🏢';
+                                        }}
+                                    />
                                 </div>
                                 <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Commercials</h3>
                                 <div className="flex items-center justify-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
@@ -255,8 +307,15 @@ const Home = () => {
                                 onClick={() => handleCategoryClick('BnB')}
                                 className="p-4 text-center transition-all duration-300 bg-white border-2 border-emerald-200 group rounded-xl shadow-subtle hover:shadow-lg hover:-translate-y-1"
                             >
-                                <div className="inline-flex items-center justify-center w-12 h-12 mb-3 transition-colors rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white">
-                                    <TbBuildingSkyscraper size={24} />   
+                                <div className="flex items-center justify-center w-16 h-16 mx-auto mb-3 overflow-hidden rounded-lg">
+                                    <img 
+                                        src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=80&h=80&fit=crop&crop=center" 
+                                        alt="BnB Properties"
+                                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                                        onError={(e) => {
+                                            e.target.src = 'https://placehold.co/80x80/10b981/white?text=🏨';
+                                        }}
+                                    />
                                 </div>
                                 <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">BnB</h3>
                                 <div className="flex items-center justify-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
@@ -269,8 +328,15 @@ const Home = () => {
                                 onClick={() => handleCategoryClick('Singles')}
                                 className="p-4 text-center transition-all duration-300 bg-white border-2 border-emerald-200 group rounded-xl shadow-subtle hover:shadow-lg hover:-translate-y-1"
                             >
-                                <div className="inline-flex items-center justify-center w-12 h-12 mb-3 transition-colors rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white">
-                                    <TbBuildingSkyscraper size={24} />   
+                                <div className="flex items-center justify-center w-16 h-16 mx-auto mb-3 overflow-hidden rounded-lg">
+                                    <img 
+                                        src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=80&h=80&fit=crop&crop=center" 
+                                        alt="Single Room Properties"
+                                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                                        onError={(e) => {
+                                            e.target.src = 'https://placehold.co/80x80/10b981/white?text=🚪';
+                                        }}
+                                    />
                                 </div>
                                 <h3 className="mb-1 text-lg font-bold text-gray-800 group-hover:text-emerald-600">Singles</h3>
                                 <div className="flex items-center justify-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
@@ -345,30 +411,6 @@ const Home = () => {
                                         </li>
                                     </ul>
                                 </div>
-
-                                {/* Newsletter */}
-                                {/* <div>
-                                    <h3 className="mb-6 text-lg font-semibold">Newsletter</h3>
-                                    <p className="mb-4 text-gray-400">
-                                        Subscribe to get the latest property listings and real estate news
-                                    </p>
-                                    <form className="space-y-3">
-                                        <div className="flex flex-wrap items-center">
-                                            <input 
-                                                type="email" 
-                                                placeholder="Your email address" 
-                                                className="w-full px-4 py-2 text-gray-800 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                                required
-                                            />
-                                        </div>
-                                        <button 
-                                            type="submit" 
-                                            className="w-full px-4 py-2 text-white transition-colors rounded-lg bg-emerald-600 hover:bg-emerald-700"
-                                        >
-                                            Subscribe
-                                        </button>
-                                    </form>
-                                </div> */}
                             </div>
                         </div>
                     </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiImage, FiHome, FiLayers, FiXCircle, FiMapPin } from 'react-icons/fi';
+import { FiImage, FiVideo, FiHome, FiLayers, FiXCircle, FiMapPin, FiPlay } from 'react-icons/fi';
 import DashboardLayout from '../../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../../hooks/useAuth';
 import { db } from '../../../firebase';
@@ -38,11 +38,12 @@ const ListProperty = () => {
         stories: '1',
         garage: '0',
         features: [],
-        images: []
+        images: [],
+        videos: [] // Add videos array
     });
 
-    const [imageFiles, setImageFiles] = useState([]);
-    const [imagePreviews, setImagePreviews] = useState([]);
+    const [mediaFiles, setMediaFiles] = useState([]); // Combined images and videos
+    const [mediaPreviews, setMediaPreviews] = useState([]);
 
     // Location picker state
     const [selectedLocation, setSelectedLocation] = useState(null);
@@ -51,8 +52,6 @@ const ListProperty = () => {
     const [state, setState] = useState('');
 
     const handleLocationSelect = (location) => {
-        // Expecting location to be an object like:
-        // { lat: number, lng: number, address: string, city: string, state: string }
         if (!location) return;
 
         setSelectedLocation({
@@ -64,7 +63,6 @@ const ListProperty = () => {
         setCity(location.city || '');
         setState(location.state || '');
 
-        // Also update formData fields that correspond to location if provided
         setFormData(prev => ({
             ...prev,
             city: location.city || prev.city,
@@ -119,30 +117,99 @@ const ListProperty = () => {
         }
     };
 
-    const handleImageChange = (e) => {
-        const files = Array.from(e.target.files);
-        const newPreviews = files.map(file => URL.createObjectURL(file));
-        setImagePreviews([...imagePreviews, ...newPreviews]);
-        setImageFiles([...imageFiles, ...files]);
+    // Helper function to check if file is video
+    const isVideoFile = (file) => {
+        return file.type.startsWith('video/');
     };
 
-    const removeImage = (index) => {
-        const newPreviews = [...imagePreviews];
-        const newFiles = [...imageFiles];
+    // Helper function to check if file is image
+    const isImageFile = (file) => {
+        return file.type.startsWith('image/');
+    };
 
-        URL.revokeObjectURL(newPreviews[index]);
+    // Helper function to get file size in MB
+    const getFileSizeInMB = (file) => {
+        return (file.size / (1024 * 1024)).toFixed(2);
+    };
+
+    const handleMediaChange = (e) => {
+        const files = Array.from(e.target.files);
+        
+        // Validate file sizes and types
+        const validFiles = [];
+        const errors = [];
+
+        files.forEach(file => {
+            const isImage = isImageFile(file);
+            const isVideo = isVideoFile(file);
+            const sizeInMB = parseFloat(getFileSizeInMB(file));
+
+            if (!isImage && !isVideo) {
+                errors.push(`${file.name}: Only images and videos are allowed`);
+                return;
+            }
+
+            if (isImage && sizeInMB > 10) {
+                errors.push(`${file.name}: Image size must be less than 10MB`);
+                return;
+            }
+
+            if (isVideo && sizeInMB > 100) {
+                errors.push(`${file.name}: Video size must be less than 100MB`);
+                return;
+            }
+
+            validFiles.push(file);
+        });
+
+        if (errors.length > 0) {
+            setSubmitError(errors.join(', '));
+            return;
+        }
+
+        // Create previews for valid files
+        const newPreviews = validFiles.map(file => {
+            if (isImageFile(file)) {
+                return {
+                    type: 'image',
+                    url: URL.createObjectURL(file),
+                    file: file,
+                    name: file.name,
+                    size: getFileSizeInMB(file)
+                };
+            } else {
+                return {
+                    type: 'video',
+                    url: URL.createObjectURL(file),
+                    file: file,
+                    name: file.name,
+                    size: getFileSizeInMB(file)
+                };
+            }
+        });
+
+        setMediaPreviews([...mediaPreviews, ...newPreviews]);
+        setMediaFiles([...mediaFiles, ...validFiles]);
+        setSubmitError(''); // Clear any previous errors
+    };
+
+    const removeMedia = (index) => {
+        const newPreviews = [...mediaPreviews];
+        const newFiles = [...mediaFiles];
+
+        URL.revokeObjectURL(newPreviews[index].url);
         newPreviews.splice(index, 1);
         newFiles.splice(index, 1);
 
-        setImagePreviews(newPreviews);
-        setImageFiles(newFiles);
+        setMediaPreviews(newPreviews);
+        setMediaFiles(newFiles);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (imageFiles.length === 0) {
-            setSubmitError('Please upload at least one image');
+        if (mediaFiles.length === 0) {
+            setSubmitError('Please upload at least one image or video');
             return;
         }
 
@@ -158,12 +225,15 @@ const ListProperty = () => {
         try {
             const apiUrl = getApiUrl();
             
-            // Upload images to B2 via backend
+            // Separate images and videos
             const imageUrls = [];
-            for (let i = 0; i < imageFiles.length; i++) {
-                const file = imageFiles[i];
+            const videoUrls = [];
+            
+            // Upload all media files to B2 via backend
+            for (let i = 0; i < mediaFiles.length; i++) {
+                const file = mediaFiles[i];
                 const uploadFormData = new FormData();
-                uploadFormData.append('image', file);
+                uploadFormData.append('image', file); // Backend expects 'image' field for both images and videos
 
                 const uploadUrl = `${apiUrl}/api/images/upload`;
                 console.log('Uploading to:', uploadUrl);
@@ -172,33 +242,37 @@ const ListProperty = () => {
                     headers: {
                         'Content-Type': 'multipart/form-data'
                     },
-                    timeout: 30000 // 30 second timeout
+                    timeout: 120000 // 2 minute timeout for videos
                 });
 
                 console.log('Upload response:', res.data);
 
                 if (res.data.status === 'success' && res.data.data?.fileUrl) {
-                    imageUrls.push(res.data.data.fileUrl);
+                    if (isImageFile(file)) {
+                        imageUrls.push(res.data.data.fileUrl);
+                    } else {
+                        videoUrls.push(res.data.data.fileUrl);
+                    }
                 } else {
-                    throw new Error(`Image upload failed: ${res.data.message || 'Unknown error'}`);
+                    throw new Error(`Upload failed: ${res.data.message || 'Unknown error'}`);
                 }
 
-                setUploadProgress(Math.round(((i + 1) / imageFiles.length) * 100));
+                setUploadProgress(Math.round(((i + 1) / mediaFiles.length) * 100));
             }
 
             // Create property document in Firestore
             const propertyData = {
                 ...formData,
                 images: imageUrls,
-                location: selectedLocation, // Add this line to save the location
-                address: address, // Optional: save the address string too
+                videos: videoUrls,
+                location: selectedLocation,
                 agentID: currentUser.uid,
                 agentName: currentUser.displayName || 'Anonymous',
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 views: 0,
                 favorites: 0,
-                status: 'pending'
+                status: 'active'
             };
 
             console.log('Creating property with data:', propertyData);
@@ -215,7 +289,7 @@ const ListProperty = () => {
             } else if (error.response) {
                 setSubmitError(`Server error: ${error.response.data?.message || error.response.statusText}`);
             } else if (error.message.includes('timeout')) {
-                setSubmitError('Upload timeout. Please try again with smaller images.');
+                setSubmitError('Upload timeout. Please try again with smaller files.');
             } else {
                 setSubmitError(`Failed to add property: ${error.message}`);
             }
@@ -475,53 +549,104 @@ const ListProperty = () => {
                         </div>
                     </div>
 
-                    {/* Images */}
+                    {/* Media Upload */}
                     <div className="p-6 bg-white shadow-sm rounded-xl">
-                        <h3 className="mb-4 text-lg font-bold text-gray-800">Property Images</h3>
-                        <p className="mb-4 text-gray-600">Upload high-quality images of your property. You can upload multiple images.</p>
+                        <h3 className="mb-4 text-lg font-bold text-gray-800">Property Media</h3>
+                        <p className="mb-4 text-gray-600">
+                            Upload high-quality images and videos of your property. Images: max 10MB each. Videos: max 100MB each.
+                        </p>
 
                         <div className="mb-6">
                             <label
-                                htmlFor="images"
+                                htmlFor="media"
                                 className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
                             >
                                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <FiImage className="w-10 h-10 mb-3 text-gray-400" />
-                                    <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                                    <p className="text-xs text-gray-500">PNG, JPG or WEBP (Max: 10MB per image)</p>
+                                    <div className="flex items-center space-x-2 mb-3">
+                                        <FiImage className="w-8 h-8 text-gray-400" />
+                                        <FiVideo className="w-8 h-8 text-gray-400" />
+                                    </div>
+                                    <p className="mb-2 text-sm text-gray-500">
+                                        <span className="font-semibold">Click to upload</span> images and videos
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        Images: PNG, JPG, WEBP (Max: 10MB) | Videos: MP4, MOV, AVI (Max: 100MB)
+                                    </p>
                                 </div>
                                 <input
-                                    id="images"
-                                    name="images"
+                                    id="media"
+                                    name="media"
                                     type="file"
-                                    accept="image/*"
+                                    accept="image/*,video/*"
                                     multiple
                                     className="hidden"
-                                    onChange={handleImageChange}
+                                    onChange={handleMediaChange}
                                 />
                             </label>
                         </div>
 
-                        {imagePreviews.length > 0 && (
+                        {mediaPreviews.length > 0 && (
                             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                                {imagePreviews.map((preview, index) => (
+                                {mediaPreviews.map((preview, index) => (
                                     <div key={index} className="relative group">
-                                        <img
-                                            src={preview}
-                                            alt={`Preview ${index + 1}`}
-                                            className="object-cover w-full h-32 rounded-lg"
-                                        />
+                                        {preview.type === 'image' ? (
+                                            <img
+                                                src={preview.url}
+                                                alt={`Preview ${index + 1}`}
+                                                className="object-cover w-full h-32 rounded-lg"
+                                            />
+                                        ) : (
+                                            <div className="relative w-full h-32 bg-gray-200 rounded-lg overflow-hidden">
+                                                <video
+                                                    src={preview.url}
+                                                    className="object-cover w-full h-full"
+                                                    muted
+                                                />
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                                                    <FiPlay className="w-8 h-8 text-white" />
+                                                </div>
+                                            </div>
+                                        )}
+                                        
+                                        {/* File info overlay */}
+                                        <div className="absolute bottom-0 left-0 right-0 p-2 bg-black bg-opacity-70 text-white text-xs rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="truncate">{preview.name}</div>
+                                            <div>{preview.size}MB</div>
+                                        </div>
+                                        
+                                        {/* Remove button */}
                                         <button
                                             type="button"
-                                            onClick={() => removeImage(index)}
+                                            onClick={() => removeMedia(index)}
                                             className="absolute p-1 text-white transition-opacity bg-red-500 rounded-full opacity-0 top-2 right-2 group-hover:opacity-100"
                                         >
                                             <FiXCircle size={16} />
                                         </button>
+                                        
+                                        {/* Media type indicator */}
+                                        <div className="absolute top-2 left-2 px-2 py-1 bg-black bg-opacity-70 text-white text-xs rounded">
+                                            {preview.type === 'image' ? (
+                                                <FiImage size={12} />
+                                            ) : (
+                                                <FiVideo size={12} />
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                         )}
+                    </div>
+
+                    {/* Map */}
+                    <div className="p-6 bg-white shadow-sm rounded-xl">
+                        <h3 className="mb-4 text-lg font-bold text-gray-800">Property Location</h3>
+                        <LocationPicker
+                            onLocationSelect={handleLocationSelect}
+                            initialLocation={selectedLocation}
+                            address={address}
+                            city={city}
+                            state={state}
+                        />
                     </div>
 
                     {/* Submit */}
@@ -548,18 +673,6 @@ const ListProperty = () => {
                         )}
                     </div>
                 </form>
-
-                {/* Map */}
-                <div className="p-6 bg-white shadow-sm rounded-xl">
-                    <h3 className="mb-4 text-lg font-bold text-gray-800">Property Location</h3>
-                    <LocationPicker
-                        onLocationSelect={handleLocationSelect}
-                        initialLocation={selectedLocation}
-                        address={address}
-                        city={city}
-                        state={state}
-                    />
-                </div>
             </div>
         </DashboardLayout>
     );
