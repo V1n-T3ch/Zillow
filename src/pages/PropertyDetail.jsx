@@ -1,16 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import {
     FiCamera, FiChevronLeft, FiChevronRight, FiPlus,
     FiCheckCircle, FiHome, FiCalendar, FiMapPin,
-    FiHeart, FiShare2, FiDollarSign,
+    FiShare2, FiDollarSign,
     FiUsers, FiUser, FiPhone, FiMessageSquare
 } from 'react-icons/fi';
 import { db } from '../firebase';
 import {
-    doc, getDoc, collection, addDoc, updateDoc, increment,
-    deleteDoc, getDocs, query, where, serverTimestamp
+    doc, getDoc, collection, getDocs, query, where
 } from 'firebase/firestore';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'react-toastify';
@@ -346,8 +345,6 @@ const PropertyDetail = () => {
     const [property, setProperty] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [isFavorite, setIsFavorite] = useState(false);
-    const [favoriteId, setFavoriteId] = useState(null);
     const [similarProperties, setSimilarProperties] = useState([]);
     const [userEmail, setUserEmail] = useState('');
     const [activeTab, setActiveTab] = useState('description');
@@ -386,22 +383,8 @@ const PropertyDetail = () => {
                     return () => clearTimeout(viewTimer);
                 }
 
-                // Check if this property is in user's favorites
+                // Set user email from auth if available
                 if (currentUser) {
-                    const favoritesQuery = query(
-                        collection(db, 'favorites'),
-                        where('userId', '==', currentUser.uid),
-                        where('propertyId', '==', id)
-                    );
-
-                    const favoritesSnapshot = await getDocs(favoritesQuery);
-
-                    if (!favoritesSnapshot.empty) {
-                        setIsFavorite(true);
-                        setFavoriteId(favoritesSnapshot.docs[0].id);
-                    }
-
-                    // Set user email from auth
                     setUserEmail(currentUser.email || '');
                 }
 
@@ -438,69 +421,6 @@ const PropertyDetail = () => {
 
         fetchPropertyData();
     }, [id, currentUser]);
-
-    // Toggle favorite status
-    const toggleFavorite = async () => {
-        if (!currentUser) {
-            toast.info('Please log in to save properties');
-            navigate('/login', { state: { from: `/properties/${id}` } });
-            return;
-        }
-
-        try {
-            // Reference to the property document
-            const propertyRef = doc(db, 'properties', id);
-
-            if (isFavorite) {
-                // Remove from favorites collection
-                await deleteDoc(doc(db, 'favorites', favoriteId));
-
-                // Decrement the favorites count in the property document
-                await updateDoc(propertyRef, {
-                    favorites: increment(-1), // Decrement by 1
-                    updatedAt: serverTimestamp()
-                });
-
-                setIsFavorite(false);
-                setFavoriteId(null);
-
-                // Update local state
-                setProperty(prev => ({
-                    ...prev,
-                    favorites: Math.max((prev.favorites || 0) - 1, 0) // Ensure it doesn't go below 0
-                }));
-
-                toast.success('Removed from favorites');
-            } else {
-                // Add to favorites collection
-                const favoriteRef = await addDoc(collection(db, 'favorites'), {
-                    userId: currentUser.uid,
-                    propertyId: id,
-                    createdAt: serverTimestamp()
-                });
-
-                // Increment the favorites count in the property document
-                await updateDoc(propertyRef, {
-                    favorites: increment(1), // Increment by 1
-                    updatedAt: serverTimestamp()
-                });
-
-                setIsFavorite(true);
-                setFavoriteId(favoriteRef.id);
-
-                // Update local state
-                setProperty(prev => ({
-                    ...prev,
-                    favorites: (prev.favorites || 0) + 1
-                }));
-
-                toast.success('Added to favorites');
-            }
-        } catch (err) {
-            console.error('Error updating favorites:', err);
-            toast.error('Failed to update favorites');
-        }
-    };
 
     // Handle share functionality
     const handleShare = () => {
@@ -636,18 +556,8 @@ const PropertyDetail = () => {
                                     </div>
                                 </div>
 
+                                {/* Only Share Button */}
                                 <div className="flex gap-3 mt-6">
-                                    <button
-                                        onClick={toggleFavorite}
-                                        className={`flex items-center px-4 py-2 rounded-lg transition-colors ${isFavorite
-                                            ? 'bg-red-50 text-red-600 border border-red-200'
-                                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
-                                            }`}
-                                    >
-                                        <FiHeart className={`mr-2 ${isFavorite ? 'fill-red-500' : ''}`} />
-                                        {isFavorite ? 'Saved' : 'Save'}
-                                    </button>
-
                                     <button
                                         className="flex items-center px-4 py-2 text-gray-700 transition-colors border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100"
                                         onClick={handleShare}
@@ -670,14 +580,6 @@ const PropertyDetail = () => {
                                         Description
                                     </button>
                                     <button
-                                        className={`px-6 py-3 text-sm font-medium ${activeTab === 'details'
-                                            ? 'text-emerald-600 border-b-2 border-emerald-600'
-                                            : 'text-gray-500 hover:text-gray-700'}`}
-                                        onClick={() => setActiveTab('details')}
-                                    >
-                                        Details
-                                    </button>
-                                    <button
                                         className={`px-6 py-3 text-sm font-medium ${activeTab === 'features'
                                             ? 'text-emerald-600 border-b-2 border-emerald-600'
                                             : 'text-gray-500 hover:text-gray-700'}`}
@@ -692,65 +594,6 @@ const PropertyDetail = () => {
                                     {activeTab === 'description' && (
                                         <div className="text-gray-700 whitespace-pre-line">
                                             {property.description || 'No description available.'}
-                                        </div>
-                                    )}
-
-                                    {/* Details Tab */}
-                                    {activeTab === 'details' && (
-                                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                            <div>
-                                                <h3 className="mb-3 font-medium text-gray-700">Basic Information</h3>
-                                                <ul className="space-y-3">
-                                                    <li className="flex items-start">
-                                                        <FiHome className="mt-1 mr-2 text-emerald-500" />
-                                                        <div>
-                                                            <span className="block text-sm text-gray-500">Property Type</span>
-                                                            <span className="text-gray-800">{property.propertyType || 'N/A'}</span>
-                                                        </div>
-                                                    </li>
-                                                    <li className="flex items-start">
-                                                        <FiMapPin className="mt-1 mr-2 text-emerald-500" />
-                                                        <div>
-                                                            <span className="block text-sm text-gray-500">Location</span>
-                                                            <span className="text-gray-800">{property.city}{property.area ? `, ${property.area}` : ''}</span>
-                                                        </div>
-                                                    </li>
-                                                </ul>
-                                            </div>
-
-                                            <div>
-                                                <h3 className="mb-3 font-medium text-gray-700">Interior Features</h3>
-                                                <ul className="space-y-3">
-                                                    <li className="flex items-start">
-                                                        <FiHome className="mt-1 mr-2 text-emerald-500" />
-                                                        <div>
-                                                            <span className="block text-sm text-gray-500">Bedrooms</span>
-                                                            <span className="text-gray-800">{property.beds || 'N/A'}</span>
-                                                        </div>
-                                                    </li>
-                                                    <li className="flex items-start">
-                                                        <FiHome className="mt-1 mr-2 text-emerald-500" />
-                                                        <div>
-                                                            <span className="block text-sm text-gray-500">Bathrooms</span>
-                                                            <span className="text-gray-800">{property.baths || 'N/A'}</span>
-                                                        </div>
-                                                    </li>
-                                                    <li className="flex items-start">
-                                                        <FiHome className="mt-1 mr-2 text-emerald-500" />
-                                                        <div>
-                                                            <span className="block text-sm text-gray-500">Stories</span>
-                                                            <span className="text-gray-800">{property.stories || 'N/A'}</span>
-                                                        </div>
-                                                    </li>
-                                                    <li className="flex items-start">
-                                                        <FiHome className="mt-1 mr-2 text-emerald-500" />
-                                                        <div>
-                                                            <span className="block text-sm text-gray-500">Garage</span>
-                                                            <span className="text-gray-800">{property.garage || 'N/A'}</span>
-                                                        </div>
-                                                    </li>
-                                                </ul>
-                                            </div>
                                         </div>
                                     )}
 
@@ -772,34 +615,6 @@ const PropertyDetail = () => {
                                         </div>
                                     )}
                                 </div>
-                            </div>
-
-                            {/* Property Stats and Highlights */}
-                            <div className="grid grid-cols-2 gap-4 mb-6 md:grid-cols-4">
-                                <FeatureBadge
-                                    icon={FiHome}
-                                    label="Property Type"
-                                    value={property.propertyType || 'N/A'}
-                                    color="emerald"
-                                />
-                                <FeatureBadge
-                                    icon={FiUsers}
-                                    label="Bedrooms"
-                                    value={property.beds}
-                                    color="blue"
-                                />
-                                <FeatureBadge
-                                    icon={FiHome}
-                                    label="Bathrooms"
-                                    value={property.baths}
-                                    color="amber"
-                                />
-                                <FeatureBadge
-                                    icon={FiHome}
-                                    label="Garage"
-                                    value={property.garage || 'None'}
-                                    color="purple"
-                                />
                             </div>
 
                         </div>

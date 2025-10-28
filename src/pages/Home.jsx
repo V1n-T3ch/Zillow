@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { 
-    FiSearch, FiMapPin, FiChevronRight, FiX,
+    FiSearch, FiMapPin, FiChevronRight,
     FiMail, FiPhone, 
     FiMapPin as FiLocation, FiInstagram, FiTwitter, FiFacebook 
 } from 'react-icons/fi';
@@ -11,9 +11,6 @@ import { motion as Motion } from 'framer-motion';
 
 const Home = () => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [showLocationModal, setShowLocationModal] = useState(false);
-    const [selectedPropertyType, setSelectedPropertyType] = useState('');
-    const [modalLocation, setModalLocation] = useState('');
     const navigate = useNavigate();
 
     // Handle search form submission
@@ -25,93 +22,14 @@ const Home = () => {
         navigate(`/properties?search=${encodeURIComponent(searchTerm)}`);
     };
 
-    // Handle category click
+    // Handle category click - direct navigation without location requirement
     const handleCategoryClick = (propertyType) => {
-        if (!searchTerm.trim()) {
-            // No location set, show modal
-            setSelectedPropertyType(propertyType);
-            setShowLocationModal(true);
-        } else {
-            // Location is set, navigate directly
-            navigate(`/category?propertyType=${propertyType}&search=${encodeURIComponent(searchTerm)}`);
-        }
-    };
-
-    // Handle modal location submission
-    const handleModalSubmit = (e) => {
-        e.preventDefault();
-        if (!modalLocation.trim()) return;
-
-        // Set the main search term and navigate
-        setSearchTerm(modalLocation);
-        setShowLocationModal(false);
-        navigate(`/category?propertyType=${selectedPropertyType}&search=${encodeURIComponent(modalLocation)}`);
-        setModalLocation('');
-    };
-
-    // Close modal
-    const closeModal = () => {
-        setShowLocationModal(false);
-        setSelectedPropertyType('');
-        setModalLocation('');
+        navigate(`/category?propertyType=${propertyType}`);
     };
 
     return (
         <div className="min-h-screen bg-white">
             <Navbar />
-
-            {/* Location Modal */}
-            {showLocationModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="w-full max-w-md p-6 mx-4 bg-white rounded-lg shadow-xl">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                Set Your Location
-                            </h3>
-                            <button
-                                onClick={closeModal}
-                                className="p-1 text-gray-400 hover:text-gray-600"
-                            >
-                                <FiX size={20} />
-                            </button>
-                        </div>
-                        
-                        <p className="mb-4 text-gray-600">
-                            Please enter your preferred location to browse {selectedPropertyType.toLowerCase()}s in that area.
-                        </p>
-
-                        <form onSubmit={handleModalSubmit}>
-                            <div className="relative mb-4">
-                                <FiMapPin className="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
-                                <input
-                                    type="text"
-                                    placeholder="Enter a location (e.g., Nairobi, Westlands)"
-                                    className="block w-full py-3 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
-                                    value={modalLocation}
-                                    onChange={(e) => setModalLocation(e.target.value)}
-                                    autoFocus
-                                />
-                            </div>
-
-                            <div className="flex gap-3">
-                                <button
-                                    type="button"
-                                    onClick={closeModal}
-                                    className="flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 px-4 py-2 text-white rounded-lg bg-emerald-600 hover:bg-emerald-700"
-                                >
-                                    Continue
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
 
             {/* Add padding bottom for mobile tab navigator */}
             <div className="pb-16 md:pb-0">
@@ -187,7 +105,12 @@ const Home = () => {
                                         alt="Studio/Bedsitter"
                                         className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
                                         onError={(e) => {
-                                            e.target.src = 'https://placehold.co/80x80/10b981/white?text=🏠';
+                                            e.target.src = `data:image/svg+xml;base64,${btoa(`
+                                                <svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+                                                    <rect width="80" height="80" fill="#10b981"/>
+                                                    <text x="40" y="45" font-family="Arial" font-size="24" fill="white" text-anchor="middle">🏠</text>
+                                                </svg>
+                                            `)}`;
                                         }}
                                     />
                                 </div>
@@ -208,7 +131,12 @@ const Home = () => {
                                         alt="Apartments"
                                         className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
                                         onError={(e) => {
-                                            e.target.src = 'https://placehold.co/80x80/10b981/white?text=🏢';
+                                            e.target.src = `data:image/svg+xml;base64,${btoa(`
+                                                <svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+                                                    <rect width="80" height="80" fill="#10b981"/>
+                                                    <text x="40" y="45" font-family="Arial" font-size="24" fill="white" text-anchor="middle">🏢</text>
+                                                </svg>
+                                            `)}`;
                                         }}
                                     />
                                 </div>
@@ -229,7 +157,12 @@ const Home = () => {
                                         alt="Bungalows"
                                         className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
                                         onError={(e) => {
-                                            e.target.src = 'https://placehold.co/80x80/10b981/white?text=🏘️';
+                                            e.target.src = `data:image/svg+xml;base64,${btoa(`
+                                                <svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+                                                    <rect width="80" height="80" fill="#10b981"/>
+                                                    <text x="40" y="45" font-family="Arial" font-size="24" fill="white" text-anchor="middle">🏘️</text>
+                                                </svg>
+                                            `)}`;
                                         }}
                                     />
                                 </div>
@@ -250,7 +183,12 @@ const Home = () => {
                                         alt="Mansionettes"
                                         className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
                                         onError={(e) => {
-                                            e.target.src = 'https://placehold.co/80x80/10b981/white?text=🏡';
+                                            e.target.src = `data:image/svg+xml;base64,${btoa(`
+                                                <svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+                                                    <rect width="80" height="80" fill="#10b981"/>
+                                                    <text x="40" y="45" font-family="Arial" font-size="24" fill="white" text-anchor="middle">🏡</text>
+                                                </svg>
+                                            `)}`;
                                         }}
                                     />
                                 </div>
@@ -271,7 +209,12 @@ const Home = () => {
                                         alt="Luxury Villas"
                                         className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
                                         onError={(e) => {
-                                            e.target.src = 'https://placehold.co/80x80/10b981/white?text=🏰';
+                                            e.target.src = `data:image/svg+xml;base64,${btoa(`
+                                                <svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+                                                    <rect width="80" height="80" fill="#10b981"/>
+                                                    <text x="40" y="45" font-family="Arial" font-size="24" fill="white" text-anchor="middle">🏰</text>
+                                                </svg>
+                                            `)}`;
                                         }}
                                     />
                                 </div>
@@ -292,7 +235,12 @@ const Home = () => {
                                         alt="Commercial Properties"
                                         className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
                                         onError={(e) => {
-                                            e.target.src = 'https://placehold.co/80x80/10b981/white?text=🏢';
+                                            e.target.src = `data:image/svg+xml;base64,${btoa(`
+                                                <svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+                                                    <rect width="80" height="80" fill="#10b981"/>
+                                                    <text x="40" y="45" font-family="Arial" font-size="24" fill="white" text-anchor="middle">🏢</text>
+                                                </svg>
+                                            `)}`;
                                         }}
                                     />
                                 </div>
@@ -313,7 +261,12 @@ const Home = () => {
                                         alt="BnB Properties"
                                         className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
                                         onError={(e) => {
-                                            e.target.src = 'https://placehold.co/80x80/10b981/white?text=🏨';
+                                            e.target.src = `data:image/svg+xml;base64,${btoa(`
+                                                <svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+                                                    <rect width="80" height="80" fill="#10b981"/>
+                                                    <text x="40" y="45" font-family="Arial" font-size="24" fill="white" text-anchor="middle">🏨</text>
+                                                </svg>
+                                            `)}`;
                                         }}
                                     />
                                 </div>
@@ -334,7 +287,12 @@ const Home = () => {
                                         alt="Single Room Properties"
                                         className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
                                         onError={(e) => {
-                                            e.target.src = 'https://placehold.co/80x80/10b981/white?text=🚪';
+                                            e.target.src = `data:image/svg+xml;base64,${btoa(`
+                                                <svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+                                                    <rect width="80" height="80" fill="#10b981"/>
+                                                    <text x="40" y="45" font-family="Arial" font-size="24" fill="white" text-anchor="middle">🚪</text>
+                                                </svg>
+                                            `)}`;
                                         }}
                                     />
                                 </div>

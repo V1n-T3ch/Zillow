@@ -31,6 +31,7 @@ const PropertyListing = () => {
     const [showFilters, setShowFilters] = useState(true);
     const [location, setLocation] = useState('Any');
     const [searchFilter, setSearchFilter] = useState(''); // New search filter for city/area
+    const [locationFilter, setLocationFilter] = useState(''); // New location filter for sidebar
 
     // Sort state
     const [sortOption, setSortOption] = useState('newest');
@@ -125,12 +126,21 @@ const PropertyListing = () => {
                 // Apply client-side filters
                 let filtered = allProperties;
 
-                // Filter by search term (city or area)
+                // Filter by search term (city or area) from URL
                 if (searchFilter && searchFilter.trim() !== '') {
                     const searchTerm = searchFilter.toLowerCase().trim();
                     filtered = filtered.filter(property => 
                         property.city?.toLowerCase().includes(searchTerm) ||
                         property.area?.toLowerCase().includes(searchTerm)
+                    );
+                }
+
+                // Filter by location from sidebar
+                if (locationFilter && locationFilter.trim() !== '') {
+                    const locationTerm = locationFilter.toLowerCase().trim();
+                    filtered = filtered.filter(property => 
+                        property.city?.toLowerCase().includes(locationTerm) ||
+                        property.area?.toLowerCase().includes(locationTerm)
                     );
                 }
 
@@ -172,7 +182,7 @@ const PropertyListing = () => {
         };
 
         fetchProperties();
-    }, [propertyType, propertyStatus, location, bedrooms, sortOption, currentPage, currentUser, priceRange, searchFilter]);
+    }, [propertyType, propertyStatus, location, bedrooms, sortOption, currentPage, currentUser, priceRange, searchFilter, locationFilter]);
 
     // Fetch user favorites
     const fetchUserFavorites = async () => {
@@ -274,12 +284,18 @@ const PropertyListing = () => {
         if (existingPropertyType) params.propertyType = existingPropertyType;
         if (existingBeds) params.beds = existingBeds;
 
+        // Add location filter to URL if set
+        if (locationFilter && locationFilter.trim() !== '') {
+            params.locationFilter = locationFilter;
+        }
+
         setSearchParams(params);
     };
 
     const resetFilters = () => {
         // Only reset sidebar filters, keep URL-based filters
         setPriceRange([0, 2000000]);
+        setLocationFilter('');
         setSortOption('newest');
         setCurrentPage(1);
         
@@ -294,7 +310,7 @@ const PropertyListing = () => {
         if (existingBeds) params.beds = existingBeds;
 
         setSearchParams(params);
-        toast.info('Price filters have been reset');
+        toast.info('Filters have been reset');
     };
 
     // Total pages for pagination
@@ -349,6 +365,22 @@ const PropertyListing = () => {
                                     </button>
                                 </div>
                             )}
+                            {locationFilter && (
+                                <div className="flex items-center gap-2 px-3 py-1 text-sm text-orange-800 bg-orange-100 rounded-full">
+                                    <span>Filter: "{locationFilter}"</span>
+                                    <button
+                                        onClick={() => {
+                                            setLocationFilter('');
+                                            const params = Object.fromEntries(searchParams);
+                                            delete params.locationFilter;
+                                            setSearchParams(params);
+                                        }}
+                                        className="ml-1 text-orange-600 hover:text-orange-800"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            )}
                             {propertyType !== 'Any' && (
                                 <div className="flex items-center gap-2 px-3 py-1 text-sm text-blue-800 bg-blue-100 rounded-full">
                                     <span>Type: {propertyType}</span>
@@ -390,7 +422,7 @@ const PropertyListing = () => {
                     )}
 
                     <div className="flex flex-col gap-6 lg:flex-row">
-                        {/* Compact Filters Sidebar - Only Price Range */}
+                        {/* Filters Sidebar - Price Range and Location */}
                         <div className={`lg:w-1/4 ${showFilters ? 'block' : 'hidden lg:block'}`}>
                             <div className="p-4 bg-white rounded-lg shadow-md h-fit">
                                 <div className="flex items-center justify-between mb-4">
@@ -429,6 +461,21 @@ const PropertyListing = () => {
                                     </div>
                                 </div>
 
+                                {/* Location Filter */}
+                                <div className="mb-4">
+                                    <h3 className="mb-2 font-medium text-gray-700">Location</h3>
+                                    <input
+                                        type="text"
+                                        placeholder="Enter city or area (e.g., Nairobi, Westlands)"
+                                        className="w-full p-2 text-sm border rounded focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        value={locationFilter}
+                                        onChange={(e) => setLocationFilter(e.target.value)}
+                                    />
+                                    <p className="mt-1 text-xs text-gray-500">
+                                        Filter properties by city or specific area
+                                    </p>
+                                </div>
+
                                 <button
                                     onClick={applyFilters}
                                     className="w-full py-2 text-sm font-medium text-white transition rounded-lg bg-emerald-600 hover:bg-emerald-700"
@@ -448,7 +495,11 @@ const PropertyListing = () => {
                                             ? 'Loading properties...'
                                             : `${totalCount} properties found`
                                         }
-                                        {searchFilter && ` for "${searchFilter}"`}
+                                        {(searchFilter || locationFilter) && (
+                                            <span>
+                                                {' '}for "{searchFilter || locationFilter}"
+                                            </span>
+                                        )}
                                     </p>
                                 </div>
 
@@ -597,8 +648,8 @@ const PropertyListing = () => {
                                         <div className="p-8 text-center bg-white rounded-lg shadow-md">
                                             <h3 className="mb-2 text-xl font-semibold">No properties found</h3>
                                             <p className="mb-4 text-gray-600">
-                                                {searchFilter 
-                                                    ? `No properties found for "${searchFilter}". Try a different location or adjust your filters.`
+                                                {(searchFilter || locationFilter)
+                                                    ? `No properties found for "${searchFilter || locationFilter}". Try a different location or adjust your filters.`
                                                     : 'Try adjusting your search criteria or filters'
                                                 }
                                             </p>
