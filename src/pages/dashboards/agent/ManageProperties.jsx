@@ -21,10 +21,10 @@ const ManageProperties = () => {
             if (!currentUser) return;
 
             try {
-                // Query properties where agentID matches current user's ID
+                // Query properties where agentId matches current user's ID
                 const propertiesQuery = query(
                     collection(db, 'properties'),
-                    where('agentID', '==', currentUser.uid),
+                    where('agentId', '==', currentUser.uid),
                     orderBy('createdAt', 'desc')
                 );
 

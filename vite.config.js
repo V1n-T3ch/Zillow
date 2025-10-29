@@ -1,10 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { cacheVersionPlugin } from './vite-plugins/cache-version-plugin.js'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    cacheVersionPlugin()
+  ],
   build: {
     rollupOptions: {
       output: {
@@ -17,6 +22,8 @@ export default defineConfig({
   },
   // Add cache headers
   server: {
+    port: 5173,
+    host: true,
     headers: {
       'Cache-Control': 'no-cache'
     }

@@ -105,18 +105,18 @@ const PropertyManagement = () => {
             toast.success(statusMessages[newStatus] || `Property status updated to ${newStatus}`);
 
             // Send notification to the property owner
-            if (property.agentID) {
+            if (property.agentId) {
                 if (newStatus === 'active') {
                     // Send property approved notification
                     await sendPropertyApprovedNotification(
-                        property.agentID,
+                        property.agentId,
                         propertyId,
                         property.title || 'Your property'
                     );
                 } else if (newStatus === 'rejected') {
                     // Send property rejected notification
                     await sendPropertyRejectedNotification(
-                        property.agentID,
+                        property.agentId,
                         propertyId,
                         property.title || 'Your property',
                         'The property did not meet our listing requirements.'
@@ -152,11 +152,11 @@ const PropertyManagement = () => {
             toast.success("Property has been permanently deleted");
 
             // Send notification to the property owner about the deletion
-            if (property.agentID) {
+            if (property.agentId) {
                 // Create a custom notification for property deletion
                 // We're using the rejection notification but with a specific message
                 await sendPropertyRejectedNotification(
-                    property.agentID,
+                    property.agentId,
                     propertyId,
                     property.title || 'Your property',
                     'This property has been removed from our platform by an administrator.'

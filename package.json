@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:analyze": "vite build --mode analyze",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.7",

@@ -279,7 +279,7 @@ const UserManagement = () => {
                                                             }`}
                                                     >
                                                         <option value="user">User</option>
-                                                        <option value="agent">agent</option>
+                                                        <option value="agent">Agent</option>
                                                         <option value="admin">Admin</option>
                                                     </select>
                                                 </td>

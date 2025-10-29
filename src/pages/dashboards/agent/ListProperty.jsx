@@ -135,7 +135,6 @@ const ListProperty = () => {
     const handleMediaChange = (e) => {
         const files = Array.from(e.target.files);
         
-        // Validate file sizes and types
         const validFiles = [];
         const errors = [];
 
@@ -154,9 +153,18 @@ const ListProperty = () => {
                 return;
             }
 
-            if (isVideo && sizeInMB > 100) {
-                errors.push(`${file.name}: Video size must be less than 100MB`);
-                return;
+            if (isVideo) {
+                // Check video format
+                const allowedVideoTypes = ['video/mp4', 'video/mov', 'video/avi', 'video/quicktime'];
+                if (!allowedVideoTypes.includes(file.type)) {
+                    errors.push(`${file.name}: Only MP4, MOV, and AVI video formats are supported`);
+                    return;
+                }
+                
+                if (sizeInMB > 100) {
+                    errors.push(`${file.name}: Video size must be less than 100MB`);
+                    return;
+                }
             }
 
             validFiles.push(file);
@@ -213,7 +221,6 @@ const ListProperty = () => {
             return;
         }
 
-        // Add location validation
         if (!selectedLocation) {
             setSubmitError('Please select a location on the map');
             return;
@@ -225,7 +232,6 @@ const ListProperty = () => {
         try {
             const apiUrl = getApiUrl();
             
-            // Separate images and videos
             const imageUrls = [];
             const videoUrls = [];
             
@@ -233,32 +239,47 @@ const ListProperty = () => {
             for (let i = 0; i < mediaFiles.length; i++) {
                 const file = mediaFiles[i];
                 const uploadFormData = new FormData();
-                uploadFormData.append('image', file); // Backend expects 'image' field for both images and videos
+                uploadFormData.append('image', file);
 
                 const uploadUrl = `${apiUrl}/api/images/upload`;
-                console.log('Uploading to:', uploadUrl);
-
-                const res = await axios.post(uploadUrl, uploadFormData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    },
-                    timeout: 120000 // 2 minute timeout for videos
+                console.log(`Uploading file ${i + 1}/${mediaFiles.length}:`, {
+                    name: file.name,
+                    size: `${(file.size / (1024 * 1024)).toFixed(2)}MB`,
+                    type: file.type
                 });
 
-                console.log('Upload response:', res.data);
+                try {
+                    const res = await axios.post(uploadUrl, uploadFormData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        },
+                        timeout: 300000, // 5 minute timeout for large videos
+                        onUploadProgress: (progressEvent) => {
+                            const fileProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                            const overallProgress = Math.round(((i / mediaFiles.length) * 100) + (fileProgress / mediaFiles.length));
+                            setUploadProgress(overallProgress);
+                            console.log(`Upload progress for ${file.name}: ${fileProgress}%`);
+                        }
+                    });
 
-                if (res.data.status === 'success' && res.data.data?.fileUrl) {
-                    if (isImageFile(file)) {
-                        imageUrls.push(res.data.data.fileUrl);
+                    console.log(`Upload response for ${file.name}:`, res.data);
+
+                    if (res.data.status === 'success' && res.data.data?.fileUrl) {
+                        if (isImageFile(file)) {
+                            imageUrls.push(res.data.data.fileUrl);
+                        } else {
+                            videoUrls.push(res.data.data.fileUrl);
+                        }
                     } else {
-                        videoUrls.push(res.data.data.fileUrl);
+                        throw new Error(`Upload failed for ${file.name}: ${res.data.message || 'Unknown error'}`);
                     }
-                } else {
-                    throw new Error(`Upload failed: ${res.data.message || 'Unknown error'}`);
+                } catch (uploadError) {
+                    console.error(`Failed to upload ${file.name}:`, uploadError);
+                    throw new Error(`Failed to upload ${file.name}: ${uploadError.message}`);
                 }
-
-                setUploadProgress(Math.round(((i + 1) / mediaFiles.length) * 100));
             }
+
+            console.log('All uploads completed:', { imageUrls, videoUrls });
 
             // Create property document in Firestore
             const propertyData = {
@@ -266,7 +287,7 @@ const ListProperty = () => {
                 images: imageUrls,
                 videos: videoUrls,
                 location: selectedLocation,
-                agentID: currentUser.uid,
+                agentId: currentUser.uid,
                 agentName: currentUser.displayName || 'Anonymous',
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
@@ -283,13 +304,12 @@ const ListProperty = () => {
         } catch (error) {
             console.error('Error adding property:', error);
             
-            // More detailed error messages
-            if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
-                setSubmitError('Network error. Please check your connection and try again.');
+            if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+                setSubmitError('Upload timeout. Please try again with smaller video files or check your internet connection.');
+            } else if (error.response?.status === 413) {
+                setSubmitError('File too large. Please reduce video file sizes and try again.');
             } else if (error.response) {
                 setSubmitError(`Server error: ${error.response.data?.message || error.response.statusText}`);
-            } else if (error.message.includes('timeout')) {
-                setSubmitError('Upload timeout. Please try again with smaller files.');
             } else {
                 setSubmitError(`Failed to add property: ${error.message}`);
             }
@@ -562,7 +582,7 @@ const ListProperty = () => {
                                 className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
                             >
                                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <div className="flex items-center space-x-2 mb-3">
+                                    <div className="flex items-center mb-3 space-x-2">
                                         <FiImage className="w-8 h-8 text-gray-400" />
                                         <FiVideo className="w-8 h-8 text-gray-400" />
                                     </div>
@@ -596,7 +616,7 @@ const ListProperty = () => {
                                                 className="object-cover w-full h-32 rounded-lg"
                                             />
                                         ) : (
-                                            <div className="relative w-full h-32 bg-gray-200 rounded-lg overflow-hidden">
+                                            <div className="relative w-full h-32 overflow-hidden bg-gray-200 rounded-lg">
                                                 <video
                                                     src={preview.url}
                                                     className="object-cover w-full h-full"
@@ -609,7 +629,7 @@ const ListProperty = () => {
                                         )}
                                         
                                         {/* File info overlay */}
-                                        <div className="absolute bottom-0 left-0 right-0 p-2 bg-black bg-opacity-70 text-white text-xs rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="absolute bottom-0 left-0 right-0 p-2 text-xs text-white transition-opacity bg-black rounded-b-lg opacity-0 bg-opacity-70 group-hover:opacity-100">
                                             <div className="truncate">{preview.name}</div>
                                             <div>{preview.size}MB</div>
                                         </div>
@@ -624,7 +644,7 @@ const ListProperty = () => {
                                         </button>
                                         
                                         {/* Media type indicator */}
-                                        <div className="absolute top-2 left-2 px-2 py-1 bg-black bg-opacity-70 text-white text-xs rounded">
+                                        <div className="absolute px-2 py-1 text-xs text-white bg-black rounded top-2 left-2 bg-opacity-70">
                                             {preview.type === 'image' ? (
                                                 <FiImage size={12} />
                                             ) : (

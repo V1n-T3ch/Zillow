@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import {
     FiCamera, FiChevronLeft, FiChevronRight, FiPlus,
-    FiCheckCircle, FiHome, FiCalendar, FiMapPin,
-    FiShare2, FiDollarSign,
-    FiUsers, FiUser, FiPhone, FiMessageSquare
+    FiCheckCircle, FiMapPin, FiShare2, FiUser, FiPhone, 
+    FiMessageSquare, FiPlay, FiPause, FiVolume2, FiVolumeX
 } from 'react-icons/fi';
 import { db } from '../firebase';
 import {
@@ -16,17 +15,27 @@ import { toast } from 'react-toastify';
 import { incrementPropertyViews } from '../services/analyticsService';
 import Navbar from '../components/Navbar';
 
-// Stunning Image Gallery Component
-const PropertyGallery = ({ images = [] }) => {
+// Enhanced Media Gallery Component for Images and Videos
+const PropertyMediaGallery = ({ images = [], videos = [] }) => {
     const [activeIndex, setActiveIndex] = useState(0);
     const [showModal, setShowModal] = useState(false);
     const [touchStart, setTouchStart] = useState(0);
     const [touchEnd, setTouchEnd] = useState(0);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isMuted, setIsMuted] = useState(true);
 
-    // Use placeholders if no images
-    const allImages = images.length > 0 ? images : [
-        'https://placehold.co/1200x800?text=No+Image+Available'
+    // Combine images and videos into a single media array
+    const allMedia = [
+        ...images.map(url => ({ type: 'image', url })),
+        ...videos.map(url => ({ type: 'video', url }))
     ];
+
+    // Use placeholders if no media
+    const mediaToShow = allMedia.length > 0 ? allMedia : [
+        { type: 'image', url: 'https://placehold.co/1200x800?text=No+Media+Available' }
+    ];
+
+    const currentMedia = mediaToShow[activeIndex];
 
     // Touch handlers for mobile swipe
     const handleTouchStart = (e) => {
@@ -39,27 +48,37 @@ const PropertyGallery = ({ images = [] }) => {
 
     const handleTouchEnd = () => {
         if (touchStart - touchEnd > 100) {
-            // Swipe left
             goToNext();
         }
-
         if (touchStart - touchEnd < -100) {
-            // Swipe right
             goToPrevious();
         }
     };
 
     const goToPrevious = () => {
-        const newIndex = activeIndex === 0 ? allImages.length - 1 : activeIndex - 1;
+        const newIndex = activeIndex === 0 ? mediaToShow.length - 1 : activeIndex - 1;
         setActiveIndex(newIndex);
+        setIsPlaying(false);
     };
 
     const goToNext = () => {
-        const newIndex = activeIndex === allImages.length - 1 ? 0 : activeIndex + 1;
+        const newIndex = activeIndex === mediaToShow.length - 1 ? 0 : activeIndex + 1;
         setActiveIndex(newIndex);
+        setIsPlaying(false);
     };
 
-    // Keyboard navigation for accessibility
+    const togglePlayPause = () => {
+        setIsPlaying(!isPlaying);
+    };
+
+    const toggleMute = () => {
+        setIsMuted(!isMuted);
+    };
+
+    // Video ref for controlling playback
+    const videoRef = React.useRef(null);
+
+    // Keyboard navigation
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (!showModal) return;
@@ -70,90 +89,138 @@ const PropertyGallery = ({ images = [] }) => {
                 goToNext();
             } else if (e.key === 'Escape') {
                 setShowModal(false);
+            } else if (e.key === ' ' && currentMedia?.type === 'video') {
+                e.preventDefault();
+                togglePlayPause();
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showModal, activeIndex, currentMedia]);
 
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [showModal, activeIndex]);
+    useEffect(() => {
+        if (videoRef.current) {
+            if (isPlaying) {
+                videoRef.current.play();
+            } else {
+                videoRef.current.pause();
+            }
+        }
+    }, [isPlaying]);
+
+    const renderMediaContent = (media, isModal = false) => {
+        if (media.type === 'video') {
+            return (
+                <div className="relative w-full h-full group">
+                    <video
+                        ref={isModal ? videoRef : null}
+                        src={media.url}
+                        className="object-cover w-full h-full"
+                        muted={isMuted}
+                        loop
+                        playsInline
+                        onError={(e) => {
+                            console.error('Video failed to load:', media.url);
+                            e.target.style.display = 'none';
+                        }}
+                    />
+                    
+                    {/* Video Controls Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center transition-opacity opacity-0 bg-black/30 group-hover:opacity-100">
+                        <div className="flex items-center gap-4">
+                            {isModal && (
+                                <>
+                                    <button
+                                        onClick={togglePlayPause}
+                                        className="p-3 text-white transition-colors rounded-full bg-black/50 hover:bg-black/70"
+                                    >
+                                        {isPlaying ? <FiPause size={24} /> : <FiPlay size={24} />}
+                                    </button>
+                                    <button
+                                        onClick={toggleMute}
+                                        className="p-3 text-white transition-colors rounded-full bg-black/50 hover:bg-black/70"
+                                    >
+                                        {isMuted ? <FiVolumeX size={20} /> : <FiVolume2 size={20} />}
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Play Icon for Non-Modal */}
+                    {!isModal && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                            <div className="p-4 text-white rounded-full bg-black/50">
+                                <FiPlay size={32} />
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        } else {
+            return (
+                <Motion.img
+                    src={media.url}
+                    alt="Property view"
+                    className="object-cover w-full h-full"
+                    initial={{ scale: 1 }}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.5 }}
+                    onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://placehold.co/1200x800?text=Image+Not+Available';
+                    }}
+                />
+            );
+        }
+    };
 
     return (
         <>
             <div className="relative mb-8 overflow-hidden shadow-2xl rounded-xl">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 h-[70vh] max-h-[600px]">
+                    {/* Main Media Display */}
                     <div
                         className="relative col-span-2 overflow-hidden cursor-pointer group"
                         onClick={() => setShowModal(true)}
                     >
-                        <Motion.img
-                            src={allImages[0]}
-                            alt="Property main view"
-                            className="object-cover w-full h-full"
-                            initial={{ scale: 1 }}
-                            whileHover={{ scale: 1.05 }}
-                            transition={{ duration: 0.5 }}
-                            onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = 'https://placehold.co/1200x800?text=Image+Not+Available';
-                            }}
-                        />
+                        {renderMediaContent(mediaToShow[0])}
                         <div className="absolute inset-0 transition-opacity duration-300 opacity-0 bg-gradient-to-t from-black/40 to-transparent group-hover:opacity-100">
                             <div className="absolute bottom-4 left-4">
                                 <div className="flex items-center gap-2 text-white">
                                     <FiCamera size={20} />
-                                    <span className="font-medium">View all {allImages.length} photos</span>
+                                    <span className="font-medium">
+                                        View all {images.length} photos {videos.length > 0 && `& ${videos.length} videos`}
+                                    </span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
+                    {/* Thumbnail Grid */}
                     <div className="hidden grid-rows-2 gap-2 md:grid">
-                        {allImages.length > 1 ? (
+                        {mediaToShow.length > 1 ? (
                             <>
                                 <div
                                     className="relative overflow-hidden cursor-pointer group"
                                     onClick={() => setShowModal(true)}
                                 >
-                                    <Motion.img
-                                        src={allImages[1]}
-                                        alt="Property view 2"
-                                        className="object-cover w-full h-full"
-                                        initial={{ scale: 1 }}
-                                        whileHover={{ scale: 1.05 }}
-                                        transition={{ duration: 0.5 }}
-                                        onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.src = 'https://placehold.co/1200x800?text=Image+Not+Available';
-                                        }}
-                                    />
+                                    {renderMediaContent(mediaToShow[1])}
                                     <div className="absolute inset-0 transition-opacity opacity-0 bg-black/20 group-hover:opacity-100"></div>
                                 </div>
                                 <div
                                     className="relative overflow-hidden cursor-pointer group"
                                     onClick={() => setShowModal(true)}
                                 >
-                                    {allImages.length > 2 ? (
+                                    {mediaToShow.length > 2 ? (
                                         <>
-                                            <Motion.img
-                                                src={allImages[2]}
-                                                alt="Property view 3"
-                                                className="object-cover w-full h-full"
-                                                initial={{ scale: 1 }}
-                                                whileHover={{ scale: 1.05 }}
-                                                transition={{ duration: 0.5 }}
-                                                onError={(e) => {
-                                                    e.target.onerror = null;
-                                                    e.target.src = 'https://placehold.co/1200x800?text=Image+Not+Available';
-                                                }}
-                                            />
-                                            {allImages.length > 3 && (
+                                            {renderMediaContent(mediaToShow[2])}
+                                            {mediaToShow.length > 3 && (
                                                 <div className="absolute inset-0 flex items-center justify-center transition-colors bg-black/50 group-hover:bg-black/70">
                                                     <div className="text-center text-white">
                                                         <FiPlus size={28} className="mx-auto mb-1" />
-                                                        <span className="font-medium">{allImages.length - 3} more</span>
+                                                        <span className="font-medium">{mediaToShow.length - 3} more</span>
                                                     </div>
                                                 </div>
                                             )}
@@ -169,16 +236,17 @@ const PropertyGallery = ({ images = [] }) => {
                             <div className="flex items-center justify-center row-span-2 bg-gray-100">
                                 <div className="text-center text-gray-400">
                                     <FiCamera size={36} className="mx-auto mb-2" />
-                                    <p>No additional photos</p>
+                                    <p>No additional media</p>
                                 </div>
                             </div>
                         )}
                     </div>
                 </div>
 
+                {/* Mobile Dots Indicator */}
                 <div className="absolute left-0 right-0 md:hidden bottom-4">
                     <div className="flex justify-center gap-1.5">
-                        {allImages.map((_, index) => (
+                        {mediaToShow.map((_, index) => (
                             <button
                                 key={index}
                                 className={`w-2 h-2 rounded-full ${index === activeIndex ? 'bg-white' : 'bg-white/50'}`}
@@ -188,15 +256,17 @@ const PropertyGallery = ({ images = [] }) => {
                     </div>
                 </div>
 
+                {/* View All Button */}
                 <button
                     className="absolute flex items-center px-4 py-2 font-medium text-gray-800 transition-all rounded-lg shadow-lg right-4 bottom-4 bg-white/90 hover:bg-white"
                     onClick={() => setShowModal(true)}
                 >
                     <FiCamera className="mr-2" />
-                    View All Photos
+                    View All Media
                 </button>
             </div>
 
+            {/* Modal Gallery */}
             <AnimatePresence>
                 {showModal && (
                     <Motion.div
@@ -205,9 +275,13 @@ const PropertyGallery = ({ images = [] }) => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                     >
+                        {/* Close Button */}
                         <button
                             className="absolute p-2 text-white transition-colors rounded-full top-4 right-4 bg-black/40 hover:bg-black/60"
-                            onClick={() => setShowModal(false)}
+                            onClick={() => {
+                                setShowModal(false);
+                                setIsPlaying(false);
+                            }}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -215,6 +289,12 @@ const PropertyGallery = ({ images = [] }) => {
                             </svg>
                         </button>
 
+                        {/* Media Type Indicator */}
+                        <div className="absolute z-10 px-3 py-1 text-sm text-white rounded-full top-4 left-4 bg-black/60">
+                            {currentMedia?.type === 'video' ? '📹 Video' : '📷 Photo'}
+                        </div>
+
+                        {/* Main Media Display */}
                         <div className="relative w-full max-w-5xl h-[70vh]">
                             <div
                                 className="flex items-center justify-center w-full h-full"
@@ -223,23 +303,20 @@ const PropertyGallery = ({ images = [] }) => {
                                 onTouchEnd={handleTouchEnd}
                             >
                                 <AnimatePresence mode="wait">
-                                    <Motion.img
+                                    <Motion.div
                                         key={activeIndex}
-                                        src={allImages[activeIndex]}
-                                        alt={`Property view ${activeIndex + 1}`}
-                                        className="object-contain max-w-full max-h-full"
+                                        className="w-full h-full"
                                         initial={{ opacity: 0, x: 20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -20 }}
                                         transition={{ duration: 0.2 }}
-                                        onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.src = 'https://placehold.co/1200x800?text=Image+Not+Available';
-                                        }}
-                                    />
+                                    >
+                                        {renderMediaContent(currentMedia, true)}
+                                    </Motion.div>
                                 </AnimatePresence>
                             </div>
 
+                            {/* Navigation Buttons */}
                             <button
                                 className="absolute p-3 text-white transition-colors -translate-y-1/2 rounded-full left-4 top-1/2 bg-black/40 hover:bg-black/60"
                                 onClick={goToPrevious}
@@ -254,31 +331,50 @@ const PropertyGallery = ({ images = [] }) => {
                             </button>
                         </div>
 
+                        {/* Thumbnail Strip */}
                         <div className="w-full max-w-5xl px-4 mt-4">
                             <div className="flex gap-2 py-2 overflow-x-auto scrollbar-hide">
-                                {allImages.map((img, index) => (
+                                {mediaToShow.map((media, index) => (
                                     <button
                                         key={index}
-                                        onClick={() => setActiveIndex(index)}
-                                        className={`flex-shrink-0 w-16 h-12 rounded-md overflow-hidden transition-all ${activeIndex === index ? 'ring-2 ring-white scale-105' : 'opacity-60 hover:opacity-100'
-                                            }`}
+                                        onClick={() => {
+                                            setActiveIndex(index);
+                                            setIsPlaying(false);
+                                        }}
+                                        className={`flex-shrink-0 w-16 h-12 rounded-md overflow-hidden transition-all relative ${
+                                            activeIndex === index ? 'ring-2 ring-white scale-105' : 'opacity-60 hover:opacity-100'
+                                        }`}
                                     >
-                                        <img
-                                            src={img}
-                                            alt={`Thumbnail ${index + 1}`}
-                                            className="object-cover w-full h-full"
-                                            onError={(e) => {
-                                                e.target.onerror = null;
-                                                e.target.src = 'https://placehold.co/1200x800?text=Image+Not+Available';
-                                            }}
-                                        />
+                                        {media.type === 'video' ? (
+                                            <div className="relative w-full h-full">
+                                                <video
+                                                    src={media.url}
+                                                    className="object-cover w-full h-full"
+                                                    muted
+                                                />
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                                    <FiPlay size={12} className="text-white" />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <img
+                                                src={media.url}
+                                                alt={`Thumbnail ${index + 1}`}
+                                                className="object-cover w-full h-full"
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.src = 'https://placehold.co/1200x800?text=Image+Not+Available';
+                                                }}
+                                            />
+                                        )}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
+                        {/* Media Counter */}
                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white bg-black/60 rounded-full px-4 py-1.5">
-                            {activeIndex + 1} / {allImages.length}
+                            {activeIndex + 1} / {mediaToShow.length}
                         </div>
                     </Motion.div>
                 )}
@@ -287,9 +383,8 @@ const PropertyGallery = ({ images = [] }) => {
     );
 };
 
-// Elegant Feature Badge Component with fixed color class implementation
+// Elegant Feature Badge Component (unchanged)
 const FeatureBadge = ({ icon: Icon, label, value, color = "emerald" }) => {
-    // Container background, text and border colors
     const colorClasses = {
         emerald: "bg-emerald-50 text-emerald-700 border-emerald-100",
         blue: "bg-blue-50 text-blue-700 border-blue-100",
@@ -298,7 +393,6 @@ const FeatureBadge = ({ icon: Icon, label, value, color = "emerald" }) => {
         indigo: "bg-indigo-50 text-indigo-700 border-indigo-100"
     };
 
-    // Icon colors
     const iconColorClasses = {
         emerald: "text-emerald-500",
         blue: "text-blue-500",
@@ -307,7 +401,6 @@ const FeatureBadge = ({ icon: Icon, label, value, color = "emerald" }) => {
         indigo: "text-indigo-500"
     };
 
-    // Label text colors
     const labelColorClasses = {
         emerald: "text-emerald-800/70",
         blue: "text-blue-800/70",
@@ -325,7 +418,7 @@ const FeatureBadge = ({ icon: Icon, label, value, color = "emerald" }) => {
     );
 };
 
-// Animated Feature Amenity Component
+// Animated Feature Amenity Component (unchanged)
 const FeatureAmenity = ({ children }) => (
     <Motion.div
         className="px-4 py-2.5 bg-gradient-to-r from-emerald-50 to-emerald-100/50 text-emerald-800 rounded-lg flex items-center shadow-sm"
@@ -372,14 +465,13 @@ const PropertyDetail = () => {
 
                 setProperty(propertyData);
 
-                // Record the view after a short delay (to ensure it's an actual view, not just a page load)
+                // Record the view after a short delay - Fixed field name
                 if (!hasRecordedView) {
                     const viewTimer = setTimeout(() => {
-                        incrementPropertyViews(id, propertyData.agentID);
+                        incrementPropertyViews(id, propertyData.agentId);
                         setHasRecordedView(true);
-                    }, 5000); // 5 second delay
+                    }, 5000);
 
-                    // Clean up timer if component unmounts
                     return () => clearTimeout(viewTimer);
                 }
 
@@ -404,13 +496,6 @@ const PropertyDetail = () => {
 
                 setSimilarProperties(similarData);
 
-                // Increment view counter after a short delay
-                // The delay prevents counting accidental/bounce views
-                const viewTimer = setTimeout(() => {
-                    incrementPropertyViews(id, propertyData.agentID);
-                }, 5000); // 5 second delay
-
-                return () => clearTimeout(viewTimer); // Clean up timer
             } catch (err) {
                 console.error('Error fetching property:', err);
                 setError('Failed to load property data');
@@ -420,7 +505,7 @@ const PropertyDetail = () => {
         };
 
         fetchPropertyData();
-    }, [id, currentUser]);
+    }, [id, currentUser, hasRecordedView]);
 
     // Handle share functionality
     const handleShare = () => {
@@ -455,6 +540,7 @@ const PropertyDetail = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50">
+                <Navbar />
                 <div className="pt-20 pb-10">
                     <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                         <div className="space-y-8 animate-pulse">
@@ -478,6 +564,7 @@ const PropertyDetail = () => {
     if (error || !property) {
         return (
             <div className="min-h-screen bg-gray-50">
+                <Navbar />
                 <div className="pt-20 pb-10">
                     <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                         <div className="p-8 text-center bg-white rounded-xl shadow-subtle">
@@ -500,14 +587,16 @@ const PropertyDetail = () => {
         );
     }
 
-
     return (
         <div className="min-h-screen bg-gray-50">
             <Navbar />
             <div className="pt-20 pb-10">
                 <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    {/* Image Gallery */}
-                    <PropertyGallery images={property.images || []} />
+                    {/* Media Gallery - Now supports both images and videos */}
+                    <PropertyMediaGallery 
+                        images={property.images || []} 
+                        videos={property.videos || []} 
+                    />
 
                     <div className="flex flex-col gap-8 lg:flex-row">
                         {/* Main Content */}
@@ -516,7 +605,6 @@ const PropertyDetail = () => {
                             <div className="p-6 mb-6 bg-white rounded-xl shadow-subtle">
                                 <div className="flex items-start justify-between mb-4">
                                     <div>
-                                      
                                         <h1 className="mb-2 font-serif text-3xl font-bold text-gray-800">{property.title}</h1>
                                         <div className="flex items-center text-gray-600">
                                             <FiMapPin className="mr-2 text-gray-400" />
@@ -556,7 +644,7 @@ const PropertyDetail = () => {
                                     </div>
                                 </div>
 
-                                {/* Only Share Button */}
+                                {/* Share Button */}
                                 <div className="flex gap-3 mt-6">
                                     <button
                                         className="flex items-center px-4 py-2 text-gray-700 transition-colors border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100"
@@ -616,7 +704,6 @@ const PropertyDetail = () => {
                                     )}
                                 </div>
                             </div>
-
                         </div>
 
                         {/* Sidebar */}
@@ -629,7 +716,7 @@ const PropertyDetail = () => {
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-gray-800">{property.agentName || 'Property Agent'}</h3>
-                                        <p className="text-sm text-gray-600">Zillow Real Estate</p>
+                                        <p className="text-sm text-gray-600">Dwella Real Estate</p>
                                     </div>
                                 </div>
 
@@ -644,7 +731,7 @@ const PropertyDetail = () => {
                                     </a>
                                 </div>
 
-                                {/* Google Maps Buttons - Moved here */}
+                                {/* Google Maps Buttons */}
                                 {property.location && (
                                     <div className="mb-6 space-y-3">
                                         <button
@@ -674,46 +761,46 @@ const PropertyDetail = () => {
                                         </button>
                                     </div>
                                 )}
-
-                                {/* Similar Properties */}
-                                {similarProperties.length > 0 && (
-                                    <div className="p-6 bg-white rounded-xl shadow-subtle">
-                                        <h3 className="mb-4 font-bold text-gray-800">Similar Properties</h3>
-                                        <div className="space-y-4">
-                                            {similarProperties.map((similar) => (
-                                                <div key={similar.id} className="flex pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-                                                    <div className="flex-shrink-0 w-24 h-20 overflow-hidden rounded-lg">
-                                                        <img
-                                                            src={similar.images?.[0] || 'https://placehold.co/800x600?text=No+Image'}
-                                                            alt={similar.title}
-                                                            className="object-cover w-full h-full"
-                                                            onError={(e) => {
-                                                                e.target.onerror = null;
-                                                                e.target.src = 'https://placehold.co/800x600?text=No+Image';
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <div className="flex-1 ml-3">
-                                                        <h4 className="text-sm font-medium text-gray-800 line-clamp-1">{similar.title}</h4>
-                                                        <p className="text-sm font-semibold text-emerald-600">${similar.price?.toLocaleString() || '0'}</p>
-                                                        <div className="flex mt-1 text-xs text-gray-500">
-                                                            <span className="mr-2">{similar.beds || 0} bd</span>
-                                                            <span className="mr-2">{similar.baths || 0} ba</span>
-                                                            <span>{similar.city}, {similar.area}</span>
-                                                        </div>
-                                                        <a
-                                                            href={`/properties/${similar.id}`}
-                                                            className="inline-block mt-1 text-xs font-medium text-emerald-600 hover:text-emerald-700"
-                                                        >
-                                                            View Details
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
                             </div>
+
+                            {/* Similar Properties */}
+                            {similarProperties.length > 0 && (
+                                <div className="p-6 bg-white rounded-xl shadow-subtle">
+                                    <h3 className="mb-4 font-bold text-gray-800">Similar Properties</h3>
+                                    <div className="space-y-4">
+                                        {similarProperties.map((similar) => (
+                                            <div key={similar.id} className="flex pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                                                <div className="flex-shrink-0 w-24 h-20 overflow-hidden rounded-lg">
+                                                    <img
+                                                        src={similar.images?.[0] || 'https://placehold.co/800x600?text=No+Image'}
+                                                        alt={similar.title}
+                                                        className="object-cover w-full h-full"
+                                                        onError={(e) => {
+                                                            e.target.onerror = null;
+                                                            e.target.src = 'https://placehold.co/800x600?text=No+Image';
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="flex-1 ml-3">
+                                                    <h4 className="text-sm font-medium text-gray-800 line-clamp-1">{similar.title}</h4>
+                                                    <p className="text-sm font-semibold text-emerald-600">Ksh.{similar.price?.toLocaleString() || '0'}</p>
+                                                    <div className="flex mt-1 text-xs text-gray-500">
+                                                        <span className="mr-2">{similar.beds || 0} bd</span>
+                                                        <span className="mr-2">{similar.baths || 0} ba</span>
+                                                        <span>{similar.city}, {similar.area}</span>
+                                                    </div>
+                                                    <a
+                                                        href={`/properties/${similar.id}`}
+                                                        className="inline-block mt-1 text-xs font-medium text-emerald-600 hover:text-emerald-700"
+                                                    >
+                                                        View Details
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

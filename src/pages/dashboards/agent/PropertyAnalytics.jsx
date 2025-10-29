@@ -56,7 +56,7 @@ const PropertyAnalytics = () => {
         
         const propertiesQuery = query(
           collection(db, 'properties'),
-          where('agentID', '==', currentUser.uid),
+          where('agentId', '==', currentUser.uid),
           orderBy('createdAt', 'desc')
         );
         
@@ -79,7 +79,7 @@ const PropertyAnalytics = () => {
         // Fetch bookings data
         const bookingsQuery = query(
           collection(db, 'bookings'),
-          where('agentID', '==', currentUser.uid),
+          where('agentId', '==', currentUser.uid),
           where('status', 'in', ['pending', 'confirmed'])
         );
         
