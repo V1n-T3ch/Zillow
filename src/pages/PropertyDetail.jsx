@@ -23,6 +23,7 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
     const [touchEnd, setTouchEnd] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(true);
+    const [imageError, setImageError] = useState(false)
 
     // Combine images and videos into a single media array
     const allMedia = [
@@ -436,12 +437,14 @@ const PropertyDetail = () => {
     const { currentUser } = useAuth();
     const navigate = useNavigate();
     const [property, setProperty] = useState(null);
+    const [agentDetails, setAgentDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [similarProperties, setSimilarProperties] = useState([]);
     const [userEmail, setUserEmail] = useState('');
     const [activeTab, setActiveTab] = useState('description');
     const [hasRecordedView, setHasRecordedView] = useState(false);
+    const [imageError, setImageError] = useState(false); // Add this line
 
     useEffect(() => {
         const fetchPropertyData = async () => {
@@ -465,7 +468,43 @@ const PropertyDetail = () => {
 
                 setProperty(propertyData);
 
-                // Record the view after a short delay - Fixed field name
+                // Fetch agent details using agentId from property
+                if (propertyData.agentId) {
+                    try {
+                        const agentDoc = await getDoc(doc(db, 'users', propertyData.agentId));
+                        if (agentDoc.exists()) {
+                            const agentData = agentDoc.data();
+                            console.log('Agent details fetched:', agentData);
+                            setAgentDetails({
+                                name: agentData.name || agentData.agentApplication?.fullName || 'Property Agent',
+                                email: agentData.email,
+                                phone: agentData.agentApplication?.phoneNumber || agentData.phone,
+                                company: agentData.agentApplication?.companyName || 'Dwella Real Estate',
+                                photoURL: agentData.photoURL,
+                                bio: agentData.agentApplication?.bio,
+                                website: agentData.agentApplication?.website
+                            });
+                        } else {
+                            console.warn('Agent document not found for ID:', propertyData.agentId);
+                            setAgentDetails({
+                                name: 'Property Agent',
+                                email: 'contact@dwella.com',
+                                phone: 'Contact for details',
+                                company: 'Dwella Real Estate'
+                            });
+                        }
+                    } catch (agentError) {
+                        console.error('Error fetching agent details:', agentError);
+                        setAgentDetails({
+                            name: 'Property Agent',
+                            email: 'contact@dwella.com',
+                            phone: 'Contact for details',
+                            company: 'Dwella Real Estate'
+                        });
+                    }
+                }
+
+                // Record the view after a short delay
                 if (!hasRecordedView) {
                     const viewTimer = setTimeout(() => {
                         incrementPropertyViews(id, propertyData.agentId);
@@ -708,30 +747,92 @@ const PropertyDetail = () => {
 
                         {/* Sidebar */}
                         <div className="lg:w-1/3">
-                            {/* Agent Contact */}
+                            {/* Updated Agent Contact Section */}
                             <div className="p-6 mb-6 bg-white rounded-xl shadow-subtle">
                                 <div className="flex items-center mb-4">
-                                    <div className="flex items-center justify-center w-16 h-16 mr-4 bg-gray-200 rounded-full">
-                                        <FiUser className="text-gray-400" size={24} />
+                                    <div className="flex items-center justify-center w-16 h-16 mr-4 overflow-hidden bg-gray-200 rounded-full">
+                                        {agentDetails?.photoURL && !imageError ? (
+                                            <img 
+                                                src={agentDetails.photoURL} 
+                                                alt={agentDetails?.name || 'Agent'}
+                                                className="w-full h-full object-cover"
+                                                onError={() => setImageError(true)}
+                                            />
+                                        ) : (
+                                            <div className="flex items-center justify-center w-full h-full">
+                                                <FiUser className="text-gray-400" size={24} />
+                                            </div>
+                                        )}
                                     </div>
-                                    <div>
-                                        <h3 className="font-bold text-gray-800">{property.agentName || 'Property Agent'}</h3>
-                                        <p className="text-sm text-gray-600">Dwella Real Estate</p>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-gray-800">
+                                            {agentDetails?.name || 'Loading...'}
+                                        </h3>
+                                        <p className="text-sm text-gray-600">
+                                            {agentDetails?.company || 'Dwella Real Estate'}
+                                        </p>
+                                        {agentDetails?.bio && (
+                                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                                                {agentDetails.bio}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
 
                                 <div className="mb-6 space-y-4">
-                                    <a href="tel:123-456-7890" className="flex items-center text-gray-700 hover:text-emerald-600">
-                                        <FiPhone className="mr-3 text-emerald-500" />
-                                        Contact via phone
-                                    </a>
-                                    <a href={`mailto:${property.agentEmail || 'contact@example.com'}`} className="flex items-center text-gray-700 hover:text-emerald-600">
-                                        <FiMessageSquare className="mr-3 text-emerald-500" />
-                                        Send email inquiry
-                                    </a>
+                                    {agentDetails?.phone && (
+                                        <a 
+                                            href={`tel:${agentDetails.phone}`} 
+                                            className="flex items-center p-3 text-gray-700 transition-colors rounded-lg hover:text-emerald-600 hover:bg-emerald-50"
+                                        >
+                                            <FiPhone className="mr-3 text-emerald-500" />
+                                            <div>
+                                                <div className="font-medium">Call Agent</div>
+                                                <div className="text-sm text-gray-500">{agentDetails.phone}</div>
+                                            </div>
+                                        </a>
+                                    )}
+                                    
+                                    {agentDetails?.email && (
+                                        <a 
+                                            href={`mailto:${agentDetails.email}?subject=Inquiry about ${property.title}&body=Hi ${agentDetails.name},%0D%0A%0D%0AI'm interested in learning more about the property "${property.title}" listed at Ksh.${property.price?.toLocaleString()}.%0D%0A%0D%0ACould you please provide more details?%0D%0A%0D%0AThank you!`}
+                                            className="flex items-center p-3 text-gray-700 transition-colors rounded-lg hover:text-emerald-600 hover:bg-emerald-50"
+                                        >
+                                            <FiMessageSquare className="mr-3 text-emerald-500" />
+                                            <div>
+                                                <div className="font-medium">Send Email</div>
+                                                <div className="text-sm text-gray-500">{agentDetails.email}</div>
+                                            </div>
+                                        </a>
+                                    )}
+
+                                    {agentDetails?.website && (
+                                        <a 
+                                            href={agentDetails.website.startsWith('http') ? agentDetails.website : `https://${agentDetails.website}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center p-3 text-gray-700 transition-colors rounded-lg hover:text-emerald-600 hover:bg-emerald-50"
+                                        >
+                                            <svg className="w-5 h-5 mr-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9m0 9c2.485 0 4.5-4.03 4.5-9S11.485 3 9 3m0 18c-2.485 0-4.5-4.03-4.5-9S6.515 3 9 3m0 18V3" />
+                                            </svg>
+                                            <div>
+                                                <div className="font-medium">Visit Website</div>
+                                                <div className="text-sm text-gray-500 truncate">{agentDetails.website}</div>
+                                            </div>
+                                        </a>
+                                    )}
+
+                                    {/* Loading state */}
+                                    {!agentDetails && (
+                                        <div className="flex items-center p-3 text-gray-500">
+                                            <div className="w-5 h-5 mr-3 border-2 border-gray-300 rounded-full animate-spin border-t-emerald-500"></div>
+                                            Loading agent details...
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* Google Maps Buttons */}
+                                {/* Google Maps Buttons - keep existing */}
                                 {property.location && (
                                     <div className="mb-6 space-y-3">
                                         <button
@@ -763,7 +864,7 @@ const PropertyDetail = () => {
                                 )}
                             </div>
 
-                            {/* Similar Properties */}
+                            {/* Similar Properties - keep existing */}
                             {similarProperties.length > 0 && (
                                 <div className="p-6 bg-white rounded-xl shadow-subtle">
                                     <h3 className="mb-4 font-bold text-gray-800">Similar Properties</h3>

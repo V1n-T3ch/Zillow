@@ -39,7 +39,6 @@ const PropertyAnalytics = () => {
   const [timeRange, setTimeRange] = useState('30');
   const [totalViews, setTotalViews] = useState(0);
   const [totalFavorites, setTotalFavorites] = useState(0);
-  const [totalBookings, setTotalBookings] = useState(0); // New state for total bookings
   const [viewsChange, setViewsChange] = useState(0); // % change
   const [favoritesChange, setFavoritesChange] = useState(0); // % change
   const [viewsData, setViewsData] = useState([]);
@@ -75,16 +74,6 @@ const PropertyAnalytics = () => {
         
         setTotalViews(views);
         setTotalFavorites(favorites);
-        
-        // Fetch bookings data
-        const bookingsQuery = query(
-          collection(db, 'bookings'),
-          where('agentId', '==', currentUser.uid),
-          where('status', 'in', ['pending', 'confirmed'])
-        );
-        
-        const bookingsSnapshot = await getDocs(bookingsQuery);
-        setTotalBookings(bookingsSnapshot.docs.length);
 
         // Fetch historical data instead of generating mock data
         await fetchHistoricalData(propertiesList, timeRange, selectedProperty);
@@ -291,31 +280,6 @@ const PropertyAnalytics = () => {
                     </span>
                   )}
                 </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-6 bg-white rounded-xl shadow-subtle">
-            <div className="flex items-center">
-              <div className="p-3 mr-4 rounded-full bg-amber-100 text-amber-600">
-                <FiMessageSquare size={24} />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Inquiries</p>
-                <h3 className="text-2xl font-bold text-gray-800">0</h3>
-              </div>
-            </div>
-          </div>
-          
-          {/* Replace the fourth analytics card (Viewings) with Bookings */}
-          <div className="p-6 bg-white rounded-xl shadow-subtle">
-            <div className="flex items-center">
-              <div className="p-3 mr-4 text-purple-600 bg-purple-100 rounded-full">
-                <FiCalendar size={24} />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Bookings</p>
-                <h3 className="text-2xl font-bold text-gray-800">{totalBookings}</h3>
               </div>
             </div>
           </div>

@@ -44,6 +44,12 @@ const Navbar = () => {
                 <div className="items-center hidden space-x-4 lg:flex">
                     {currentUser ? (
                         <>
+                            {userDetails?.role === 'user' && (
+                                        <Link to="/agent-application" className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-emerald-600">
+                                            <FaBuildingColumns className="mr-2" size={20} />
+                                            Apply as Agent
+                                        </Link>
+                                    )}
                             <Link to="/saved" className="p-2 text-gray-600 rounded-full hover:text-emerald-500 hover:bg-gray-100">
                                 <FiHeart size={20} />
                             </Link>

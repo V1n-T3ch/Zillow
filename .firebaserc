@@ -1,6 +1,6 @@
 {
   "projects": {
-    "default": "zillow-5e1b9",
+    "default": "dwella-724ba",
     "dwella-prod": "dwella-724ba"
   },
   "targets": {},

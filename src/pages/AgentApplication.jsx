@@ -6,6 +6,8 @@ import { useAuth } from '../hooks/useAuth';
 import Navbar from '../components/Navbar';
 import { motion as Motion } from 'framer-motion';
 import { FiUser, FiPhone, FiBriefcase, FiEdit, FiGlobe, FiCheck } from 'react-icons/fi';
+import { sendAgentApplicationNotification } from '../services/notificationService';
+import { toast } from 'react-toastify';
 
 const AgentApplication = () => {
   const { currentUser, userDetails } = useAuth();
@@ -80,6 +82,19 @@ const AgentApplication = () => {
           submittedAt: serverTimestamp()
         }
       });
+
+      // Send notification to admins
+      try {
+        await sendAgentApplicationNotification(
+        currentUser.uid,
+        currentUser.displayName || formData.fullName,
+        currentUser.email
+      );
+      
+      toast.success('Application submitted successfully! Admins have been notified.');
+      } catch (notificationError) {
+        console.error('Failed to send admin notification:', notificationError)
+      }
 
       setSuccess(true);
       // Reset form

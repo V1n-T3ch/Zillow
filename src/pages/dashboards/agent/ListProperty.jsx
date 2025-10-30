@@ -96,8 +96,21 @@ const ListProperty = () => {
         const { name, value } = e.target;
 
         if (['price', 'beds', 'baths'].includes(name)) {
-            const numberValue = value === '' ? '' : Number(value);
-            setFormData({ ...formData, [name]: numberValue });
+            // For price and beds, only allow whole numbers
+            if (name === 'price' || name === 'beds') {
+                const numberValue = value === '' ? '' : parseInt(value, 10);
+                // Only update if it's a valid whole number or empty
+                if (value === '' || (!isNaN(numberValue) && numberValue >= 0)) {
+                    setFormData({ ...formData, [name]: numberValue || '' });
+                }
+            } 
+            // For baths, allow decimals (0.5 steps)
+            else if (name === 'baths') {
+                const numberValue = value === '' ? '' : parseFloat(value);
+                if (value === '' || (!isNaN(numberValue) && numberValue >= 0)) {
+                    setFormData({ ...formData, [name]: numberValue || '' });
+                }
+            }
         } else {
             setFormData({ ...formData, [name]: value });
         }
@@ -405,7 +418,6 @@ const ListProperty = () => {
                                         name="price"
                                         type="number"
                                         min="0"
-                                        step="1000"
                                         value={formData.price}
                                         onChange={handleChange}
                                         required

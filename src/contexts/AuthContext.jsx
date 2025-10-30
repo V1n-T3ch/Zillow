@@ -100,20 +100,32 @@ export function AuthProvider({ children }) {
 
     const fetchUserDetails = useCallback(async (uid) => {
         try {
+            console.log('🔍 Fetching user details for:', uid);
             const userDoc = await getDoc(doc(db, 'users', uid));
             if (userDoc.exists()) {
-                setUserDetails(userDoc.data());
-                return userDoc.data();
+                const userData = userDoc.data();
+                console.log('📋 User data fetched:', {
+                    email: userData.email,
+                    role: userData.role,
+                    name: userData.name
+                });
+                setUserDetails(userData);
+                return userData;
+            } else {
+                console.warn('❌ No user document found for:', uid);
+                setUserDetails(null);
+                return null;
             }
-            return null;
         } catch (error) {
-            console.error("Error fetching user details:", error);
+            console.error("❌ Error fetching user details:", error);
+            setUserDetails(null);
             return null;
         }
     }, []);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            console.log('🔍 Auth state changed:', user?.email);
             setCurrentUser(user);
             if (user) {
                 await fetchUserDetails(user.uid);
@@ -129,6 +141,7 @@ export function AuthProvider({ children }) {
     const value = {
         currentUser,
         userDetails,
+        userRole: userDetails?.role, // Add this line!
         signup,
         login,
         googleSignIn,

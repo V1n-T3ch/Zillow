@@ -6,6 +6,7 @@ import {
 } from 'react-icons/fi';
 import DashboardLayout from '../../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../../hooks/useAuth';
+import AdminApplications from '../../../components/AdminApplications'
 
 const AdminDashboard = () => {
     const { currentUser, userDetails } = useAuth();
@@ -106,6 +107,7 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             </div>
+            <AdminApplications />
         </DashboardLayout>
     );
 };

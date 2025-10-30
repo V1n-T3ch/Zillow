@@ -1,15 +1,8 @@
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 
 /**
- * Create a new notification for a user
- * @param {string} userId - The ID of the user to send the notification to
- * @param {string} type - The notification type
- * @param {string} title - The notification title
- * @param {string} message - The notification message
- * @param {Object} data - Additional data to include with the notification
- * @param {string} actionUrl - URL to navigate to when clicking the notification
- * @returns {Promise<string>} - The ID of the new notification
+ * Create a new notification for a user (direct to Firestore)
  */
 export const createNotification = async (
   userId,
@@ -40,22 +33,71 @@ export const createNotification = async (
 };
 
 /**
- * Create agent application approved notification
+ * Listen to pending agent applications for admins
+ * This replaces the need for Cloud Functions
  */
+export const subscribeToPendingApplications = (callback) => {
+  const q = query(
+    collection(db, 'users'),
+    where('agentApplication.status', '==', 'pending')
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const pendingApplications = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+    callback(pendingApplications);
+  }, (error) => {
+    console.error('Error listening to pending applications:', error);
+  });
+};
+
+/**
+ * Get pending agent applications (one-time fetch)
+ */
+export const getPendingApplications = async () => {
+  try {
+    const q = query(
+      collection(db, 'users'),
+      where('agentApplication.status', '==', 'pending')
+    );
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error getting pending applications:', error);
+    return [];
+  }
+};
+
+/**
+ * Simple function for agent application submission (no Cloud Functions needed)
+ * This is just for consistency - the real work is done by updating the user document
+ */
+export const sendAgentApplicationNotification = async (applicantId, applicantName, applicantEmail) => {
+  // Since we're using real-time listeners, we don't need to do anything here
+  // The AdminApplications component will automatically see the new pending application
+  console.log(`Agent application submitted by ${applicantName} (${applicantEmail})`);
+  return { success: true, message: 'Application submitted successfully' };
+};
+
+// Direct user notifications
 export const sendAgentApprovedNotification = async (userId) => {
   return createNotification(
     userId,
     'agent_approved',
-    'agent Application Approved',
-    `Congratulations! Your application to become a Agent has been approved. You can now list properties on our platform.`,
+    'Agent Application Approved',
+    'Congratulations! Your application to become an Agent has been approved. You can now list properties on our platform.',
     { approved: true },
     '/agent'
   );
 };
 
-/**
- * Create agent application rejected notification
- */
 export const sendAgentRejectedNotification = async (userId, reason = '') => {
   const message = reason 
     ? `Your Agent application has been rejected. Reason: ${reason}`
@@ -64,19 +106,27 @@ export const sendAgentRejectedNotification = async (userId, reason = '') => {
   return createNotification(
     userId,
     'agent_rejected',
-    'agent Application Rejected',
+    'Agent Application Rejected',
     message,
     { approved: false },
     '/agent-application'
   );
 };
 
-/**
- * Create property approved notification
- */
-export const sendPropertyApprovedNotification = async (userId, propertyId, propertyTitle) => {
+export const sendBookingRequestNotification = async (agentId, bookingId, propertyTitle, userEmail, date, time) => {
   return createNotification(
-    userId,
+    agentId,
+    'booking_request',
+    'New Booking Request',
+    `You have a new booking request for "${propertyTitle}" from ${userEmail} on ${date} at ${time}.`,
+    { bookingId },
+    `/agent/bookings/${bookingId}`
+  );
+};
+
+export const sendPropertyApprovedNotification = async (agentId, propertyId, propertyTitle) => {
+  return createNotification(
+    agentId,
     'property_approved',
     'Property Listing Approved',
     `Your property "${propertyTitle}" has been approved and is now live on our platform.`,
@@ -85,16 +135,13 @@ export const sendPropertyApprovedNotification = async (userId, propertyId, prope
   );
 };
 
-/**
- * Create property rejected notification
- */
-export const sendPropertyRejectedNotification = async (userId, propertyId, propertyTitle, reason = '') => {
+export const sendPropertyRejectedNotification = async (agentId, propertyId, propertyTitle, reason = '') => {
   const message = reason 
     ? `Your property "${propertyTitle}" has been rejected. Reason: ${reason}`
     : `Your property "${propertyTitle}" has been rejected. Please review and update your listing.`;
   
   return createNotification(
-    userId,
+    agentId,
     'property_rejected',
     'Property Listing Rejected',
     message,
@@ -103,37 +150,17 @@ export const sendPropertyRejectedNotification = async (userId, propertyId, prope
   );
 };
 
-/**
- * Create new message notification
- */
-export const sendMessageReceivedNotification = async (userId, senderId, senderName, messagePreview) => {
+export const sendBookingConfirmedNotification = async (userId, bookingId, propertyTitle, date, time) => {
   return createNotification(
     userId,
-    'message_received',
-    'New Message',
-    `You have received a new message from ${senderName}: "${messagePreview.substring(0, 50)}${messagePreview.length > 50 ? '...' : ''}"`,
-    { senderId },
-    `/messages/${senderId}`
+    'booking_confirmed',
+    'Booking Confirmed',
+    `Your booking for "${propertyTitle}" on ${date} at ${time} has been confirmed.`,
+    { bookingId },
+    `/bookings/${bookingId}`
   );
 };
 
-/**
- * Create property view milestone notification for agent
- */
-export const sendPropertyViewMilestoneNotification = async (agentId, propertyId, propertyTitle, viewCount) => {
-  return createNotification(
-    agentId,
-    'property_view',
-    'Property Milestone',
-    `Your property "${propertyTitle}" has reached ${viewCount} views!`,
-    { propertyId, viewCount },
-    `/agent/properties/${propertyId}/stats`
-  );
-};
-
-/**
- * Create booking rejected notification for user
- */
 export const sendBookingRejectedNotification = async (userId, bookingId, propertyTitle, reason = '') => {
   const message = reason
     ? `Your booking request for "${propertyTitle}" has been declined. Reason: ${reason}`
@@ -149,44 +176,13 @@ export const sendBookingRejectedNotification = async (userId, bookingId, propert
   );
 };
 
-/**
- * Create booking completed notification for user
- */
-export const sendBookingCompletedNotification = async (userId, bookingId, propertyTitle) => {
+export const sendMessageReceivedNotification = async (userId, senderId, senderName, messagePreview) => {
   return createNotification(
     userId,
-    'booking_completed',
-    'Booking Completed',
-    `Your viewing for "${propertyTitle}" has been marked as completed. We hope you enjoyed viewing the property!`,
-    { bookingId },
-    '/bookings'
-  );
-};
-
-/**
- * Create booking reminder notification (for upcoming bookings)
- */
-export const sendBookingReminderNotification = async (userId, bookingId, propertyTitle, date, time) => {
-  return createNotification(
-    userId,
-    'booking_reminder',
-    'Booking Reminder',
-    `Reminder: You have a scheduled viewing for "${propertyTitle}" tomorrow at ${time}.`,
-    { bookingId },
-    `/bookings/${bookingId}`
-  );
-};
-
-/**
- * Create booking rescheduled notification
- */
-export const sendBookingRescheduledNotification = async (userId, bookingId, propertyTitle, oldDate, oldTime, newDate, newTime) => {
-  return createNotification(
-    userId,
-    'booking_rescheduled',
-    'Booking Rescheduled',
-    `Your booking for "${propertyTitle}" has been rescheduled from ${oldDate} at ${oldTime} to ${newDate} at ${newTime}.`,
-    { bookingId },
-    `/bookings/${bookingId}`
+    'message_received',
+    'New Message',
+    `You have received a new message from ${senderName}: "${messagePreview.substring(0, 50)}${messagePreview.length > 50 ? '...' : ''}"`,
+    { senderId },
+    `/messages/${senderId}`
   );
 };

@@ -149,11 +149,11 @@ const PropertyListing = () => {
                     property.price >= priceRange[0] && property.price <= priceRange[1]
                 );
 
-                // Filter by bedrooms
+                // Filter by bedrooms - exact match
                 if (bedrooms && bedrooms !== '') {
                     const bedsNumber = parseInt(bedrooms);
                     filtered = filtered.filter(property => 
-                        property.beds >= bedsNumber
+                        property.beds === bedsNumber
                     );
                 }
 

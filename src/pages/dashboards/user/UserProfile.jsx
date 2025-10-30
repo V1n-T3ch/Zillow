@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
-import { FiUser, FiMail, FiPhone, FiEdit2, FiSave, FiCamera, FiAlertCircle, FiX, FiSettings, FiTrash2, FiLock, FiMapPin, FiCheckCircle } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
+import { FiUser, FiMail, FiPhone, FiEdit2, FiSave, FiAlertCircle, FiX, FiSettings, FiTrash2, FiLock, FiMapPin, FiCheckCircle } from 'react-icons/fi';
 import DashboardLayout from '../../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../../hooks/useAuth';
 import { updateProfile, EmailAuthProvider, reauthenticateWithCredential, updatePassword, deleteUser } from 'firebase/auth';
 import { doc, updateDoc, deleteDoc, query, collection, where, getDocs } from 'firebase/firestore';
-import { db, storage } from '../../../firebase';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { db } from '../../../firebase';
 import { useNavigate } from 'react-router-dom';
 
 const UserProfile = () => {
@@ -15,11 +14,6 @@ const UserProfile = () => {
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
-    const fileInputRef = useRef(null);
-
-    // Image upload state
-    const [uploadProgress, setUploadProgress] = useState(0);
-    const [isUploading, setIsUploading] = useState(false);
 
     // Password change modal state
     const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -123,86 +117,6 @@ const UserProfile = () => {
             setErrorMessage(error.message || 'Failed to update profile. Please try again.');
         } finally {
             setLoading(false);
-        }
-    };
-
-    // Handle profile photo upload
-    const handlePhotoClick = () => {
-        fileInputRef.current.click();
-    };
-
-    const handleFileChange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        // Validate file type
-        const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        if (!validTypes.includes(file.type)) {
-            setErrorMessage('Please upload a valid image file (JPEG, PNG, or GIF)');
-            return;
-        }
-
-        // Validate file size (max 2MB)
-        if (file.size > 2 * 1024 * 1024) {
-            setErrorMessage('Image size should be less than 2MB');
-            return;
-        }
-
-        try {
-            setIsUploading(true);
-            setUploadProgress(0);
-
-            // Create a storage reference
-            const storageRef = ref(storage, `profile-photos/${currentUser.uid}/${Date.now()}-${file.name}`);
-
-            // Upload file with progress tracking
-            const uploadTask = uploadBytesResumable(storageRef, file);
-
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    // Track upload progress
-                    const progress = Math.round(
-                        (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-                    );
-                    setUploadProgress(progress);
-                },
-                (error) => {
-                    console.error('Error uploading image:', error);
-                    setIsUploading(false);
-                    setErrorMessage('Failed to upload image. Please try again.');
-                },
-                async () => {
-                    // Upload completed successfully
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-
-                    // Update user profile in Firebase Auth
-                    await updateProfile(currentUser, {
-                        photoURL: downloadURL
-                    });
-
-                    // Update photoURL in Firestore
-                    const userRef = doc(db, 'users', currentUser.uid);
-                    await updateDoc(userRef, {
-                        photoURL: downloadURL,
-                        updatedAt: new Date()
-                    });
-
-                    // Refresh user data
-                    await fetchUserDetails(currentUser.uid);
-
-                    setIsUploading(false);
-                    setSuccessMessage('Profile photo updated successfully!');
-
-                    // Clear success message after 3 seconds
-                    setTimeout(() => {
-                        setSuccessMessage('');
-                    }, 3000);
-                }
-            );
-        } catch (error) {
-            console.error('Error handling file upload:', error);
-            setIsUploading(false);
-            setErrorMessage('Failed to process image. Please try again.');
         }
     };
 
@@ -431,48 +345,10 @@ const UserProfile = () => {
 
                 <div className="bg-white p-6 rounded-xl shadow-sm mb-6">
                     <div className="flex flex-col sm:flex-row items-center sm:items-start mb-6">
-                        <div className="relative mb-4 sm:mb-0 sm:mr-6">
-                            <div className="w-24 h-24 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden">
-                                {isUploading ? (
-                                    <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                                        <div className="text-center">
-                                            <div className="h-4 w-16 bg-gray-300 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-emerald-500"
-                                                    style={{ width: `${uploadProgress}%` }}
-                                                ></div>
-                                            </div>
-                                            <div className="text-xs mt-1 text-gray-600">{uploadProgress}%</div>
-                                        </div>
-                                    </div>
-                                ) : currentUser?.photoURL ? (
-                                    <img
-                                        src={currentUser.photoURL}
-                                        alt={formData.name}
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <span className="text-emerald-700 text-3xl font-bold">
-                                        {formData.name ? formData.name.charAt(0).toUpperCase() : 'U'}
-                                    </span>
-                                )}
-                            </div>
-
-                            {editing && (
-                                <button
-                                    className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md border border-gray-200 text-gray-700 hover:text-emerald-600"
-                                    onClick={handlePhotoClick}
-                                >
-                                    <FiCamera size={18} />
-                                </button>
-                            )}
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                className="hidden"
-                                accept="image/jpeg, image/png, image/gif"
-                                onChange={handleFileChange}
-                            />
+                        <div className="w-24 h-24 rounded-full bg-emerald-100 flex items-center justify-center mb-4 sm:mb-0 sm:mr-6">
+                            <span className="text-emerald-700 text-3xl font-bold">
+                                {formData.name ? formData.name.charAt(0).toUpperCase() : 'U'}
+                            </span>
                         </div>
 
                         <div className="text-center sm:text-left">
@@ -604,6 +480,7 @@ const UserProfile = () => {
                     </form>
                 </div>
 
+                {/* Account Settings section remains the same */}
                 <div className="bg-white p-6 rounded-xl shadow-sm">
                     <h3 className="text-lg font-bold text-gray-800 mb-4">Account Settings</h3>
 
