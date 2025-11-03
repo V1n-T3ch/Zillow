@@ -52,6 +52,8 @@ const LocationPicker = ({
   const [searchValue, setSearchValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(initialLocation || null);
+  const [gettingLocation, setGettingLocation] = useState(false);
+  const [locationError, setLocationError] = useState('');
 
   // Initialize the map with Leaflet
   useEffect(() => {
@@ -97,7 +99,7 @@ const LocationPicker = ({
         L.control.layers(baseLayers).addTo(newMap);
 
         setMap(newMap);
-        mapInstanceRef.current = newMap; // Store map instance in ref
+        mapInstanceRef.current = newMap;
 
         // Add click handler
         newMap.on('click', (event) => {
@@ -185,7 +187,7 @@ const LocationPicker = ({
       // Create new marker with custom icon
       const newMarker = L.marker([location.lat, location.lng], {
         draggable: true,
-        icon: customIcon // Use the custom icon
+        icon: customIcon
       }).addTo(mapInstance);
       
       // Add drag end event
@@ -200,7 +202,7 @@ const LocationPicker = ({
         onLocationSelect(newPosition);
       });
       
-      // Store marker in ref instead of state
+      // Store marker in ref
       markerRef.current = newMarker;
     } catch (error) {
       console.error('Error creating marker:', error);
@@ -224,7 +226,6 @@ const LocationPicker = ({
     setIsLoading(true);
     
     try {
-      // Use Nominatim API for geocoding
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressString)}&limit=1&countrycodes=ke`
       );
@@ -241,8 +242,6 @@ const LocationPicker = ({
         centerMap(location);
         setMarkerOnMap(location);
         onLocationSelect(location);
-      } else {
-        console.log('No results found for:', addressString);
       }
     } catch (error) {
       console.error('Geocoding error:', error);
@@ -255,7 +254,6 @@ const LocationPicker = ({
     if (!location) return;
     
     try {
-      // Use Nominatim API for reverse geocoding
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lng}&zoom=16&addressdetails=1`
       );
@@ -264,7 +262,6 @@ const LocationPicker = ({
       
       if (data && data.display_name) {
         console.log('Address found:', data.display_name);
-        // You can use this address data as needed
       }
     } catch (error) {
       console.error('Reverse geocoding error:', error);
@@ -278,6 +275,56 @@ const LocationPicker = ({
     }
   };
 
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setGettingLocation(true);
+    setLocationError('');
+
+    navigator.geolocation.getCurrentPosition(
+      (geoPosition) => {
+        const { latitude, longitude } = geoPosition.coords;
+        
+        const newPosition = {
+          lat: latitude,
+          lng: longitude
+        };
+        
+        setSelectedLocation(newPosition);
+        setMarkerOnMap(newPosition);
+        onLocationSelect(newPosition);
+        centerMap(newPosition);
+        
+        setGettingLocation(false);
+      },
+      (error) => {
+        setGettingLocation(false);
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError('Location access denied. Please enable location permissions.');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationError('Location information unavailable.');
+            break;
+          case error.TIMEOUT:
+            setLocationError('Location request timed out.');
+            break;
+          default:
+            setLocationError('An error occurred while getting your location.');
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 30000,
+        maximumAge: 0
+      }
+    );
+  };
+
   return (
     <div className="w-full">
       {/* CSS for custom marker */}
@@ -288,48 +335,78 @@ const LocationPicker = ({
         }
       `}</style>
       
-      <div className="flex mb-4 space-x-2">
+      <div className="flex flex-col gap-3 mb-4 sm:flex-row">
+        {/* Search input */}
         <div className="relative flex-grow">
-          <div>
-            <input
-              type="text"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
-              placeholder="Search location"
-              className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            />
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <FiSearch className="text-gray-500" />
-            </div>
-            <button 
-              type="button"
-              onClick={handleSearch}
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-emerald-600"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Searching...' : 'Search'}
-            </button>
+          <input
+            type="text"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+            placeholder="Search location (e.g., Nakuru, Karen, Westlands)"
+            className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          />
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <FiSearch className="text-gray-500" />
           </div>
+          <button 
+            type="button"
+            onClick={handleSearch}
+            className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-emerald-600"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Searching...' : 'Search'}
+          </button>
         </div>
+
+        {/* Use My Location button */}
+        <button
+          type="button"
+          onClick={handleUseMyLocation}
+          disabled={gettingLocation}
+          className="flex items-center justify-center px-4 py-3 text-white transition-colors rounded-lg whitespace-nowrap bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+          {gettingLocation ? (
+            <>
+              <svg className="w-5 h-5 mr-2 animate-spin" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Getting...
+            </>
+          ) : (
+            <>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Use My Location
+            </>
+          )}
+        </button>
       </div>
 
+      {/* Error message */}
+      {locationError && (
+        <div className="p-3 mb-3 text-sm text-red-700 bg-red-50 rounded-lg">
+          {locationError}
+        </div>
+      )}
+
+      {/* Map container */}
       <div 
         ref={mapRef} 
-        className="w-full border border-gray-300 rounded-lg shadow-md h-96"
+        className="w-full border border-gray-300 rounded-lg shadow-md"
         style={{ height: '400px' }}
       ></div>
       
+      {/* Selected coordinates display */}
       {selectedLocation && (
-        <div className="mt-3 text-sm text-gray-600">
-          <p>Selected coordinates: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}</p>
-        </div>
-      )}
-      
-      {isLoading && (
-        <div className="flex items-center justify-center mt-2">
-          <div className="w-4 h-4 mr-2 border-2 border-t-2 border-gray-500 rounded-full animate-spin border-t-emerald-600"></div>
-          <span className="text-gray-600">Loading...</span>
+        <div className="p-3 mt-3 text-sm rounded-lg bg-emerald-50 border border-emerald-200">
+          <p className="font-medium text-emerald-900">✓ Location Selected</p>
+          <p className="text-emerald-700">
+            {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
+          </p>
         </div>
       )}
     </div>

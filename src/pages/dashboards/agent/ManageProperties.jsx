@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { FiEdit, FiTrash2, FiEye, FiPlus, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiEye, FiPlus, FiAlertCircle, FiCheckCircle, FiToggleLeft, FiToggleRight } from 'react-icons/fi';
 import DashboardLayout from '../../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../../hooks/useAuth';
 import { db } from '../../../firebase';
-import { collection, query, where, getDocs, deleteDoc, doc, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, deleteDoc, doc, orderBy, updateDoc } from 'firebase/firestore';
 import { toast } from 'react-toastify';
 
 const ManageProperties = () => {
@@ -12,6 +12,7 @@ const ManageProperties = () => {
     const [properties, setProperties] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [updatingStatus, setUpdatingStatus] = useState(null); // Track which property is being updated
     const [searchParams] = useSearchParams();
     const success = searchParams.get('success');
     const propertyId = searchParams.get('propertyId');
@@ -52,6 +53,35 @@ const ManageProperties = () => {
             toast.success('Property successfully added! It will be reviewed by an admin before being published.');
         }
     }, [currentUser, success, propertyId]);
+
+    const handleToggleAvailability = async (id, currentStatus) => {
+        setUpdatingStatus(id);
+
+        try {
+            // Determine new status - toggle between 'active' and 'unavailable'
+            const newStatus = currentStatus === 'active' ? 'unavailable' : 'active';
+
+            // Update the property in Firestore
+            await updateDoc(doc(db, 'properties', id), {
+                status: newStatus,
+                updatedAt: new Date()
+            });
+
+            // Update local state
+            setProperties(properties.map(property =>
+                property.id === id
+                    ? { ...property, status: newStatus }
+                    : property
+            ));
+
+            toast.success(`Property marked as ${newStatus === 'active' ? 'available' : 'unavailable'}`);
+        } catch (error) {
+            console.error('Error updating property status:', error);
+            toast.error('Failed to update property status. Please try again.');
+        } finally {
+            setUpdatingStatus(null);
+        }
+    };
 
     const handleDeleteProperty = async (id) => {
         if (!window.confirm('Are you sure you want to delete this property? This action cannot be undone.')) {
@@ -134,17 +164,22 @@ const ManageProperties = () => {
                                         <p className="text-gray-600">{property.area || 'Not Available'}</p>
                                         <p className="text-lg font-semibold text-emerald-600">Ksh.{property.price?.toLocaleString() || '0'}</p>
                                         <div className="mt-2 flex flex-wrap gap-2">
-                                            <span className={`px-2 py-1 text-xs rounded-full ${property.status === 'active'
+                                            <span className={`px-2 py-1 text-xs rounded-full ${
+                                                property.status === 'active'
                                                     ? 'bg-green-100 text-green-800'
                                                     : property.status === 'pending'
                                                         ? 'bg-yellow-100 text-yellow-800'
-                                                        : 'bg-red-100 text-red-800'
-                                                }`}>
+                                                        : property.status === 'unavailable'
+                                                            ? 'bg-gray-100 text-gray-800'
+                                                            : 'bg-red-100 text-red-800'
+                                            }`}>
                                                 {property.status === 'active'
-                                                    ? 'Active'
+                                                    ? 'Available'
                                                     : property.status === 'pending'
                                                         ? 'Pending Review'
-                                                        : 'Rejected'}
+                                                        : property.status === 'unavailable'
+                                                            ? 'Unavailable'
+                                                            : 'Rejected'}
                                             </span>
                                             <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
                                                 {property.propertyType || property.type || 'Property'}
@@ -161,7 +196,7 @@ const ManageProperties = () => {
                                                     {property.inquiries || 0} Inquiries
                                                 </span>
                                             </div>
-                                            <div className="flex gap-2">
+                                            <div className="flex gap-2 mb-2">
                                                 <Link
                                                     to={`/properties/${property.id}`}
                                                     className="p-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
@@ -184,6 +219,38 @@ const ManageProperties = () => {
                                                     <FiTrash2 />
                                                 </button>
                                             </div>
+                                            {/* Toggle Availability Button - Only show for active/unavailable properties */}
+                                            {(property.status === 'active' || property.status === 'unavailable') && (
+                                                <button
+                                                    onClick={() => handleToggleAvailability(property.id, property.status)}
+                                                    disabled={updatingStatus === property.id}
+                                                    className={`flex items-center justify-center w-full px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                                        property.status === 'active'
+                                                            ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                    title={property.status === 'active' ? 'Mark as Unavailable' : 'Mark as Available'}
+                                                >
+                                                    {updatingStatus === property.id ? (
+                                                        <span className="flex items-center">
+                                                            <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                                            </svg>
+                                                            Updating...
+                                                        </span>
+                                                    ) : (
+                                                        <>
+                                                            {property.status === 'active' ? (
+                                                                <FiToggleRight className="mr-2" size={18} />
+                                                            ) : (
+                                                                <FiToggleLeft className="mr-2" size={18} />
+                                                            )}
+                                                            {property.status === 'active' ? 'Available' : 'Unavailable'}
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

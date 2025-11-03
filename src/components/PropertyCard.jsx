@@ -21,7 +21,8 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
         yearBuilt, 
         listingStatus,
         stories,
-        garage 
+        garage,
+        status // Add status field
     } = property;
     
     const [isHovered, setIsHovered] = useState(false);
@@ -44,10 +45,49 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
         setImageError(true);
     };
 
+    // Get status information
+    const getStatusInfo = () => {
+        switch (status) {
+            case 'active':
+                return {
+                    label: 'Available',
+                    bgColor: 'bg-green-500',
+                    textColor: 'text-white'
+                };
+            case 'unavailable':
+                return {
+                    label: 'Unavailable',
+                    bgColor: 'bg-gray-500',
+                    textColor: 'text-white'
+                };
+            case 'pending':
+                return {
+                    label: 'Pending Review',
+                    bgColor: 'bg-yellow-500',
+                    textColor: 'text-white'
+                };
+            case 'rejected':
+                return {
+                    label: 'Not Available',
+                    bgColor: 'bg-red-500',
+                    textColor: 'text-white'
+                };
+            default:
+                return {
+                    label: 'Available',
+                    bgColor: 'bg-green-500',
+                    textColor: 'text-white'
+                };
+        }
+    };
+
+    const statusInfo = getStatusInfo();
+    const isUnavailable = status === 'unavailable' || status === 'rejected';
+
     if (viewMode === 'list') {
         return (
             <div
-                className="flex flex-col overflow-hidden transition-all duration-300 bg-white border border-gray-100 shadow-sm rounded-xl hover:shadow-lg md:flex-row"
+                className={`flex flex-col overflow-hidden transition-all duration-300 bg-white border border-gray-100 shadow-sm rounded-xl hover:shadow-lg md:flex-row ${isUnavailable ? 'opacity-75' : ''}`}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
@@ -64,7 +104,11 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
 
                     {/* Badges */}
                     <div className="absolute flex flex-col gap-2 top-4 left-4">
-                        {isNewListing && (
+                        {/* Status Badge */}
+                        <span className={`px-3 py-1 text-xs font-semibold tracking-wide rounded-full shadow-sm ${statusInfo.bgColor} ${statusInfo.textColor}`}>
+                            {statusInfo.label}
+                        </span>
+                        {isNewListing && status === 'active' && (
                             <span className="px-3 py-1 text-xs font-medium tracking-wide text-white rounded-full shadow-sm bg-emerald-500">
                                 New
                             </span>
@@ -140,10 +184,20 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
                     <div className="flex items-center justify-between mt-5">
                         <Link
                             to={`/properties/${id}`}
-                            className="group relative bg-emerald-50 text-emerald-700 py-2.5 px-5 rounded-full hover:bg-emerald-600 hover:text-white font-medium transition-all duration-300 overflow-hidden"
+                            className={`group relative py-2.5 px-5 rounded-full font-medium transition-all duration-300 overflow-hidden ${
+                                isUnavailable
+                                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white'
+                            }`}
+                            onClick={(e) => {
+                                if (isUnavailable) {
+                                    e.preventDefault();
+                                }
+                            }}
                         >
                             <span className="relative z-10 flex items-center">
-                                View Details <FiExternalLink className="ml-1.5 transform group-hover:translate-x-1 transition-transform" />
+                                {isUnavailable ? 'Not Available' : 'View Details'} 
+                                {!isUnavailable && <FiExternalLink className="ml-1.5 transform group-hover:translate-x-1 transition-transform" />}
                             </span>
                         </Link>
 
@@ -158,7 +212,7 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
 
     return (
         <div
-            className="flex flex-col h-full overflow-hidden transition-all duration-300 bg-white border border-gray-100 shadow-sm group rounded-xl hover:shadow-xl"
+            className={`flex flex-col h-full overflow-hidden transition-all duration-300 bg-white border border-gray-100 shadow-sm group rounded-xl hover:shadow-xl ${isUnavailable ? 'opacity-75' : ''}`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
@@ -176,7 +230,11 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
 
                 {/* Badges */}
                 <div className="absolute flex flex-col gap-2 top-4 left-4">
-                    {isNewListing && (
+                    {/* Status Badge */}
+                    <span className={`px-3 py-1 text-xs font-semibold tracking-wide rounded-full shadow-sm ${statusInfo.bgColor} ${statusInfo.textColor}`}>
+                        {statusInfo.label}
+                    </span>
+                    {isNewListing && status === 'active' && (
                         <span className="px-3 py-1 text-xs font-medium tracking-wide text-white rounded-full shadow-sm bg-emerald-500">
                             New
                         </span>
@@ -243,9 +301,18 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
                 <div className="pt-3 mt-auto border-t border-gray-100">
                     <Link
                         to={`/properties/${id}`}
-                        className="block w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg transition-colors"
+                        className={`block w-full text-center font-medium py-2.5 rounded-lg transition-colors ${
+                            isUnavailable
+                                ? 'bg-gray-400 text-white cursor-not-allowed'
+                                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                        }`}
+                        onClick={(e) => {
+                            if (isUnavailable) {
+                                e.preventDefault();
+                            }
+                        }}
                     >
-                        View Details
+                        {isUnavailable ? 'Not Available' : 'View Details'}
                     </Link>
                 </div>
             </div>

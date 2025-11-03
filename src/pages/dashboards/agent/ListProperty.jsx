@@ -95,23 +95,26 @@ const ListProperty = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        if (['price', 'beds', 'baths'].includes(name)) {
-            // For price and beds, only allow whole numbers
-            if (name === 'price' || name === 'beds') {
-                const numberValue = value === '' ? '' : parseInt(value, 10);
-                // Only update if it's a valid whole number or empty
-                if (value === '' || (!isNaN(numberValue) && numberValue >= 0)) {
-                    setFormData({ ...formData, [name]: numberValue || '' });
-                }
-            } 
-            // For baths, allow decimals (0.5 steps)
-            else if (name === 'baths') {
-                const numberValue = value === '' ? '' : parseFloat(value);
-                if (value === '' || (!isNaN(numberValue) && numberValue >= 0)) {
-                    setFormData({ ...formData, [name]: numberValue || '' });
-                }
+        // Special handling for propertyType
+        if (name === 'propertyType') {
+            // If Studio or Bedsitter is selected, automatically set beds to 0
+            if (value === 'Studio' || value === 'Bedsitter') {
+                setFormData({ 
+                    ...formData, 
+                    [name]: value,
+                    beds: 0 
+                });
+            } else {
+                setFormData({ ...formData, [name]: value });
             }
-        } else {
+        } 
+        // Number fields validation
+        else if (['price', 'beds', 'baths'].includes(name)) {
+            const numberValue = value === '' ? '' : Number(value);
+            setFormData({ ...formData, [name]: numberValue });
+        } 
+        // All other fields
+        else {
             setFormData({ ...formData, [name]: value });
         }
     };
