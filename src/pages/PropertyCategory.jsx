@@ -182,8 +182,15 @@ const PropertyCategory = () => {
                 <div className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
                     {/* Results Summary */}
                     <div className="mb-6">
-                        <h1 className="mb-2 text-3xl font-bold text-gray-900">
-                            {propertyType}s {searchFilter && `in ${searchFilter}`}
+                        <h1 className="mb-4 text-3xl font-bold text-gray-800 md:text-4xl">
+                            {propertyType === 'Studio' 
+                                ? 'Studio & Bedsitter Properties'
+                                : propertyType === 'BnB'
+                                    ? 'BnB Properties'
+                                    : propertyType === 'Singles'
+                                        ? 'Single Room Properties'
+                                        : `${propertyType} Properties`
+                            }
                         </h1>
                         <p className="text-gray-600">
                             {totalCount} {propertyType.toLowerCase()}{totalCount !== 1 ? 's' : ''} found
@@ -265,7 +272,16 @@ const PropertyCategory = () => {
                                                             </div>
                                                             <div>
                                                                 <h3 className="text-xl font-bold text-gray-900 group-hover:text-emerald-600">
-                                                                    {bedroomCount} {propertyType}s
+                                                                    {propertyType === 'Singles' 
+                                                                        ? bedroomCount === 'Studio' 
+                                                                            ? 'Single Rooms' 
+                                                                            : `${bedroomCount} Single Rooms`
+                                                                        : propertyType === 'BnB'
+                                                                            ? `${bedroomCount} BnB Properties`
+                                                                            : propertyType === 'Studio'
+                                                                                ? bedroomCount === 'Studio' ? 'Studio & Bedsitter' : `${bedroomCount} ${propertyType}s`
+                                                                                : `${bedroomCount} ${propertyType}s`
+                                                                    }
                                                                 </h3>
                                                                 <p className="text-sm text-gray-500">
                                                                     {searchFilter && `in ${searchFilter}`}
