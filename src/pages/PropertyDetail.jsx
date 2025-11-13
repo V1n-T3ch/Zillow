@@ -755,7 +755,7 @@ const PropertyDetail = () => {
                                             <img 
                                                 src={agentDetails.photoURL} 
                                                 alt={agentDetails?.name || 'Agent'}
-                                                className="w-full h-full object-cover"
+                                                className="object-cover w-full h-full"
                                                 onError={() => setImageError(true)}
                                             />
                                         ) : (
@@ -772,7 +772,7 @@ const PropertyDetail = () => {
                                             {agentDetails?.company || 'Dwella Real Estate'}
                                         </p>
                                         {agentDetails?.bio && (
-                                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                                            <p className="mt-1 text-xs text-gray-500 line-clamp-2">
                                                 {agentDetails.bio}
                                             </p>
                                         )}
@@ -844,7 +844,7 @@ const PropertyDetail = () => {
                                             className="flex items-center justify-center w-full px-4 py-3 font-medium text-white transition-colors rounded-lg bg-emerald-600 hover:bg-emerald-700"
                                         >
                                             <FiMapPin className="mr-2" />
-                                            Open in Google Maps
+                                            Open property location
                                         </button>
 
                                         <button

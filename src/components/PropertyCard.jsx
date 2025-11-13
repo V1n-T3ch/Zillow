@@ -275,9 +275,6 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
                     <span className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full">
                         <TbBuildingEstate className="inline mr-1" /> {propertyType || 'Property'}
                     </span>
-                    <div className="text-xs text-gray-400">
-                        Added 2 days ago
-                    </div>
                 </div>
 
                 <h3 className="mt-2 mb-1 text-lg font-bold text-gray-800 line-clamp-1">{title}</h3>

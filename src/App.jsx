@@ -30,6 +30,9 @@ import AdminDashboard from './pages/dashboards/admin/AdminDashboard';
 import UserManagement from './pages/dashboards/admin/UserManagement';
 import PropertyManagement from './pages/dashboards/admin/PropertyManagement';
 
+//Developer Payment
+import PayDeveloper from './pages/PayDeveloper';
+
 function App() {
   return (
     <AuthProvider>
@@ -45,6 +48,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              {/* <Route path="/" element={<PayDeveloper />} /> */}
               
               {/* Agent application route */}
               <Route path="/agent-application" element={
