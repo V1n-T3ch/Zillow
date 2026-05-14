@@ -45,6 +45,10 @@ const ListProperty = () => {
     const [mediaFiles, setMediaFiles] = useState([]); // Combined images and videos
     const [mediaPreviews, setMediaPreviews] = useState([]);
 
+    const MAX_THUMBNAIL_IMAGES = 1;
+    const MAX_IMAGE_SIZE_MB = 10;
+    const MAX_VIDEO_SIZE_MB = 1024;
+
     // Location picker state
     const [selectedLocation, setSelectedLocation] = useState(null);
     const [address, setAddress] = useState('');
@@ -150,9 +154,10 @@ const ListProperty = () => {
 
     const handleMediaChange = (e) => {
         const files = Array.from(e.target.files);
-        
+
         const validFiles = [];
         const errors = [];
+        let currentImageCount = mediaFiles.filter(isImageFile).length;
 
         files.forEach(file => {
             const isImage = isImageFile(file);
@@ -164,9 +169,18 @@ const ListProperty = () => {
                 return;
             }
 
-            if (isImage && sizeInMB > 10) {
-                errors.push(`${file.name}: Image size must be less than 10MB`);
-                return;
+            if (isImage) {
+                if (currentImageCount >= MAX_THUMBNAIL_IMAGES) {
+                    errors.push(`${file.name}: Only one thumbnail image is allowed`);
+                    return;
+                }
+
+                if (sizeInMB > MAX_IMAGE_SIZE_MB) {
+                    errors.push(`${file.name}: Image size must be less than ${MAX_IMAGE_SIZE_MB}MB`);
+                    return;
+                }
+
+                currentImageCount += 1;
             }
 
             if (isVideo) {
@@ -177,8 +191,8 @@ const ListProperty = () => {
                     return;
                 }
                 
-                if (sizeInMB > 100) {
-                    errors.push(`${file.name}: Video size must be less than 100MB`);
+                if (sizeInMB > MAX_VIDEO_SIZE_MB) {
+                    errors.push(`${file.name}: Video size must be less than ${MAX_VIDEO_SIZE_MB}MB`);
                     return;
                 }
             }
@@ -232,8 +246,8 @@ const ListProperty = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (mediaFiles.length === 0) {
-            setSubmitError('Please upload at least one image or video');
+        if (!mediaFiles.some(isImageFile)) {
+            setSubmitError('Please upload one thumbnail image');
             return;
         }
 
@@ -269,7 +283,7 @@ const ListProperty = () => {
                         headers: {
                             'Content-Type': 'multipart/form-data'
                         },
-                        timeout: 300000, // 5 minute timeout for large videos
+                        timeout: 1800000, // 30 minute timeout for large videos
                         onUploadProgress: (progressEvent) => {
                             const fileProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
                             const overallProgress = Math.round(((i / mediaFiles.length) * 100) + (fileProgress / mediaFiles.length));
@@ -323,7 +337,7 @@ const ListProperty = () => {
             if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
                 setSubmitError('Upload timeout. Please try again with smaller video files or check your internet connection.');
             } else if (error.response?.status === 413) {
-                setSubmitError('File too large. Please reduce video file sizes and try again.');
+                setSubmitError('File too large. Please keep videos at 1GB or less and try again.');
             } else if (error.response) {
                 setSubmitError(`Server error: ${error.response.data?.message || error.response.statusText}`);
             } else {
@@ -588,7 +602,7 @@ const ListProperty = () => {
                     <div className="p-6 bg-white shadow-sm rounded-xl">
                         <h3 className="mb-4 text-lg font-bold text-gray-800">Property Media</h3>
                         <p className="mb-4 text-gray-600">
-                            Upload high-quality images and videos of your property. Images: max 10MB each. Videos: max 100MB each.
+                            Upload one thumbnail image and any supporting videos. Images: max 10MB. Videos: max 1GB each.
                         </p>
 
                         <div className="mb-6">
@@ -602,10 +616,10 @@ const ListProperty = () => {
                                         <FiVideo className="w-8 h-8 text-gray-400" />
                                     </div>
                                     <p className="mb-2 text-sm text-gray-500">
-                                        <span className="font-semibold">Click to upload</span> images and videos
+                                        <span className="font-semibold">Click to upload</span> one thumbnail image and videos
                                     </p>
                                     <p className="text-xs text-gray-500">
-                                        Images: PNG, JPG, WEBP (Max: 10MB) | Videos: MP4, MOV, AVI (Max: 100MB)
+                                        Thumbnail: PNG, JPG, WEBP (Max: 10MB) | Videos: MP4, MOV, AVI (Max: 1GB)
                                     </p>
                                 </div>
                                 <input

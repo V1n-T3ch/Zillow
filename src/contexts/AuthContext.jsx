@@ -42,7 +42,13 @@ export function AuthProvider({ children }) {
             name,
             email,
             role: 'user', // Default role
-            createdAt: serverTimestamp()
+            createdAt: serverTimestamp(),
+            subscription: {
+                status: 'inactive',
+                provider: 'paystack',
+                planCode: null,
+                expiresAt: null
+            }
         });
 
         // Set redirect path if provided
@@ -78,7 +84,13 @@ export function AuthProvider({ children }) {
                 email: result.user.email,
                 role: 'user',
                 createdAt: serverTimestamp(),
-                photoURL: result.user.photoURL
+                photoURL: result.user.photoURL,
+                subscription: {
+                    status: 'inactive',
+                    provider: 'paystack',
+                    planCode: null,
+                    expiresAt: null
+                }
             });
         }
 

@@ -14,6 +14,23 @@ import { useAuth } from '../hooks/useAuth';
 import { toast } from 'react-toastify';
 import { incrementPropertyViews } from '../services/analyticsService';
 import Navbar from '../components/Navbar';
+import SubscriptionPaywall from '../components/SubscriptionPaywall';
+
+const isSubscriptionActive = (subscription) => {
+    if (!subscription || subscription.status !== 'active') {
+        return false;
+    }
+
+    if (!subscription.expiresAt) {
+        return true;
+    }
+
+    const expiryDate = subscription.expiresAt.toDate
+        ? subscription.expiresAt.toDate()
+        : new Date(subscription.expiresAt);
+
+    return expiryDate.getTime() > Date.now();
+};
 
 // Enhanced Media Gallery Component for Images and Videos
 const PropertyMediaGallery = ({ images = [], videos = [] }) => {
@@ -434,7 +451,7 @@ const FeatureAmenity = ({ children }) => (
 // Main Property Detail Component
 const PropertyDetail = () => {
     const { id } = useParams();
-    const { currentUser } = useAuth();
+    const { currentUser, userDetails, fetchUserDetails } = useAuth();
     const navigate = useNavigate();
     const [property, setProperty] = useState(null);
     const [agentDetails, setAgentDetails] = useState(null);
@@ -445,6 +462,7 @@ const PropertyDetail = () => {
     const [activeTab, setActiveTab] = useState('description');
     const [hasRecordedView, setHasRecordedView] = useState(false);
     const [imageError, setImageError] = useState(false); // Add this line
+    const canViewSensitiveDetails = isSubscriptionActive(userDetails?.subscription);
 
     useEffect(() => {
         const fetchPropertyData = async () => {
@@ -467,42 +485,6 @@ const PropertyDetail = () => {
                 };
 
                 setProperty(propertyData);
-
-                // Fetch agent details using agentId from property
-                if (propertyData.agentId) {
-                    try {
-                        const agentDoc = await getDoc(doc(db, 'users', propertyData.agentId));
-                        if (agentDoc.exists()) {
-                            const agentData = agentDoc.data();
-                            console.log('Agent details fetched:', agentData);
-                            setAgentDetails({
-                                name: agentData.name || agentData.agentApplication?.fullName || 'Property Agent',
-                                email: agentData.email,
-                                phone: agentData.agentApplication?.phoneNumber || agentData.phone,
-                                company: agentData.agentApplication?.companyName || 'Dwella Real Estate',
-                                photoURL: agentData.photoURL,
-                                bio: agentData.agentApplication?.bio,
-                                website: agentData.agentApplication?.website
-                            });
-                        } else {
-                            console.warn('Agent document not found for ID:', propertyData.agentId);
-                            setAgentDetails({
-                                name: 'Property Agent',
-                                email: 'contact@dwella.com',
-                                phone: 'Contact for details',
-                                company: 'Dwella Real Estate'
-                            });
-                        }
-                    } catch (agentError) {
-                        console.error('Error fetching agent details:', agentError);
-                        setAgentDetails({
-                            name: 'Property Agent',
-                            email: 'contact@dwella.com',
-                            phone: 'Contact for details',
-                            company: 'Dwella Real Estate'
-                        });
-                    }
-                }
 
                 // Record the view after a short delay
                 if (!hasRecordedView) {
@@ -545,6 +527,49 @@ const PropertyDetail = () => {
 
         fetchPropertyData();
     }, [id, currentUser, hasRecordedView]);
+
+    useEffect(() => {
+        const fetchAgentDetails = async () => {
+            if (!property?.agentId || !canViewSensitiveDetails) {
+                return;
+            }
+
+            try {
+                const agentDoc = await getDoc(doc(db, 'users', property.agentId));
+                if (agentDoc.exists()) {
+                    const agentData = agentDoc.data();
+                    console.log('Agent details fetched:', agentData);
+                    setAgentDetails({
+                        name: agentData.name || agentData.agentApplication?.fullName || 'Property Agent',
+                        email: agentData.email,
+                        phone: agentData.agentApplication?.phoneNumber || agentData.phone,
+                        company: agentData.agentApplication?.companyName || 'Dwella Real Estate',
+                        photoURL: agentData.photoURL,
+                        bio: agentData.agentApplication?.bio,
+                        website: agentData.agentApplication?.website
+                    });
+                } else {
+                    console.warn('Agent document not found for ID:', property.agentId);
+                    setAgentDetails({
+                        name: 'Property Agent',
+                        email: 'contact@dwella.com',
+                        phone: 'Contact for details',
+                        company: 'Dwella Real Estate'
+                    });
+                }
+            } catch (agentError) {
+                console.error('Error fetching agent details:', agentError);
+                setAgentDetails({
+                    name: 'Property Agent',
+                    email: 'contact@dwella.com',
+                    phone: 'Contact for details',
+                    company: 'Dwella Real Estate'
+                });
+            }
+        };
+
+        fetchAgentDetails();
+    }, [property?.agentId, canViewSensitiveDetails]);
 
     // Handle share functionality
     const handleShare = () => {
@@ -748,121 +773,134 @@ const PropertyDetail = () => {
                         {/* Sidebar */}
                         <div className="lg:w-1/3">
                             {/* Updated Agent Contact Section */}
-                            <div className="p-6 mb-6 bg-white rounded-xl shadow-subtle">
-                                <div className="flex items-center mb-4">
-                                    <div className="flex items-center justify-center w-16 h-16 mr-4 overflow-hidden bg-gray-200 rounded-full">
-                                        {agentDetails?.photoURL && !imageError ? (
-                                            <img 
-                                                src={agentDetails.photoURL} 
-                                                alt={agentDetails?.name || 'Agent'}
-                                                className="object-cover w-full h-full"
-                                                onError={() => setImageError(true)}
-                                            />
-                                        ) : (
-                                            <div className="flex items-center justify-center w-full h-full">
-                                                <FiUser className="text-gray-400" size={24} />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="font-bold text-gray-800">
-                                            {agentDetails?.name || 'Loading...'}
-                                        </h3>
-                                        <p className="text-sm text-gray-600">
-                                            {agentDetails?.company || 'Dwella Real Estate'}
-                                        </p>
-                                        {agentDetails?.bio && (
-                                            <p className="mt-1 text-xs text-gray-500 line-clamp-2">
-                                                {agentDetails.bio}
+                            {canViewSensitiveDetails ? (
+                                <div className="p-6 mb-6 bg-white rounded-xl shadow-subtle">
+                                    <div className="flex items-center mb-4">
+                                        <div className="flex items-center justify-center w-16 h-16 mr-4 overflow-hidden bg-gray-200 rounded-full">
+                                            {agentDetails?.photoURL && !imageError ? (
+                                                <img 
+                                                    src={agentDetails.photoURL} 
+                                                    alt={agentDetails?.name || 'Agent'}
+                                                    className="object-cover w-full h-full"
+                                                    onError={() => setImageError(true)}
+                                                />
+                                            ) : (
+                                                <div className="flex items-center justify-center w-full h-full">
+                                                    <FiUser className="text-gray-400" size={24} />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800">
+                                                {agentDetails?.name || 'Loading...'}
+                                            </h3>
+                                            <p className="text-sm text-gray-600">
+                                                {agentDetails?.company || 'Dwella Real Estate'}
                                             </p>
+                                            {agentDetails?.bio && (
+                                                <p className="mt-1 text-xs text-gray-500 line-clamp-2">
+                                                    {agentDetails.bio}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-6 space-y-4">
+                                        {agentDetails?.phone && (
+                                            <a 
+                                                href={`tel:${agentDetails.phone}`} 
+                                                className="flex items-center p-3 text-gray-700 transition-colors rounded-lg hover:text-emerald-600 hover:bg-emerald-50"
+                                            >
+                                                <FiPhone className="mr-3 text-emerald-500" />
+                                                <div>
+                                                    <div className="font-medium">Call Agent</div>
+                                                    <div className="text-sm text-gray-500">{agentDetails.phone}</div>
+                                                </div>
+                                            </a>
+                                        )}
+                                        
+                                        {agentDetails?.email && (
+                                            <a 
+                                                href={`mailto:${agentDetails.email}?subject=Inquiry about ${property.title}&body=Hi ${agentDetails.name},%0D%0A%0D%0AI'm interested in learning more about the property "${property.title}" listed at Ksh.${property.price?.toLocaleString()}.%0D%0A%0D%0ACould you please provide more details?%0D%0A%0D%0AThank you!`}
+                                                className="flex items-center p-3 text-gray-700 transition-colors rounded-lg hover:text-emerald-600 hover:bg-emerald-50"
+                                            >
+                                                <FiMessageSquare className="mr-3 text-emerald-500" />
+                                                <div>
+                                                    <div className="font-medium">Send Email</div>
+                                                    <div className="text-sm text-gray-500">{agentDetails.email}</div>
+                                                </div>
+                                            </a>
+                                        )}
+
+                                        {agentDetails?.website && (
+                                            <a 
+                                                href={agentDetails.website.startsWith('http') ? agentDetails.website : `https://${agentDetails.website}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center p-3 text-gray-700 transition-colors rounded-lg hover:text-emerald-600 hover:bg-emerald-50"
+                                            >
+                                                <svg className="w-5 h-5 mr-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9m0 9c2.485 0 4.5-4.03 4.5-9S11.485 3 9 3m0 18c-2.485 0-4.5-4.03-4.5-9S6.515 3 9 3m0 18V3" />
+                                                </svg>
+                                                <div>
+                                                    <div className="font-medium">Visit Website</div>
+                                                    <div className="text-sm text-gray-500 truncate">{agentDetails.website}</div>
+                                                </div>
+                                            </a>
+                                        )}
+
+                                        {!agentDetails && (
+                                            <div className="flex items-center p-3 text-gray-500">
+                                                <div className="w-5 h-5 mr-3 border-2 border-gray-300 rounded-full animate-spin border-t-emerald-500"></div>
+                                                Loading agent details...
+                                            </div>
                                         )}
                                     </div>
-                                </div>
 
-                                <div className="mb-6 space-y-4">
-                                    {agentDetails?.phone && (
-                                        <a 
-                                            href={`tel:${agentDetails.phone}`} 
-                                            className="flex items-center p-3 text-gray-700 transition-colors rounded-lg hover:text-emerald-600 hover:bg-emerald-50"
-                                        >
-                                            <FiPhone className="mr-3 text-emerald-500" />
-                                            <div>
-                                                <div className="font-medium">Call Agent</div>
-                                                <div className="text-sm text-gray-500">{agentDetails.phone}</div>
-                                            </div>
-                                        </a>
-                                    )}
-                                    
-                                    {agentDetails?.email && (
-                                        <a 
-                                            href={`mailto:${agentDetails.email}?subject=Inquiry about ${property.title}&body=Hi ${agentDetails.name},%0D%0A%0D%0AI'm interested in learning more about the property "${property.title}" listed at Ksh.${property.price?.toLocaleString()}.%0D%0A%0D%0ACould you please provide more details?%0D%0A%0D%0AThank you!`}
-                                            className="flex items-center p-3 text-gray-700 transition-colors rounded-lg hover:text-emerald-600 hover:bg-emerald-50"
-                                        >
-                                            <FiMessageSquare className="mr-3 text-emerald-500" />
-                                            <div>
-                                                <div className="font-medium">Send Email</div>
-                                                <div className="text-sm text-gray-500">{agentDetails.email}</div>
-                                            </div>
-                                        </a>
-                                    )}
+                                    {property.location && (
+                                        <div className="mb-6 space-y-3">
+                                            <button
+                                                onClick={() => {
+                                                    const { lat, lng } = property.location;
+                                                    const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+                                                    window.open(googleMapsUrl, '_blank');
+                                                }}
+                                                className="flex items-center justify-center w-full px-4 py-3 font-medium text-white transition-colors rounded-lg bg-emerald-600 hover:bg-emerald-700"
+                                            >
+                                                <FiMapPin className="mr-2" />
+                                                Open property location
+                                            </button>
 
-                                    {agentDetails?.website && (
-                                        <a 
-                                            href={agentDetails.website.startsWith('http') ? agentDetails.website : `https://${agentDetails.website}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center p-3 text-gray-700 transition-colors rounded-lg hover:text-emerald-600 hover:bg-emerald-50"
-                                        >
-                                            <svg className="w-5 h-5 mr-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9m0 9c2.485 0 4.5-4.03 4.5-9S11.485 3 9 3m0 18c-2.485 0-4.5-4.03-4.5-9S6.515 3 9 3m0 18V3" />
-                                            </svg>
-                                            <div>
-                                                <div className="font-medium">Visit Website</div>
-                                                <div className="text-sm text-gray-500 truncate">{agentDetails.website}</div>
-                                            </div>
-                                        </a>
-                                    )}
-
-                                    {/* Loading state */}
-                                    {!agentDetails && (
-                                        <div className="flex items-center p-3 text-gray-500">
-                                            <div className="w-5 h-5 mr-3 border-2 border-gray-300 rounded-full animate-spin border-t-emerald-500"></div>
-                                            Loading agent details...
+                                            <button
+                                                onClick={() => {
+                                                    const { lat, lng } = property.location;
+                                                    const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+                                                    window.open(directionsUrl, '_blank');
+                                                }}
+                                                className="flex items-center justify-center w-full px-4 py-3 font-medium transition-colors border rounded-lg text-emerald-600 border-emerald-600 hover:bg-emerald-50"
+                                            >
+                                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m0 0L9 7" />
+                                                </svg>
+                                                Get Directions
+                                            </button>
                                         </div>
                                     )}
                                 </div>
-
-                                {/* Google Maps Buttons - keep existing */}
-                                {property.location && (
-                                    <div className="mb-6 space-y-3">
-                                        <button
-                                            onClick={() => {
-                                                const { lat, lng } = property.location;
-                                                const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-                                                window.open(googleMapsUrl, '_blank');
-                                            }}
-                                            className="flex items-center justify-center w-full px-4 py-3 font-medium text-white transition-colors rounded-lg bg-emerald-600 hover:bg-emerald-700"
-                                        >
-                                            <FiMapPin className="mr-2" />
-                                            Open property location
-                                        </button>
-
-                                        <button
-                                            onClick={() => {
-                                                const { lat, lng } = property.location;
-                                                const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-                                                window.open(directionsUrl, '_blank');
-                                            }}
-                                            className="flex items-center justify-center w-full px-4 py-3 font-medium transition-colors border rounded-lg text-emerald-600 border-emerald-600 hover:bg-emerald-50"
-                                        >
-                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m0 0L9 7" />
-                                            </svg>
-                                            Get Directions
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                            ) : (
+                                <div className="mb-6">
+                                    <SubscriptionPaywall
+                                        isAuthenticated={Boolean(currentUser)}
+                                        email={currentUser?.email || userEmail}
+                                        currentUserId={currentUser?.uid}
+                                        onSubscribed={async () => {
+                                            if (currentUser?.uid) {
+                                                await fetchUserDetails(currentUser.uid);
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            )}
 
                             {/* Similar Properties - keep existing */}
                             {similarProperties.length > 0 && (
