@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FiLock, FiCreditCard, FiMapPin, FiPhone, FiUser } from 'react-icons/fi';
+import { FiLock, FiCreditCard, FiMapPin, FiPhone, FiUser, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import { startPaystackSubscription, verifyPaystackSubscription, PAYSTACK_AMOUNT_KES } from '../services/paystackService';
 
@@ -8,7 +8,8 @@ const SubscriptionPaywall = ({
     isAuthenticated,
     email,
     currentUserId,
-    onSubscribed
+    onSubscribed,
+    onClose
 }) => {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
@@ -52,12 +53,23 @@ const SubscriptionPaywall = ({
     };
 
     return (
-        <div className="p-6 bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 rounded-xl shadow-sm">
+        <div className={`p-6 bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 rounded-xl shadow-sm ${onClose ? 'relative' : ''}`}>
+            {/* Close Button - Only shown in modal mode */}
+            {onClose && (
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 p-1 text-gray-500 transition-colors rounded-lg hover:text-gray-700 hover:bg-gray-100"
+                    aria-label="Close"
+                >
+                    <FiX size={20} />
+                </button>
+            )}
+
             <div className="flex items-start gap-4">
                 <div className="flex items-center justify-center flex-shrink-0 w-12 h-12 rounded-full bg-emerald-100 text-emerald-600">
                     <FiLock size={20} />
                 </div>
-                <div>
+                <div className={onClose ? 'pr-6' : ''}>
                     <h3 className="text-lg font-bold text-gray-800">Unlock contact and location details</h3>
                     <p className="mt-1 text-sm text-gray-600">
                         Subscribe for Ksh. {PAYSTACK_AMOUNT_KES}/month to view the listing agent name, phone number, email address, and exact property location.

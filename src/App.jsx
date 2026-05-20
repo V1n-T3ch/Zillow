@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
 import { AuthProvider } from './contexts/AuthContext';
 import MobileTabNavigator from './components/MobileTabNavigator';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 import Home from './pages/Home';
 import PropertyListing from './pages/PropertyListing';
 import PropertyDetail from './pages/PropertyDetail';
@@ -35,6 +36,9 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <div className="min-h-screen bg-white">
+          {/* PWA Install Prompt */}
+          <PWAInstallPrompt />
+          
           {/* Main content with bottom padding for mobile nav */}
           <div className="pb-16 md:pb-0">
             <Routes>
