@@ -72,9 +72,9 @@ const PWAInstallPrompt = () => {
     }
 
     return (
-        <div className="fixed top-0 left-0 right-0 z-40 px-4 pt-4">
-            <div className="mx-auto max-w-md rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 p-4 shadow-lg">
-                <div className="flex items-start justify-between">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/20 px-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 p-4 shadow-2xl">
+                <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
                         <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-white/20">
                             <FiDownload className="text-white" size={20} />
@@ -88,7 +88,7 @@ const PWAInstallPrompt = () => {
                     </div>
                     <button
                         onClick={handleDismiss}
-                        className="ml-2 flex-shrink-0 text-white hover:text-emerald-100 transition-colors"
+                        className="flex-shrink-0 text-white transition-colors hover:text-emerald-100"
                         aria-label="Dismiss install prompt"
                     >
                         <FiX size={20} />
@@ -98,13 +98,13 @@ const PWAInstallPrompt = () => {
                 <div className="mt-4 flex gap-2">
                     <button
                         onClick={handleInstall}
-                        className="flex-1 rounded-lg bg-white px-4 py-2 font-medium text-emerald-600 hover:bg-emerald-50 transition-colors"
+                        className="flex-1 rounded-lg bg-white px-4 py-2 font-medium text-emerald-600 transition-colors hover:bg-emerald-50"
                     >
                         Install
                     </button>
                     <button
                         onClick={handleDismiss}
-                        className="rounded-lg bg-white/20 px-4 py-2 font-medium text-white hover:bg-white/30 transition-colors"
+                        className="rounded-lg bg-white/20 px-4 py-2 font-medium text-white transition-colors hover:bg-white/30"
                     >
                         Not Now
                     </button>
