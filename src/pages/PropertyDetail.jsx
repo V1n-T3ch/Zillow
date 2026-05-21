@@ -40,6 +40,7 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
     const [touchEnd, setTouchEnd] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(true);
+    const [isTouchDevice, setIsTouchDevice] = useState(false);
 
     // Combine images and videos into a single media array
     const allMedia = [
@@ -95,6 +96,25 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
     // Video ref for controlling playback
     const videoRef = React.useRef(null);
 
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const mediaQuery = window.matchMedia('(hover: none), (pointer: coarse)');
+        const updateTouchDeviceState = () => setIsTouchDevice(mediaQuery.matches);
+
+        updateTouchDeviceState();
+
+        if (mediaQuery.addEventListener) {
+            mediaQuery.addEventListener('change', updateTouchDeviceState);
+            return () => mediaQuery.removeEventListener('change', updateTouchDeviceState);
+        }
+
+        mediaQuery.addListener(updateTouchDeviceState);
+        return () => mediaQuery.removeListener(updateTouchDeviceState);
+    }, []);
+
     // Keyboard navigation
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -137,6 +157,8 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
                         muted={isMuted}
                         loop
                         playsInline
+                        controls={isModal}
+                        preload={isModal ? 'metadata' : 'none'}
                         onError={(e) => {
                             console.error('Video failed to load:', media.url);
                             e.target.style.display = 'none';
@@ -144,19 +166,21 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
                     />
                     
                     {/* Video Controls Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center transition-opacity opacity-0 bg-black/30 group-hover:opacity-100">
+                    <div
+                        className={`absolute inset-0 flex items-center justify-center transition-opacity bg-black/30 ${isModal ? 'pointer-events-none' : 'pointer-events-none opacity-0 group-hover:opacity-100'}`}
+                    >
                         <div className="flex items-center gap-4">
-                            {isModal && (
+                            {isModal && !isTouchDevice && (
                                 <>
                                     <button
                                         onClick={togglePlayPause}
-                                        className="p-3 text-white transition-colors rounded-full bg-black/50 hover:bg-black/70"
+                                        className="pointer-events-auto p-3 text-white transition-colors rounded-full bg-black/50 hover:bg-black/70"
                                     >
                                         {isPlaying ? <FiPause size={24} /> : <FiPlay size={24} />}
                                     </button>
                                     <button
                                         onClick={toggleMute}
-                                        className="p-3 text-white transition-colors rounded-full bg-black/50 hover:bg-black/70"
+                                        className="pointer-events-auto p-3 text-white transition-colors rounded-full bg-black/50 hover:bg-black/70"
                                     >
                                         {isMuted ? <FiVolumeX size={20} /> : <FiVolume2 size={20} />}
                                     </button>
@@ -181,6 +205,8 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
                     src={media.url}
                     alt="Property view"
                     className="object-cover w-full h-full"
+                    loading={isModal ? 'eager' : 'lazy'}
+                    decoding="async"
                     initial={{ scale: 1 }}
                     whileHover={{ scale: 1.05 }}
                     transition={{ duration: 0.5 }}
@@ -368,6 +394,8 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
                                                     src={media.url}
                                                     className="object-cover w-full h-full"
                                                     muted
+                                                    preload="none"
+                                                    playsInline
                                                 />
                                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                                                     <FiPlay size={12} className="text-white" />
@@ -378,6 +406,8 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
                                                 src={media.url}
                                                 alt={`Thumbnail ${index + 1}`}
                                                 className="object-cover w-full h-full"
+                                                loading="lazy"
+                                                decoding="async"
                                                 onError={(e) => {
                                                     e.target.onerror = null;
                                                     e.target.src = 'https://placehold.co/1200x800?text=Image+Not+Available';
