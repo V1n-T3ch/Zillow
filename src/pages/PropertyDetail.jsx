@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import {
     FiCamera, FiChevronLeft, FiChevronRight, FiPlus,
-    FiCheckCircle, FiMapPin, FiShare2, FiUser, FiPhone, 
+    FiCheckCircle, FiMapPin, FiShare2, FiUser, FiPhone,
     FiMessageSquare, FiPlay, FiPause, FiVolume2, FiVolumeX
 } from 'react-icons/fi';
 import { db } from '../firebase';
@@ -42,10 +42,14 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
     const [isMuted, setIsMuted] = useState(true);
     const [isTouchDevice, setIsTouchDevice] = useState(false);
 
-    // Combine images and videos into a single media array
+    // FIX: Support both plain URL strings and { url, poster } objects for videos
     const allMedia = [
         ...images.map(url => ({ type: 'image', url })),
-        ...videos.map(url => ({ type: 'video', url }))
+        ...videos.map(v =>
+            typeof v === 'string'
+                ? { type: 'video', url: v, poster: '' }
+                : { type: 'video', url: v.url, poster: v.poster || '' }
+        )
     ];
 
     // Use placeholders if no media
@@ -73,28 +77,36 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
         }
     };
 
+    // FIX: Reset video ref on navigation to avoid stale state
+    const videoRef = React.useRef(null);
+
     const goToPrevious = useCallback(() => {
         const newIndex = activeIndex === 0 ? mediaToShow.length - 1 : activeIndex - 1;
         setActiveIndex(newIndex);
         setIsPlaying(false);
+        if (videoRef.current) {
+            videoRef.current.pause();
+            videoRef.current.currentTime = 0;
+        }
     }, [activeIndex, mediaToShow.length]);
 
     const goToNext = useCallback(() => {
         const newIndex = activeIndex === mediaToShow.length - 1 ? 0 : activeIndex + 1;
         setActiveIndex(newIndex);
         setIsPlaying(false);
+        if (videoRef.current) {
+            videoRef.current.pause();
+            videoRef.current.currentTime = 0;
+        }
     }, [activeIndex, mediaToShow.length]);
 
     const togglePlayPause = useCallback(() => {
-        setIsPlaying(!isPlaying);
-    }, [isPlaying]);
+        setIsPlaying(prev => !prev);
+    }, []);
 
     const toggleMute = () => {
-        setIsMuted(!isMuted);
+        setIsMuted(prev => !prev);
     };
-
-    // Video ref for controlling playback
-    const videoRef = React.useRef(null);
 
     useEffect(() => {
         if (typeof window === 'undefined') {
@@ -126,6 +138,11 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
                 goToNext();
             } else if (e.key === 'Escape') {
                 setShowModal(false);
+                setIsPlaying(false);
+                if (videoRef.current) {
+                    videoRef.current.pause();
+                    videoRef.current.currentTime = 0;
+                }
             } else if (e.key === ' ' && currentMedia?.type === 'video') {
                 e.preventDefault();
                 togglePlayPause();
@@ -139,12 +156,19 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
     useEffect(() => {
         if (videoRef.current) {
             if (isPlaying) {
-                videoRef.current.play();
+                videoRef.current.play().catch(() => setIsPlaying(false));
             } else {
                 videoRef.current.pause();
             }
         }
     }, [isPlaying]);
+
+    // FIX: Sync muted state to video ref directly
+    useEffect(() => {
+        if (videoRef.current) {
+            videoRef.current.muted = isMuted;
+        }
+    }, [isMuted]);
 
     const renderMediaContent = (media, isModal = false) => {
         if (media.type === 'video') {
@@ -153,18 +177,21 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
                     <video
                         ref={isModal ? videoRef : null}
                         src={media.url}
+                        // FIX: Use poster frame so there's no black box on load
+                        poster={media.poster || undefined}
                         className="object-cover w-full h-full"
                         muted={isMuted}
                         loop
                         playsInline
                         controls={isModal}
+                        // FIX: preload metadata in modal, none in thumbnail
                         preload={isModal ? 'metadata' : 'none'}
                         onError={(e) => {
                             console.error('Video failed to load:', media.url);
                             e.target.style.display = 'none';
                         }}
                     />
-                    
+
                     {/* Video Controls Overlay */}
                     <div
                         className={`absolute inset-0 flex items-center justify-center transition-opacity bg-black/30 ${isModal ? 'pointer-events-none' : 'pointer-events-none opacity-0 group-hover:opacity-100'}`}
@@ -174,13 +201,13 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
                                 <>
                                     <button
                                         onClick={togglePlayPause}
-                                        className="pointer-events-auto p-3 text-white transition-colors rounded-full bg-black/50 hover:bg-black/70"
+                                        className="p-3 text-white transition-colors rounded-full pointer-events-auto bg-black/50 hover:bg-black/70"
                                     >
                                         {isPlaying ? <FiPause size={24} /> : <FiPlay size={24} />}
                                     </button>
                                     <button
                                         onClick={toggleMute}
-                                        className="pointer-events-auto p-3 text-white transition-colors rounded-full bg-black/50 hover:bg-black/70"
+                                        className="p-3 text-white transition-colors rounded-full pointer-events-auto bg-black/50 hover:bg-black/70"
                                     >
                                         {isMuted ? <FiVolumeX size={20} /> : <FiVolume2 size={20} />}
                                     </button>
@@ -223,12 +250,12 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
         <>
             <div className="relative mb-8 overflow-hidden shadow-2xl rounded-xl">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 h-[70vh] max-h-[600px]">
-                    {/* Main Media Display */}
+                    {/* FIX: Main display now tracks activeIndex, not hardcoded to [0] */}
                     <div
                         className="relative col-span-2 overflow-hidden cursor-pointer group"
                         onClick={() => setShowModal(true)}
                     >
-                        {renderMediaContent(mediaToShow[0])}
+                        {renderMediaContent(mediaToShow[activeIndex])}
                         <div className="absolute inset-0 transition-opacity duration-300 opacity-0 bg-gradient-to-t from-black/40 to-transparent group-hover:opacity-100">
                             <div className="absolute bottom-4 left-4">
                                 <div className="flex items-center gap-2 text-white">
@@ -247,14 +274,14 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
                             <>
                                 <div
                                     className="relative overflow-hidden cursor-pointer group"
-                                    onClick={() => setShowModal(true)}
+                                    onClick={() => { setActiveIndex(1); setShowModal(true); }}
                                 >
                                     {renderMediaContent(mediaToShow[1])}
                                     <div className="absolute inset-0 transition-opacity opacity-0 bg-black/20 group-hover:opacity-100"></div>
                                 </div>
                                 <div
                                     className="relative overflow-hidden cursor-pointer group"
-                                    onClick={() => setShowModal(true)}
+                                    onClick={() => { setActiveIndex(2); setShowModal(true); }}
                                 >
                                     {mediaToShow.length > 2 ? (
                                         <>
@@ -324,6 +351,10 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
                             onClick={() => {
                                 setShowModal(false);
                                 setIsPlaying(false);
+                                if (videoRef.current) {
+                                    videoRef.current.pause();
+                                    videoRef.current.currentTime = 0;
+                                }
                             }}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -383,20 +414,35 @@ const PropertyMediaGallery = ({ images = [], videos = [] }) => {
                                         onClick={() => {
                                             setActiveIndex(index);
                                             setIsPlaying(false);
+                                            if (videoRef.current) {
+                                                videoRef.current.pause();
+                                                videoRef.current.currentTime = 0;
+                                            }
                                         }}
                                         className={`flex-shrink-0 w-16 h-12 rounded-md overflow-hidden transition-all relative ${
                                             activeIndex === index ? 'ring-2 ring-white scale-105' : 'opacity-60 hover:opacity-100'
                                         }`}
                                     >
+                                        {/* FIX: Video thumbnails use poster img instead of <video> element */}
                                         {media.type === 'video' ? (
                                             <div className="relative w-full h-full">
-                                                <video
-                                                    src={media.url}
-                                                    className="object-cover w-full h-full"
-                                                    muted
-                                                    preload="none"
-                                                    playsInline
-                                                />
+                                                {media.poster ? (
+                                                    <img
+                                                        src={media.poster}
+                                                        alt={`Video thumbnail ${index + 1}`}
+                                                        className="object-cover w-full h-full"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                        onError={(e) => {
+                                                            e.target.onerror = null;
+                                                            e.target.src = 'https://placehold.co/64x48?text=▶';
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div className="flex items-center justify-center w-full h-full bg-gray-800">
+                                                        <FiPlay size={14} className="text-white" />
+                                                    </div>
+                                                )}
                                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                                                     <FiPlay size={12} className="text-white" />
                                                 </div>

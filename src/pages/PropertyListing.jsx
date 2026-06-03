@@ -63,6 +63,25 @@ const PropertyListing = () => {
         setCurrentPage(page);
     }, [searchParams]);
 
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const mediaQuery = window.matchMedia('(max-width: 1023px)');
+        const updateFilterVisibility = () => setShowFilters(!mediaQuery.matches);
+
+        updateFilterVisibility();
+
+        if (mediaQuery.addEventListener) {
+            mediaQuery.addEventListener('change', updateFilterVisibility);
+            return () => mediaQuery.removeEventListener('change', updateFilterVisibility);
+        }
+
+        mediaQuery.addListener(updateFilterVisibility);
+        return () => mediaQuery.removeListener(updateFilterVisibility);
+    }, []);
+
     // Fetch properties from Firestore
     useEffect(() => {
         const fetchProperties = async () => {
@@ -533,6 +552,7 @@ const PropertyListing = () => {
                                     <button
                                         className="flex items-center gap-1 p-2 border rounded lg:hidden"
                                         onClick={() => setShowFilters(!showFilters)}
+                                        aria-expanded={showFilters}
                                     >
                                         <FiFilter size={16} />
                                         <span className="text-sm">{showFilters ? 'Hide' : 'Show'}</span>
