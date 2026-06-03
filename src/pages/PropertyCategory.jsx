@@ -3,7 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import Navbar from '../components/Navbar';
-import { FiMapPin, FiChevronRight, FiHome, FiFilter, FiX } from 'react-icons/fi';
+import { FiChevronRight, FiHome, FiFilter, FiX } from 'react-icons/fi';
 import { motion as Motion } from 'framer-motion';
 
 const PropertyCategory = () => {

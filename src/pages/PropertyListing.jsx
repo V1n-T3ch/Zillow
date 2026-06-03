@@ -365,10 +365,10 @@ const PropertyListing = () => {
 
             <div className="pb-16 md:pb-0">
                 <div className="container px-4 py-8 mx-auto">
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="mb-8">
                         <h1 className="text-3xl font-bold">Property Listings</h1>
                         {/* Show current filters if active */}
-                        <div className="flex flex-wrap gap-2">
+                        <div className="hidden flex-wrap gap-2 mt-4 lg:flex">
                             {searchFilter && (
                                 <div className="flex items-center gap-2 px-3 py-1 text-sm rounded-full bg-emerald-100 text-emerald-800">
                                     <span>Location: "{searchFilter}"</span>
