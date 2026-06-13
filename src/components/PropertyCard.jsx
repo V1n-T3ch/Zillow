@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FiHeart, FiExternalLink, FiCamera } from 'react-icons/fi';
 import { TbBed, TbBath, TbHome, TbBuildingEstate } from 'react-icons/tb';
+import { normalizeImageList } from '../utils/propertyData';
 
 const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
     const { 
@@ -29,8 +30,10 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
     const [imageError, setImageError] = useState(false);
     
     // Get the first image from images array or fallback to imageUrl
-    const displayImage = !imageError && images && images.length > 0 
-        ? images[0] 
+    const normalizedImages = normalizeImageList(images, imageUrl);
+
+    const displayImage = !imageError && normalizedImages.length > 0 
+        ? normalizedImages[0] 
         : imageUrl || 'https://placehold.co/600x400?text=No+Image';
     
     // Format location string
@@ -39,7 +42,7 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
         : city || area || 'Location not specified';
     
     // Count images for badge
-    const photoCount = images ? images.length : 0;
+    const photoCount = normalizedImages.length;
 
     const handleImageError = () => {
         setImageError(true);
@@ -97,6 +100,8 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
                             src={displayImage}
                             alt={title}
                             className="object-cover w-full h-full transition-transform duration-700 ease-in-out group-hover:scale-110"
+                            loading="lazy"
+                            decoding="async"
                             onError={handleImageError}
                         />
                         <div className={`absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-${isHovered ? '100' : '70'} transition-opacity duration-300`}></div>
@@ -196,7 +201,7 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
                             }}
                         >
                             <span className="relative z-10 flex items-center">
-                                {isUnavailable ? 'Not Available' : 'View Details'} 
+                                {isUnavailable ? 'Not Available' : 'Take Virtual Tour'} 
                                 {!isUnavailable && <FiExternalLink className="ml-1.5 transform group-hover:translate-x-1 transition-transform" />}
                             </span>
                         </Link>
@@ -219,10 +224,12 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
             <div className="relative overflow-hidden">
                 {/* Standardized image container with fixed height */}
                 <div className="w-full overflow-hidden h-60">
-                    <img
+                        <img
                         src={displayImage}
                         alt={title}
                         className="object-cover w-full h-full transition-transform duration-700 ease-in-out group-hover:scale-110"
+                            loading="lazy"
+                            decoding="async"
                         onError={handleImageError}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
@@ -309,7 +316,7 @@ const PropertyCard = ({ property, onFavoriteToggle, viewMode = 'grid' }) => {
                             }
                         }}
                     >
-                        {isUnavailable ? 'Not Available' : 'View Details'}
+                        {isUnavailable ? 'Not Available' : 'Take Virtual Tour'}
                     </Link>
                 </div>
             </div>

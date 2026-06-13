@@ -8,13 +8,14 @@ import {
 } from 'react-icons/fi';
 import { db } from '../firebase';
 import {
-    doc, getDoc, collection, getDocs, query, where
+    doc, getDoc, collection, getDocs, query, where, documentId
 } from 'firebase/firestore';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'react-toastify';
 import { incrementPropertyViews } from '../services/analyticsService';
 import Navbar from '../components/Navbar';
 import SubscriptionPaywall from '../components/SubscriptionPaywall';
+import { normalizeProperty } from '../utils/propertyData';
 
 const isSubscriptionActive = (subscription) => {
     if (!subscription || subscription.status !== 'active') {
@@ -520,10 +521,10 @@ const PropertyDetail = () => {
                     return;
                 }
 
-                const propertyData = {
+                const propertyData = normalizeProperty({
                     id: propertyDoc.id,
                     ...propertyDoc.data()
-                };
+                });
 
                 setProperty(propertyData);
 
@@ -542,21 +543,26 @@ const PropertyDetail = () => {
                     setUserEmail(currentUser.email || '');
                 }
 
-                // Fetch similar properties
-                const similarQuery = query(
-                    collection(db, 'properties'),
-                    where('city', '==', propertyData.city),
-                    where('propertyType', '==', propertyData.propertyType),
-                    where('id', '!=', id)
-                );
+                // Fetch similar properties separately so a query issue does not block the main detail view.
+                try {
+                    const similarQuery = query(
+                        collection(db, 'properties'),
+                        where('city', '==', propertyData.city),
+                        where('propertyType', '==', propertyData.propertyType),
+                        where(documentId(), '!=', id)
+                    );
 
-                const similarSnapshot = await getDocs(similarQuery);
-                const similarData = similarSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                })).slice(0, 3);
+                    const similarSnapshot = await getDocs(similarQuery);
+                    const similarData = similarSnapshot.docs.map(similarDoc => normalizeProperty({
+                        id: similarDoc.id,
+                        ...similarDoc.data()
+                    })).slice(0, 3);
 
-                setSimilarProperties(similarData);
+                    setSimilarProperties(similarData);
+                } catch (similarError) {
+                    console.warn('Failed to load similar properties:', similarError);
+                    setSimilarProperties([]);
+                }
 
             } catch (err) {
                 console.error('Error fetching property:', err);
@@ -567,7 +573,7 @@ const PropertyDetail = () => {
         };
 
         fetchPropertyData();
-    }, [id, currentUser, hasRecordedView]);
+    }, [id, currentUser]);
 
     useEffect(() => {
         const fetchAgentDetails = async () => {
@@ -698,7 +704,7 @@ const PropertyDetail = () => {
             <div className="pt-20 pb-10">
                 <div className="w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <PropertyMediaGallery
-                        images={property.images || []}
+                        // images={property.images || []}
                         videos={property.videos || []}
                     />
 

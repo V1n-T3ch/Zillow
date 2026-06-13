@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dwella-v1.0.1'; // Update this version when you deploy
+const CACHE_NAME = 'dwella-04d9855-20260606T150031'; // Update this version when you deploy
 const urlsToCache = [
   '/',
   '/index.html',

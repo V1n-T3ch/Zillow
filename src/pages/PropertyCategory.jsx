@@ -1,30 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import Navbar from '../components/Navbar';
 import { FiChevronRight, FiHome, FiFilter, FiX } from 'react-icons/fi';
 import { motion as Motion } from 'framer-motion';
+import { normalizeProperty, toBedsCount } from '../utils/propertyData';
 
 const PropertyCategory = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const propertyType = searchParams.get('propertyType') || 'House';
     const searchFilter = searchParams.get('search') || '';
     const bedsFilter = searchParams.get('beds') || '';
-    const minPrice = parseInt(searchParams.get('minPrice') || '0');
-    const maxPrice = parseInt(searchParams.get('maxPrice') || '2000000');
+    const hasPriceFilter = searchParams.has('minPrice') || searchParams.has('maxPrice');
     
-    const [properties, setProperties] = useState([]);
     const [groupedProperties, setGroupedProperties] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [totalCount, setTotalCount] = useState(0);
 
-    useEffect(() => {
-        fetchPropertiesByType();
-    }, [propertyType, searchFilter, bedsFilter, minPrice, maxPrice]);
-
-    const fetchPropertiesByType = async () => {
+    const fetchPropertiesByType = useCallback(async () => {
         try {
             setLoading(true);
             
@@ -38,14 +33,13 @@ const PropertyCategory = () => {
             const querySnapshot = await getDocs(propertiesQuery);
             
             if (querySnapshot.empty) {
-                setProperties([]);
                 setGroupedProperties({});
                 setTotalCount(0);
                 setLoading(false);
                 return;
             }
 
-            let fetchedProperties = querySnapshot.docs.map(doc => ({
+            let fetchedProperties = querySnapshot.docs.map(doc => normalizeProperty({
                 id: doc.id,
                 ...doc.data()
             }));
@@ -65,17 +59,14 @@ const PropertyCategory = () => {
             // Filter by bedrooms
             if (bedsFilter && bedsFilter !== '') {
                 const bedsNumber = parseInt(bedsFilter);
-                filtered = filtered.filter(property => 
-                    property.beds >= bedsNumber
-                );
+                filtered = filtered.filter(property => toBedsCount(property.beds) >= bedsNumber);
             }
 
-            setProperties(filtered);
             setTotalCount(filtered.length);
             
             // Group properties by number of bedrooms
             const grouped = filtered.reduce((acc, property) => {
-                const beds = parseInt(property.beds) || 0;
+                const beds = toBedsCount(property.beds);
                 const key = beds === 0 ? 'Studio' : beds === 1 ? '1 Bedroom' : `${beds} Bedrooms`;
                 
                 if (!acc[key]) {
@@ -93,7 +84,11 @@ const PropertyCategory = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [propertyType, searchFilter, bedsFilter]);
+
+    useEffect(() => {
+        fetchPropertiesByType();
+    }, [fetchPropertiesByType]);
 
     const removeFilter = (filterName) => {
         const params = Object.fromEntries(searchParams);
@@ -105,7 +100,7 @@ const PropertyCategory = () => {
         setSearchParams({ propertyType });
     };
 
-    const hasActiveFilters = searchFilter || bedsFilter || minPrice > 0 || maxPrice < 2000000;
+    const hasActiveFilters = searchFilter || bedsFilter || hasPriceFilter;
 
     if (loading) {
         return (

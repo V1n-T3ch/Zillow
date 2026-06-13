@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import PropertyCard from '../components/PropertyCard';
@@ -12,10 +12,10 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { normalizeProperty, toBedsCount, toNumber } from '../utils/propertyData';
 
 const PropertyListing = () => {
     const [searchParams, setSearchParams] = useSearchParams();
-    const [properties, setProperties] = useState([]);
     const [filteredProperties, setFilteredProperties] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [viewMode, setViewMode] = useState('grid');
@@ -25,11 +25,10 @@ const PropertyListing = () => {
 
     // Filter states
     const [priceRange, setPriceRange] = useState([0, 2000000]);
+    const [priceFilterApplied, setPriceFilterApplied] = useState(false);
     const [bedrooms, setBedrooms] = useState('');
     const [propertyType, setPropertyType] = useState('Any');
-    const [propertyStatus, setPropertyStatus] = useState('Any');
     const [showFilters, setShowFilters] = useState(true);
-    const [location, setLocation] = useState('Any');
     const [searchFilter, setSearchFilter] = useState(''); // New search filter for city/area
     const [locationFilter, setLocationFilter] = useState(''); // New location filter for sidebar
 
@@ -47,8 +46,7 @@ const PropertyListing = () => {
         const bedsParam = searchParams.get('beds') || '';
         const minPrice = parseInt(searchParams.get('minPrice') || '0');
         const maxPrice = parseInt(searchParams.get('maxPrice') || '2000000');
-        const status = searchParams.get('status') || 'Any';
-        const loc = searchParams.get('location') || 'Any';
+        const hasPriceParams = searchParams.has('minPrice') || searchParams.has('maxPrice');
         const search = searchParams.get('search') || ''; // New search param
         const sort = searchParams.get('sort') || 'newest';
         const page = parseInt(searchParams.get('page') || '1');
@@ -56,8 +54,7 @@ const PropertyListing = () => {
         setPropertyType(type);
         setBedrooms(bedsParam);
         setPriceRange([minPrice, maxPrice]);
-        setPropertyStatus(status);
-        setLocation(loc);
+        setPriceFilterApplied(hasPriceParams);
         setSearchFilter(search); // Set search filter
         setSortOption(sort);
         setCurrentPage(page);
@@ -82,9 +79,30 @@ const PropertyListing = () => {
         return () => mediaQuery.removeListener(updateFilterVisibility);
     }, []);
 
-    // Fetch properties from Firestore
-    useEffect(() => {
-        const fetchProperties = async () => {
+    const fetchUserFavorites = useCallback(async () => {
+        if (!currentUser) return;
+
+        try {
+            const favoritesQuery = query(
+                collection(db, 'favorites'),
+                where('userId', '==', currentUser.uid)
+            );
+
+            const querySnapshot = await getDocs(favoritesQuery);
+
+            const favoritesMap = {};
+            querySnapshot.docs.forEach(doc => {
+                const data = doc.data();
+                favoritesMap[data.propertyId] = doc.id;
+            });
+
+            setFavorites(favoritesMap);
+        } catch (error) {
+            console.error('Error fetching favorites:', error);
+        }
+    }, [currentUser]);
+
+    const fetchProperties = useCallback(async () => {
             setIsLoading(true);
             setError(null);
 
@@ -136,7 +154,7 @@ const PropertyListing = () => {
                 // Get all properties for client-side filtering
                 const querySnapshot = await getDocs(propertiesQuery);
 
-                const allProperties = querySnapshot.docs.map(doc => ({
+                const allProperties = querySnapshot.docs.map(doc => normalizeProperty({
                     id: doc.id,
                     ...doc.data(),
                     createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString()
@@ -164,16 +182,17 @@ const PropertyListing = () => {
                 }
 
                 // Filter by price
-                filtered = filtered.filter(property => 
-                    property.price >= priceRange[0] && property.price <= priceRange[1]
-                );
+                if (priceFilterApplied) {
+                    filtered = filtered.filter(property => {
+                        const price = toNumber(property.price);
+                        return price >= priceRange[0] && price <= priceRange[1];
+                    });
+                }
 
                 // Filter by bedrooms - exact match
                 if (bedrooms && bedrooms !== '') {
                     const bedsNumber = parseInt(bedrooms);
-                    filtered = filtered.filter(property => 
-                        property.beds === bedsNumber
-                    );
+                    filtered = filtered.filter(property => toBedsCount(property.beds) === bedsNumber);
                 }
 
                 // Calculate total for pagination
@@ -183,7 +202,6 @@ const PropertyListing = () => {
                 const skip = (currentPage - 1) * propertiesPerPage;
                 const paginatedResults = filtered.slice(skip, skip + propertiesPerPage);
 
-                setProperties(filtered);
                 setFilteredProperties(paginatedResults);
 
                 // Fetch user's favorites if logged in
@@ -198,34 +216,12 @@ const PropertyListing = () => {
             } finally {
                 setIsLoading(false);
             }
-        };
+    }, [propertyType, bedrooms, sortOption, currentPage, currentUser, priceRange, priceFilterApplied, searchFilter, locationFilter, fetchUserFavorites]);
 
+    // Fetch properties from Firestore
+    useEffect(() => {
         fetchProperties();
-    }, [propertyType, propertyStatus, location, bedrooms, sortOption, currentPage, currentUser, priceRange, searchFilter, locationFilter]);
-
-    // Fetch user favorites
-    const fetchUserFavorites = async () => {
-        if (!currentUser) return;
-
-        try {
-            const favoritesQuery = query(
-                collection(db, 'favorites'),
-                where('userId', '==', currentUser.uid)
-            );
-
-            const querySnapshot = await getDocs(favoritesQuery);
-
-            const favoritesMap = {};
-            querySnapshot.docs.forEach(doc => {
-                const data = doc.data();
-                favoritesMap[data.propertyId] = doc.id;
-            });
-
-            setFavorites(favoritesMap);
-        } catch (error) {
-            console.error('Error fetching favorites:', error);
-        }
-    };
+    }, [fetchProperties]);
 
     const toggleFavorite = async (propertyId) => {
         if (!currentUser) {
@@ -308,12 +304,15 @@ const PropertyListing = () => {
             params.locationFilter = locationFilter;
         }
 
+        setPriceFilterApplied(true);
+
         setSearchParams(params);
     };
 
     const resetFilters = () => {
         // Only reset sidebar filters, keep URL-based filters
         setPriceRange([0, 2000000]);
+        setPriceFilterApplied(false);
         setLocationFilter('');
         setSortOption('newest');
         setCurrentPage(1);
@@ -400,36 +399,7 @@ const PropertyListing = () => {
                                     </button>
                                 </div>
                             )}
-                            {propertyType !== 'Any' && (
-                                <div className="flex items-center gap-2 px-3 py-1 text-sm text-blue-800 bg-blue-100 rounded-full">
-                                    <span>Type: {propertyType}</span>
-                                    <button
-                                        onClick={() => {
-                                            const params = Object.fromEntries(searchParams);
-                                            delete params.propertyType;
-                                            setSearchParams(params);
-                                        }}
-                                        className="ml-1 text-blue-600 hover:text-blue-800"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                            )}
-                            {bedrooms && (
-                                <div className="flex items-center gap-2 px-3 py-1 text-sm text-purple-800 bg-purple-100 rounded-full">
-                                    <span>Bedrooms: {bedrooms}+</span>
-                                    <button
-                                        onClick={() => {
-                                            const params = Object.fromEntries(searchParams);
-                                            delete params.beds;
-                                            setSearchParams(params);
-                                        }}
-                                        className="ml-1 text-purple-600 hover:text-purple-800"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                            )}
+                            {/*  */}
                         </div>
                     </div>
 
@@ -595,11 +565,12 @@ const PropertyListing = () => {
                                                         property={{
                                                             ...property,
                                                             isFavorite: Boolean(favorites[property.id]),
-                                                            beds: property.beds || 0,
-                                                            baths: property.baths || 0,                                                         
+                                                            beds: toBedsCount(property.beds),
+                                                            baths: toNumber(property.baths),                                                         
                                                             propertyType: property.propertyType || 'Property',
-                                                            price: property.price || 0,
-                                                            imageUrl: property.images?.[0] || 'https://placehold.co/800x500?text=No+Image'
+                                                            price: toNumber(property.price),
+                                                            images: property.images || [],
+                                                            imageUrl: property.imageUrl || 'https://placehold.co/800x500?text=No+Image'
                                                         }}
                                                         onFavoriteToggle={() => toggleFavorite(property.id)}
                                                         viewMode={viewMode}

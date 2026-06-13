@@ -286,7 +286,7 @@ const ListProperty = () => {
                         timeout: 1800000, // 30 minute timeout for large videos
                         onUploadProgress: (progressEvent) => {
                             const fileProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                            const overallProgress = Math.round(((i / mediaFiles.length) * 100) + (fileProgress / mediaFiles.length));
+                            const overallProgress = Math.min(95, Math.round(((i / mediaFiles.length) * 100) + (fileProgress / mediaFiles.length)));
                             setUploadProgress(overallProgress);
                             console.log(`Upload progress for ${file.name}: ${fileProgress}%`);
                         }
@@ -294,11 +294,17 @@ const ListProperty = () => {
 
                     console.log(`Upload response for ${file.name}:`, res.data);
 
+                    setUploadProgress(Math.min(95, Math.round(((i + 1) / mediaFiles.length) * 95)));
+
                     if (res.data.status === 'success' && res.data.data?.fileUrl) {
                         if (isImageFile(file)) {
                             imageUrls.push(res.data.data.fileUrl);
                         } else {
-                            videoUrls.push(res.data.data.fileUrl);
+                            videoUrls.push(
+                                res.data.data.posterUrl
+                                    ? { url: res.data.data.fileUrl, poster: res.data.data.posterUrl }
+                                    : res.data.data.fileUrl
+                            );
                         }
                     } else {
                         throw new Error(`Upload failed for ${file.name}: ${res.data.message || 'Unknown error'}`);
@@ -328,6 +334,7 @@ const ListProperty = () => {
 
             console.log('Creating property with data:', propertyData);
             const docRef = await addDoc(collection(db, 'properties'), propertyData);
+            setUploadProgress(100);
 
             navigate(`/agent/properties?success=true&propertyId=${docRef.id}`);
 
